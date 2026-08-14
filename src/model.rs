@@ -163,14 +163,9 @@ impl CompiledNet {
         }
     }
 
-    /// Forward one state's sparse features. Writes raw WDL logits
-    /// (`[loss, draw, win]`) and raw action logits (indexed by action ID).
-    pub fn forward(
-        &self,
-        features: &[u32],
-        wdl_logits: &mut [f32; 3],
-        action_logits: &mut Vec<f32>,
-    ) {
+    /// Shared trunk: embedding sum and both hidden layers. `h2` is
+    /// resized to the model width.
+    pub fn forward_hidden(&self, features: &[u32], h2: &mut Vec<f32>) {
         let w = self.dims.width;
         let mut x = vec![0.0f32; w];
         for &f in features {
@@ -188,14 +183,39 @@ impl CompiledNet {
         for v in &mut h1 {
             *v = v.max(0.0);
         }
-        let mut h2 = vec![0.0f32; w];
-        matvec(&self.w2, &self.b2, &h1, &mut h2);
-        for v in &mut h2 {
+        h2.clear();
+        h2.resize(w, 0.0);
+        matvec(&self.w2, &self.b2, &h1, h2);
+        for v in h2.iter_mut() {
             *v = v.max(0.0);
         }
-        matvec(&self.wv, &self.bv, &h2, wdl_logits);
+    }
+
+    /// WDL logits (`[loss, draw, win]`) from a trunk output.
+    pub fn wdl_head(&self, h2: &[f32], wdl_logits: &mut [f32; 3]) {
+        matvec(&self.wv, &self.bv, h2, wdl_logits);
+    }
+
+    /// Action logits (indexed by action ID) from a trunk output. This is
+    /// the dominant cost for wide action spaces (chess: 4168), so search
+    /// evaluators call it only when move ordering actually needs it.
+    pub fn action_head(&self, h2: &[f32], action_logits: &mut Vec<f32>) {
         action_logits.resize(self.dims.action_count, 0.0);
-        matvec(&self.wa, &self.ba, &h2, action_logits);
+        matvec(&self.wa, &self.ba, h2, action_logits);
+    }
+
+    /// Forward one state's sparse features through the trunk and both
+    /// heads (validation and non-search callers).
+    pub fn forward(
+        &self,
+        features: &[u32],
+        wdl_logits: &mut [f32; 3],
+        action_logits: &mut Vec<f32>,
+    ) {
+        let mut h2 = Vec::new();
+        self.forward_hidden(features, &mut h2);
+        self.wdl_head(&h2, wdl_logits);
+        self.action_head(&h2, action_logits);
     }
 }
 
@@ -205,10 +225,14 @@ impl CompiledNet {
 pub struct ModelEvaluator<'a> {
     net: &'a CompiledNet,
     features: Vec<u32>,
-    /// Cached forward output for the last state (keyed by position hash),
-    /// since `leaf_value` and `policy_scores` may hit the same state.
+    /// Trunk output cached per position key; each head is computed
+    /// lazily only when its consumer (leaf value vs move ordering)
+    /// actually asks.
     cache_key: Option<u64>,
+    cache_h2: Vec<f32>,
+    wdl_valid: bool,
     cache_wdl: [f32; 3],
+    logits_valid: bool,
     cache_logits: Vec<f32>,
 }
 
@@ -218,43 +242,56 @@ impl<'a> ModelEvaluator<'a> {
             net,
             features: Vec::new(),
             cache_key: None,
+            cache_h2: Vec::new(),
+            wdl_valid: false,
             cache_wdl: [0.0; 3],
+            logits_valid: false,
             cache_logits: Vec::new(),
         }
     }
 
-    fn forward_state<G: crate::game::Game>(&mut self, game: &G, state: &G::State) {
+    fn trunk<G: crate::game::Game>(&mut self, game: &G, state: &G::State) {
         let key = game.position_key(state);
         if self.cache_key == Some(key) {
             return;
         }
         game.encode_features(state, &mut self.features);
-        let mut wdl_logits = [0.0f32; 3];
-        let mut logits = std::mem::take(&mut self.cache_logits);
-        self.net
-            .forward(&self.features, &mut wdl_logits, &mut logits);
-        // Stable softmax over the three WDL logits.
-        let max = wdl_logits[0].max(wdl_logits[1]).max(wdl_logits[2]);
-        let exp = [
-            (wdl_logits[0] - max).exp(),
-            (wdl_logits[1] - max).exp(),
-            (wdl_logits[2] - max).exp(),
-        ];
-        let sum = exp[0] + exp[1] + exp[2];
-        self.cache_wdl = [exp[0] / sum, exp[1] / sum, exp[2] / sum];
-        self.cache_logits = logits;
+        let mut h2 = std::mem::take(&mut self.cache_h2);
+        self.net.forward_hidden(&self.features, &mut h2);
+        self.cache_h2 = h2;
         self.cache_key = Some(key);
+        self.wdl_valid = false;
+        self.logits_valid = false;
     }
 
     /// WDL probabilities `[loss, draw, win]` for `state` (side to move).
     pub fn wdl_probs<G: crate::game::Game>(&mut self, game: &G, state: &G::State) -> [f32; 3] {
-        self.forward_state(game, state);
+        self.trunk(game, state);
+        if !self.wdl_valid {
+            let mut wdl_logits = [0.0f32; 3];
+            self.net.wdl_head(&self.cache_h2, &mut wdl_logits);
+            let max = wdl_logits[0].max(wdl_logits[1]).max(wdl_logits[2]);
+            let exp = [
+                (wdl_logits[0] - max).exp(),
+                (wdl_logits[1] - max).exp(),
+                (wdl_logits[2] - max).exp(),
+            ];
+            let sum = exp[0] + exp[1] + exp[2];
+            self.cache_wdl = [exp[0] / sum, exp[1] / sum, exp[2] / sum];
+            self.wdl_valid = true;
+        }
         self.cache_wdl
     }
 
     /// Raw action logits indexed by action ID.
     pub fn action_logits<G: crate::game::Game>(&mut self, game: &G, state: &G::State) -> &[f32] {
-        self.forward_state(game, state);
+        self.trunk(game, state);
+        if !self.logits_valid {
+            let mut logits = std::mem::take(&mut self.cache_logits);
+            self.net.action_head(&self.cache_h2, &mut logits);
+            self.cache_logits = logits;
+            self.logits_valid = true;
+        }
         &self.cache_logits
     }
 }
@@ -278,7 +315,7 @@ impl<G: crate::game::Game> crate::search::Evaluator<G> for ModelEvaluator<'_> {
         moves: &[G::Move],
         out: &mut Vec<f32>,
     ) -> bool {
-        self.forward_state(game, state);
+        self.action_logits(game, state);
         out.clear();
         for &mv in moves {
             out.push(self.cache_logits[game.action_id(state, mv) as usize]);

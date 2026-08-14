@@ -93,8 +93,20 @@ fn main() {
     let game = Chess::new();
     let mut state = game.initial_state();
     let mut compiled: Option<CompiledNet> = None;
-    if let Some(dir) = std::env::args().nth(1) {
-        match load_compiled(Path::new(&dir)) {
+    // `--random <seed>`: uniform random legal mover (evaluation baseline
+    // only, §27). Otherwise the first argument is a checkpoint directory.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let mut random_rng: Option<rand_chacha::ChaCha12Rng> = None;
+    if let Some(seed_text) = args.first().and_then(|a| a.strip_prefix("--random=")) {
+        use rand::SeedableRng as _;
+        let seed = seed_text.parse().unwrap_or(0u64);
+        random_rng = Some(rand_chacha::ChaCha12Rng::seed_from_u64(seed));
+    } else if args.first().map(String::as_str) == Some("--random") {
+        use rand::SeedableRng as _;
+        let seed = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(0u64);
+        random_rng = Some(rand_chacha::ChaCha12Rng::seed_from_u64(seed));
+    } else if let Some(dir) = args.first() {
+        match load_compiled(Path::new(dir)) {
             Ok(net) => compiled = Some(net),
             Err(e) => eprintln!("info string checkpoint error: {e}"),
         }
@@ -186,7 +198,9 @@ fn main() {
                     depth = d as u32;
                 }
                 if let Some(ms) = value("movetime") {
-                    deadline = Some(Instant::now() + Duration::from_millis(ms));
+                    // 20% abort-lag margin so the reply lands inside the
+                    // allotted time.
+                    deadline = Some(Instant::now() + Duration::from_millis((ms * 8 / 10).max(5)));
                 }
                 let our_time = match state_side(&state) {
                     Color::White => value("wtime").zip(Some(value("winc").unwrap_or(0))),
@@ -200,6 +214,15 @@ fn main() {
                 }
                 if game.outcome(&state).is_some() {
                     println!("bestmove 0000");
+                    continue;
+                }
+                if let Some(rng) = &mut random_rng {
+                    use rand::Rng as _;
+                    let mut legal = Vec::new();
+                    game.legal_moves(&state, &mut legal);
+                    let mv = legal[rng.gen_range(0..legal.len())];
+                    println!("info depth 0 nodes 0 score cp 0");
+                    println!("bestmove {}", format_uci_move(&state, mv));
                     continue;
                 }
                 // A `go` without any limit (or `go infinite`, which this
