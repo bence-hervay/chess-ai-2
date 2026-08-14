@@ -1,0 +1,9 @@
+method = "exact"
+ordering = "natural"
+
+[game]
+kind = "connect_k"
+width = 6
+height = 4
+k = 4
+gravity = true

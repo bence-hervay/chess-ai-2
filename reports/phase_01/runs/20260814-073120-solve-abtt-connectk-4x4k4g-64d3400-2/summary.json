@@ -1,0 +1,15 @@
+{
+  "best_action": 3,
+  "completed_depth": 16,
+  "cpu_seconds": 0.01,
+  "method": "alpha_beta_tt",
+  "nodes": 25544,
+  "nodes_at_completed_depth": 25544,
+  "ordering": "reversed",
+  "peak_rss_bytes": 28520448,
+  "root_wdl": "Draw",
+  "score": 0,
+  "tt_hits": 13507,
+  "tt_probes": 18963,
+  "wall_seconds": 0.017366613
+}

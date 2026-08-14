@@ -1,0 +1,9 @@
+method = "alpha_beta_tt"
+ordering = "natural"
+
+[game]
+kind = "connect_k"
+width = 3
+height = 3
+k = 3
+gravity = false

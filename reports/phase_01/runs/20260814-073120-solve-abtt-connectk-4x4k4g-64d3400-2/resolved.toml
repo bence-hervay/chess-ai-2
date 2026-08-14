@@ -1,0 +1,9 @@
+method = "alpha_beta_tt"
+ordering = "reversed"
+
+[game]
+kind = "connect_k"
+width = 4
+height = 4
+k = 4
+gravity = true

@@ -1,0 +1,10 @@
+{
+  "cpu_seconds": 0.03,
+  "method": "exhaustive",
+  "nodes": 277167,
+  "ordering": "natural",
+  "peak_rss_bytes": 3465216,
+  "root_wdl": "Win",
+  "score": 31991,
+  "wall_seconds": 0.034110065
+}

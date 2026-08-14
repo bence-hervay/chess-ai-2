@@ -1,0 +1,10 @@
+{
+  "cpu_seconds": 0.0,
+  "method": "exhaustive",
+  "nodes": 3278,
+  "ordering": "natural",
+  "peak_rss_bytes": 3530752,
+  "root_wdl": "Draw",
+  "score": 0,
+  "wall_seconds": 0.000399306
+}

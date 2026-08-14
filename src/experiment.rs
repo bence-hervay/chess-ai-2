@@ -169,18 +169,38 @@ pub struct RunDir {
 }
 
 impl RunDir {
-    /// Create `runs/<timestamp>-<label>-<sha7>/` (plus `games/`).
+    /// Create `runs/<timestamp>-<label>-<sha7>/`. If that directory already
+    /// exists (two runs of the same label within one second), a `-2`, `-3`,
+    /// ... suffix keeps every run self-contained.
     pub fn create(root: &Path, label: &str, git_commit: &str) -> std::io::Result<RunDir> {
         let sha7: String = git_commit.chars().take(7).collect();
-        let name = format!(
+        let base = format!(
             "{}-{}-{}",
             utc_timestamp_compact(unix_seconds()),
             label,
             sha7
         );
-        let path = root.join(name);
-        fs::create_dir_all(path.join("games"))?;
-        Ok(RunDir { path })
+        for attempt in 1..1000u32 {
+            let name = if attempt == 1 {
+                base.clone()
+            } else {
+                format!("{base}-{attempt}")
+            };
+            let path = root.join(&name);
+            match fs::create_dir_all(root).and_then(|()| fs::create_dir(&path)) {
+                Ok(()) => return Ok(RunDir { path }),
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(e) => return Err(e),
+            }
+        }
+        Err(std::io::Error::other(
+            "could not find a free run directory name",
+        ))
+    }
+
+    /// Create a subdirectory (e.g. `games/`) inside the run directory.
+    pub fn create_subdir(&self, name: &str) -> std::io::Result<()> {
+        fs::create_dir_all(self.path.join(name))
     }
 
     pub fn path(&self) -> &Path {

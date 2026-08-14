@@ -34,22 +34,29 @@ environment manifest, metrics, and game records.
 | Phase | Result | Report |
 |---|---|---|
 | 0 — Deterministic foundation | **PASS** | [reports/phase_00.md](reports/phase_00.md) |
-| 1 — Exact solving and search correctness | not started | — |
+| 1 — Exact solving and search correctness | **PASS** | [reports/phase_01.md](reports/phase_01.md) |
+| 2 — Supervised oracle ceiling | not started | — |
 
 ### Current state (2026-08-14)
 
-Phase 0 complete and promoted. The foundation exists: a rule-facts-only
-`Game` trait, parameterized Connect-k (gravity on/off), a paired
-random-agent arena, and self-contained run directories with full
-environment manifests. Key evidence:
+Phases 0–1 complete and promoted. The search machinery is proven
+mathematically correct before any learning exists:
 
-- **Determinism**: four benchmark runs at 1/2/4/8 worker threads produced
-  byte-identical 209 MB game-record files (2,000,000 games, same sha256).
-- **Parallel scaling** on 4 physical cores / 8 SMT threads: 247k games/s
-  (1 worker, 99.8% utilization) → 891k (4 workers, 90% efficiency) → 1.13M
-  (8 workers, SMT). ~24M moves/s peak.
-- 20 unit/property tests plus differential terminal-detection oracle;
-  fmt/clippy/test clean in debug and release.
+- **100% agreement** between the memoized exact solver, plain exhaustive
+  negamax, and the production alpha–beta search (iterative deepening,
+  transposition table on/off, natural/reversed ordering) on all seven
+  solved Connect-k instances — values and optimal actions.
+- External anchors: tic-tac-toe solves to a draw with exactly 4,520
+  reachable non-terminal states (the literature count), validating both
+  the solver and Zobrist hashing.
+- The transposition table cuts alpha–beta nodes 8–65x with identical
+  results; node-budget searches deterministically return the last
+  completed iteration.
+- Exact solver throughput ~2.3M states/s; oracle rung fixed at 5x4 k=4
+  gravity (3.1M-state corpus with WDL + optimal-action labels, 8.8 s).
+- Phase 0 foundation: byte-identical game records across 1/2/4/8 worker
+  threads; 1.13M random games/s at 8 workers.
 
-Next: Phase 1 — exact negamax solver, alpha–beta with iterative deepening
-and transposition table, proven equivalent on small Connect-k instances.
+Next: Phase 2 — sparse embedding-sum policy/value network trained on the
+exact corpus; capacity/data/seed sweeps to establish the supervised
+ceiling before any self-play.

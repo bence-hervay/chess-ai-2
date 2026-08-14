@@ -1,0 +1,9 @@
+method = "exhaustive"
+ordering = "natural"
+
+[game]
+kind = "connect_k"
+width = 3
+height = 3
+k = 3
+gravity = true
