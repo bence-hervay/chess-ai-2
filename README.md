@@ -41,11 +41,25 @@ environment manifest, metrics, and game records.
 | 5 — Othello benchmark | **PASS** | [reports/phase_05.md](reports/phase_05.md) |
 | 6 — Standard chess integration | **PASS** | [reports/phase_06.md](reports/phase_06.md) |
 | 7 — Measurable chess strength | **PASS** | [reports/phase_07.md](reports/phase_07.md) |
-| 8 — Forward Chess rules | not started | — |
+| 8 — Forward Chess rules | **PASS** | [reports/phase_08.md](reports/phase_08.md) |
 
 ### Current state (2026-08-14)
 
-Phases 0–7 complete and promoted. **First honest chess strength
+Phases 0–8 complete and promoted. Phase 8 brought **Forward Chess in,
+exactly**:
+
+- `FORWARD_CHESS_RULES.md` implemented verbatim in `games::forward_chess`
+  (directional attacks, orientation-reversing promotion), differential-
+  tested against an independent reference generator on all rulesets.
+- Reduced instances **solved**: tiny 3×4 and small 4×4 are both
+  game-theoretic **draws** (84k and 46.5M reachable positions); every
+  solve writes a compact, checksummed, write-then-verified tablebase
+  (D029).
+- The frozen stack ran unchanged: oracle-evaluated self-play reaches
+  searched@600 test accuracy 0.967 (tiny) / 0.9755 (small); raw-policy
+  coverage stall reproduced on a third game family (the open finding).
+
+Phase 7 delivered the **first honest chess strength
 measurement** (all Elo protocol-relative, never human/FIDE):
 
 - Headline anchor: **10.33% over 300 games vs full Stockfish 17.1
