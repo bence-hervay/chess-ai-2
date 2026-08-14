@@ -9,9 +9,10 @@
 #
 # Everything is deterministic given the campaign parameters: chunk c
 # uses seed = base_seed + c - 1, and all lab internals are
-# thread-count-independent. Known discontinuity: the FIFO replay buffer
-# restarts empty at each chunk boundary, and per-chunk "vs gen0"
-# progression is measured against the chunk's own starting champion.
+# thread-count-independent. The FIFO replay window persists across
+# chunks (replay.jsonl + init_replay), so a chunked campaign trains
+# like one long run; per-chunk "vs gen0" progression is measured
+# against the chunk's own starting champion.
 #
 # Layout under campaigns/<name>/:
 #   campaign.env            frozen parameters (sourced on resume)
@@ -35,9 +36,26 @@ usage() {
 Usage: tools/fc_train.sh <campaign-name> [options]
 
 Creates or resumes the chunked self-play campaign campaigns/<name>.
-On resume, saved parameters are used; new options are ignored.
+On resume, saved parameters are used; new options are ignored, except
+--chunks N which extends the target — that is also how you CONTINUE a
+finished campaign with the same recipe (nothing retrains; the next
+chunk picks up the champion and its replay window).
+
+To continue a trained champion under a DIFFERENT recipe (deeper
+search, more games, ...), fork it into a new campaign:
+
+  tools/fc_train.sh <new-name> --from campaigns/<old> --nodes 800
+
+--from accepts a campaign directory (champion + latest replay), a
+chunk directory (that snapshot + its replay), or a bare checkpoint
+directory (no replay). The new campaign's chunk 1 initializes from it;
+width and game must match the source model. Each campaign's recipe
+stays frozen, so provenance is never mixed; the fork's baseline_gen0
+anchor is the source champion (its Elo curve reads "gain since fork").
 
 Options (defaults in brackets):
+  --from PATH       initialize chunk 1 from an existing campaign /
+                    chunk / checkpoint (creation only) [none]
   --game G          fc-tiny | fc-small | fc-medium | fc-full [fc-full]
   --width W         model width [64]
   --chunks N        total chunks to reach (resume raises this) [6]
@@ -64,10 +82,11 @@ DIR="campaigns/$NAME"
 # Defaults (overridden by flags, then frozen into campaign.env).
 GAME=fc-full WIDTH=64 CHUNKS=6 GENS=8 GAMES=200 NODES=400 EVAL_NODES=400
 STEPS=2000 PAIRS=30 OPENING=2 EPSILON=0.1 REPLAY=4 SEED=1 THREADS=7
-STATUS=0
+STATUS=0 FROM=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    --from) FROM=$2; shift 2;;
     --game) GAME=$2; shift 2;;
     --width) WIDTH=$2; shift 2;;
     --chunks) CHUNKS=$2; shift 2;;
@@ -107,12 +126,41 @@ fi
 
 if [ -f "$DIR/campaign.env" ]; then
   # Resume: frozen parameters win, except --chunks may extend the target.
+  if [ -n "$FROM" ]; then
+    echo "--from is only valid when creating a campaign; to continue $NAME" >&2
+    echo "with its own recipe use --chunks, or fork with a NEW name." >&2
+    exit 1
+  fi
   TARGET=$CHUNKS
   # shellcheck disable=SC1091
   source "$DIR/campaign.env"
   if [ "$TARGET" -gt "$CHUNKS" ]; then CHUNKS=$TARGET; sed -i "s/^CHUNKS=.*/CHUNKS=$CHUNKS/" "$DIR/campaign.env"; fi
   echo "resuming campaign $NAME at chunk $(( $(done_chunks) + 1 ))/$CHUNKS"
 else
+  FROM_CHECKPOINT="" FROM_REPLAY=""
+  if [ -n "$FROM" ]; then
+    if [ -d "$FROM/champion" ]; then
+      # A campaign: fork its champion and the latest chunk's replay.
+      FROM_CHECKPOINT="$FROM/champion"
+      LAST=$(find "$FROM" -mindepth 2 -maxdepth 2 -path '*/chunk_*/DONE' 2>/dev/null | sort | tail -1 | xargs -r dirname)
+      if [ -n "$LAST" ] && [ -f "$LAST/replay.jsonl" ]; then FROM_REPLAY="$LAST/replay.jsonl"; fi
+    elif [ -d "$FROM/checkpoint" ]; then
+      # A chunk snapshot.
+      FROM_CHECKPOINT="$FROM/checkpoint"
+      if [ -f "$FROM/replay.jsonl" ]; then FROM_REPLAY="$FROM/replay.jsonl"; fi
+    elif [ -f "$FROM/model.json" ]; then
+      # A bare checkpoint (no replay to inherit).
+      FROM_CHECKPOINT="$FROM"
+    else
+      echo "--from $FROM: not a campaign, chunk, or checkpoint directory" >&2
+      exit 1
+    fi
+    SRC_WIDTH=$(python3 -c "import json;print(json.load(open('$FROM_CHECKPOINT/model.json'))['dims']['width'])")
+    if [ "$SRC_WIDTH" != "$WIDTH" ]; then
+      echo "--from model width is $SRC_WIDTH but --width is $WIDTH; pass --width $SRC_WIDTH" >&2
+      exit 1
+    fi
+  fi
   mkdir -p "$DIR"
   cat > "$DIR/campaign.env" <<EOF
 GAME=$GAME
@@ -130,8 +178,14 @@ EPSILON=$EPSILON
 REPLAY=$REPLAY
 SEED=$SEED
 THREADS=$THREADS
+FROM_CHECKPOINT=$FROM_CHECKPOINT
+FROM_REPLAY=$FROM_REPLAY
 EOF
-  echo "campaign $NAME created: $GAME w$WIDTH, $CHUNKS chunks x $GENS gens x $GAMES games (base seed $SEED)"
+  if [ -n "$FROM_CHECKPOINT" ]; then
+    echo "campaign $NAME created: $GAME w$WIDTH, $CHUNKS chunks x $GENS gens x $GAMES games (base seed $SEED), forked from $FROM_CHECKPOINT"
+  else
+    echo "campaign $NAME created: $GAME w$WIDTH, $CHUNKS chunks x $GENS gens x $GAMES games (base seed $SEED)"
+  fi
 fi
 
 cargo build --release --quiet 2>/dev/null || cargo build --release
@@ -162,6 +216,13 @@ while [ "$(done_chunks)" -lt "$CHUNKS" ]; do
       # of a chunk train on one generation of data and regress.
       if [ -f "$PREV/replay.jsonl" ]; then
         echo "init_replay = \"$PREV/replay.jsonl\""
+      fi
+    elif [ -n "${FROM_CHECKPOINT:-}" ]; then
+      # Forked campaign: chunk 1 continues from the source champion
+      # (and its replay window, when the source had one).
+      echo "init_checkpoint = \"$FROM_CHECKPOINT\""
+      if [ -n "${FROM_REPLAY:-}" ]; then
+        echo "init_replay = \"$FROM_REPLAY\""
       fi
     fi
     echo ""

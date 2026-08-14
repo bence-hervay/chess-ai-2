@@ -16,6 +16,10 @@ Forward Chess Elo is never comparable to chess Elo (plan §29).
 Match results are cached under campaigns/<name>/rating/matches/ — rerun
 the script after more chunks and only the new pairings are played.
 
+The first pool member is the 0-Elo anchor: normally the campaign's
+random-init baseline_gen0 (for a fork, the fork point). --add members
+are inserted first, so adding a parent champion makes IT the anchor.
+
 Typical use:
     tools/fc_rating.py --campaign campaigns/fc_full_w64
     tools/fc_rating.py --campaign campaigns/fc_full_w64 --round-robin
@@ -48,6 +52,10 @@ def parse_args():
     p.add_argument("--threads", type=int, default=7, help="worker threads per match [7]")
     p.add_argument("--round-robin", action="store_true",
                    help="play all snapshot pairs (default: gauntlet vs latest + adjacent chain)")
+    p.add_argument("--add", action="append", default=[], metavar="NAME=PATH",
+                   help="add an external checkpoint to the pool (repeatable), e.g. a "
+                        "parent campaign's champion when rating a fork: "
+                        "--add parent=campaigns/base/champion")
     p.add_argument("--bootstrap", type=int, default=200, help="bootstrap resamples [200]")
     p.add_argument("--skip-matches", action="store_true",
                    help="fit from cached results only (no new matches)")
@@ -196,6 +204,14 @@ def main():
     campaign = Path(args.campaign)
     env = campaign_env(campaign)
     members = pool_members(campaign)
+    for spec in args.add:
+        if "=" not in spec:
+            sys.exit(f"--add wants NAME=PATH, got {spec}")
+        name, path = spec.split("=", 1)
+        path = Path(path)
+        if not (path / "model.bin").exists():
+            sys.exit(f"--add {spec}: no model.bin under {path}")
+        members.insert(0, (name, path))
     if len(members) < 2:
         sys.exit("need at least two snapshots (run tools/fc_train.sh first)")
     names = [n for n, _ in members]

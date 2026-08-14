@@ -29,7 +29,23 @@ chunk is a normal `lab selfplay` run whose champion seeds the next
 chunk (`init_checkpoint`). Interrupt at any time (Ctrl-C, VM restart —
 anything): re-running the same command resumes from the last completed
 chunk. A chunk killed mid-run is re-run from its start; completed
-chunks are never touched. `--chunks N` on resume extends the target.
+chunks are never touched.
+
+Three ways to keep training without retraining from scratch:
+
+- **Interrupted?** Rerun the same command — it resumes.
+- **Finished, want more of the same?** `--chunks N` raises the target;
+  the next chunk picks up the champion and its replay window.
+- **Finished, want a different recipe** (deeper search, more games,
+  new epsilon, ...)? Fork it:
+  `tools/fc_train.sh <new-name> --from campaigns/<old> --nodes 800`.
+  `--from` takes a campaign, a chunk snapshot, or a bare checkpoint;
+  chunk 1 of the new campaign continues from that champion (plus its
+  replay window when available). Width and game must match. Each
+  campaign's recipe stays frozen, so provenance is never mixed; the
+  fork's `baseline_gen0` anchor is the fork point, and
+  `fc_rating.py --add parent=campaigns/<old>/champion` links the two
+  curves in one pool.
 
 Defaults are the Phase 7-calibrated recipe: full-board Forward Chess,
 width 64, 6 chunks × 8 generations × 200 games, 400-node expert
