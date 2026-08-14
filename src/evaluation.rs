@@ -241,7 +241,9 @@ pub fn evaluate_model_oracle(
     let mut by_wdl_total = [0usize; 3];
 
     for chunk in examples.chunks(1024) {
-        let refs: Vec<&crate::training::Example> = chunk.iter().collect();
+        let rows: Vec<crate::training::TrainRow> =
+            chunk.iter().map(crate::training::TrainRow::from).collect();
+        let refs: Vec<&crate::training::TrainRow> = rows.iter().collect();
         let batch = make_batch::<crate::model::InferBackend>(&refs, dims, max_features, &device);
         let (wdl_logits, action_logits) =
             net.forward(batch.feature_ids.clone(), batch.feature_mask.clone());
@@ -320,6 +322,266 @@ pub fn evaluate_model_oracle(
             ratio(by_wdl_correct[1], by_wdl_total[1]),
             ratio(by_wdl_correct[2], by_wdl_total[2]),
         ],
+    }
+}
+
+/// Decision quality when the model searches before acting (plan §23
+/// diagnostic matrix, "learned model plus search" column). States are a
+/// deterministic hash-selected sample of one split of the exact corpus.
+#[derive(Clone, Debug, Serialize)]
+pub struct SearchedMetrics {
+    pub states: usize,
+    pub node_budget: u64,
+    /// Fraction of sampled states where the searched action is optimal.
+    pub action_accuracy: f64,
+    pub mean_regret_levels: f64,
+    pub mean_nodes: f64,
+    pub mean_completed_depth: f64,
+}
+
+/// Corpus split selector matching the training split hash buckets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub enum CorpusSplit {
+    Val,
+    Test,
+}
+
+/// A candidate state for searched-decision evaluation: selection hash,
+/// state, exact value, legal action IDs, exact child values.
+type SolvedCandidate<G> = (
+    u64,
+    <G as Game>::State,
+    crate::search::Wdl,
+    Vec<u32>,
+    Vec<crate::search::Wdl>,
+);
+
+fn splitmix64_local(mut x: u64) -> u64 {
+    x = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    x ^ (x >> 31)
+}
+
+/// Evaluate search-guided decisions on up to `cap` states of `split`,
+/// selected deterministically by position hash (independent of `cap`
+/// ordering effects: a state is in the sample iff its selection hash is
+/// among the smallest). Runs games' searches in parallel.
+pub fn searched_decision_metrics<G: Game>(
+    game: &G,
+    net: &crate::model::CompiledNet,
+    split: CorpusSplit,
+    cap: usize,
+    node_budget: u64,
+    threads: usize,
+) -> SearchedMetrics {
+    use crate::search::{enumerate_solved, ExactSolver, MoveOrdering, Searcher, Wdl};
+
+    // Collect the split's states with their exact child values.
+    let mut solver = ExactSolver::new();
+    let mut candidates: Vec<SolvedCandidate<G>> = Vec::new();
+    enumerate_solved(game, &mut solver, |position| {
+        let bucket = splitmix64_local(game.position_key(position.state)) % 10;
+        let wanted = match split {
+            CorpusSplit::Val => 8,
+            CorpusSplit::Test => 9,
+        };
+        if bucket == wanted {
+            let selection = splitmix64_local(game.position_key(position.state) ^ 0x5EA3C4);
+            candidates.push((
+                selection,
+                position.state.clone(),
+                position.value,
+                position
+                    .legal
+                    .iter()
+                    .map(|&m| game.action_id(position.state, m))
+                    .collect(),
+                position.child_values.to_vec(),
+            ));
+        }
+    });
+    candidates.sort_by_key(|(selection, ..)| *selection);
+    candidates.truncate(cap);
+
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("failed to build rayon pool");
+    let results: Vec<(bool, u64, u64, u32)> = pool.install(|| {
+        candidates
+            .par_iter()
+            .map(|(_, state, value, legal, child_values)| {
+                let mut evaluator = crate::model::ModelEvaluator::new(net);
+                let mut searcher: Searcher<G> = Searcher::new(
+                    Some(crate::training::SELFPLAY_TT_LOG2),
+                    MoveOrdering::Natural,
+                );
+                let mut s = state.clone();
+                let result = searcher.search(game, &mut s, 512, node_budget, &mut evaluator);
+                let chosen = result.best_move.expect("non-terminal state");
+                let chosen_id = game.action_id(state, chosen);
+                let index = legal
+                    .iter()
+                    .position(|&a| a == chosen_id)
+                    .expect("chosen move is legal");
+                let child = child_values[index];
+                let regret = match (*value, child) {
+                    (a, b) if a == b => 0u64,
+                    (Wdl::Win, Wdl::Draw) | (Wdl::Draw, Wdl::Loss) => 1,
+                    (Wdl::Win, Wdl::Loss) => 2,
+                    _ => 0,
+                };
+                (
+                    child == *value,
+                    regret,
+                    result.nodes,
+                    result.completed_depth,
+                )
+            })
+            .collect()
+    });
+
+    let n = results.len().max(1) as f64;
+    SearchedMetrics {
+        states: results.len(),
+        node_budget,
+        action_accuracy: results.iter().filter(|(ok, ..)| *ok).count() as f64 / n,
+        mean_regret_levels: results.iter().map(|(_, r, ..)| *r as f64).sum::<f64>() / n,
+        mean_nodes: results
+            .iter()
+            .map(|(_, _, nodes, _)| *nodes as f64)
+            .sum::<f64>()
+            / n,
+        mean_completed_depth: results.iter().map(|(.., d)| f64::from(*d)).sum::<f64>() / n,
+    }
+}
+
+/// Exploitability against perfect opposition (plan §32.3): the agent
+/// (search + model) plays both colours from the initial state and every
+/// distinct state at ply 1 and 2; the opponent always plays the first
+/// optimal move. A game "drops levels" when its result is worse for the
+/// agent than the start state's exact value.
+#[derive(Clone, Debug, Serialize)]
+pub struct ExploitabilityReport {
+    pub games: u64,
+    /// Sum over games of WDL levels lost versus the start value.
+    pub levels_lost: u64,
+    pub mean_levels_lost: f64,
+    /// Games where a win or draw was avoidably given away.
+    pub avoidable_drops: u64,
+    pub agent_wins: u64,
+    pub draws: u64,
+    pub agent_losses: u64,
+}
+
+pub fn exploitability_vs_perfect<G: Game>(
+    game: &G,
+    net: &crate::model::CompiledNet,
+    node_budget: u64,
+    threads: usize,
+) -> ExploitabilityReport {
+    use crate::game::Player;
+    use crate::search::{ExactSolver, MoveOrdering, Searcher, Wdl};
+
+    // Start set: initial state plus all distinct states at plies 1-2.
+    let mut starts: Vec<G::State> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let initial = game.initial_state();
+    let mut frontier = vec![(initial.clone(), 0u32)];
+    while let Some((state, ply)) = frontier.pop() {
+        if game.outcome(&state).is_some() {
+            continue;
+        }
+        if seen.insert(game.position_key(&state)) {
+            starts.push(state.clone());
+        }
+        if ply < 2 {
+            let mut moves = Vec::new();
+            game.legal_moves(&state, &mut moves);
+            for &mv in &moves {
+                let mut child = state.clone();
+                game.make_move(&mut child, mv);
+                frontier.push((child, ply + 1));
+            }
+        }
+    }
+
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("failed to build rayon pool");
+    let games: Vec<(u64, bool, i8)> = pool.install(|| {
+        starts
+            .par_iter()
+            .flat_map(|start| {
+                [Player::One, Player::Two]
+                    .into_par_iter()
+                    .map(|agent_side| {
+                        let mut solver = ExactSolver::new();
+                        let mut evaluator = crate::model::ModelEvaluator::new(net);
+                        let mut searcher: Searcher<G> = Searcher::new(
+                            Some(crate::training::SELFPLAY_TT_LOG2),
+                            MoveOrdering::Natural,
+                        );
+                        let mut state = start.clone();
+                        // Exact value of the start from the agent's perspective.
+                        let mover_value = solver.solve(game, &mut state);
+                        let agent_to_move = game.side_to_move(&state) == agent_side;
+                        let start_value = if agent_to_move {
+                            mover_value
+                        } else {
+                            mover_value.flip()
+                        };
+                        let outcome = loop {
+                            if let Some(outcome) = game.outcome(&state) {
+                                break outcome;
+                            }
+                            let mv = if game.side_to_move(&state) == agent_side {
+                                let result = searcher.search(
+                                    game,
+                                    &mut state,
+                                    512,
+                                    node_budget,
+                                    &mut evaluator,
+                                );
+                                result
+                                    .best_move
+                                    .expect("non-terminal search returns a move")
+                            } else {
+                                let mut optimal = Vec::new();
+                                solver.optimal_moves(game, &mut state, &mut optimal);
+                                optimal[0]
+                            };
+                            game.make_move(&mut state, mv);
+                        };
+                        let result_value = match outcome {
+                            crate::game::Outcome::Draw => Wdl::Draw,
+                            crate::game::Outcome::Win(winner) if winner == agent_side => Wdl::Win,
+                            crate::game::Outcome::Win(_) => Wdl::Loss,
+                        };
+                        let levels = (start_value as i64 - result_value as i64).max(0) as u64;
+                        let score = match result_value {
+                            Wdl::Win => 1i8,
+                            Wdl::Draw => 0,
+                            Wdl::Loss => -1,
+                        };
+                        (levels, levels > 0, score)
+                    })
+            })
+            .collect()
+    });
+
+    let total = games.len() as u64;
+    let levels_lost: u64 = games.iter().map(|(l, ..)| *l).sum();
+    ExploitabilityReport {
+        games: total,
+        levels_lost,
+        mean_levels_lost: levels_lost as f64 / total.max(1) as f64,
+        avoidable_drops: games.iter().filter(|(_, dropped, _)| *dropped).count() as u64,
+        agent_wins: games.iter().filter(|(.., s)| *s > 0).count() as u64,
+        draws: games.iter().filter(|(.., s)| *s == 0).count() as u64,
+        agent_losses: games.iter().filter(|(.., s)| *s < 0).count() as u64,
     }
 }
 

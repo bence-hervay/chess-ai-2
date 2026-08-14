@@ -1,0 +1,12 @@
+kind = "oracle_probe"
+checkpoint = "runs/20260814-075745-train-connectk-4x4k4g-w128-n107000-s1-e8c2276/checkpoint"
+node_budgets = [1, 10, 100, 1000, 5000]
+searched_sample = 2000
+threads = 7
+
+[game]
+kind = "connect_k"
+width = 4
+height = 4
+k = 4
+gravity = true

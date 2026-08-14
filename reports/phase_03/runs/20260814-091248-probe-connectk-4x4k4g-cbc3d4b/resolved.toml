@@ -1,0 +1,17 @@
+checkpoint = "runs/20260814-090056-selfplay-connectk-4x4k4g-w64-g400-e10-s1-cbc3d4b/checkpoint"
+node_budgets = [
+    1,
+    10,
+    100,
+    600,
+    5000,
+]
+searched_sample = 2000
+threads = 7
+
+[game]
+kind = "connect_k"
+width = 4
+height = 4
+k = 4
+gravity = true

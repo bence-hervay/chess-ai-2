@@ -1,0 +1,7 @@
+{"command": "selfplay", "config": "configs/phase_03/games100.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/games1600.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/budget150.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/budget2400.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/headline_w128_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/headline_w128_s2.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/headline_w128_s3.toml", "cores": 7}

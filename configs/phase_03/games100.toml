@@ -1,0 +1,17 @@
+seed = 1
+model_width = 64
+generations = 12
+games_per_generation = 100
+steps_per_generation = 2000
+epsilon = 0.1
+gen_node_budget = 600
+eval_node_budget = 600
+replay_generations = 4
+threads = 7
+
+[game]
+kind = "connect_k"
+width = 4
+height = 4
+k = 4
+gravity = true

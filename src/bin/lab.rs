@@ -5,12 +5,19 @@
 //! - `lab solve <config>`: exact solving and search-correctness
 //!   experiments (Phase 1);
 //! - `lab train <config>`: supervised training on exact corpora (Phase 2);
-//! - `lab sweep <manifest>`: CPU-slot scheduling of many runs (Phase 2).
+//! - `lab sweep <manifest>`: CPU-slot scheduling of many runs (Phase 2);
+//! - `lab selfplay <config>`: synchronous Expert Iteration (Phase 3);
+//! - `lab evaluate` kind `oracle_probe`: checkpoint quality with and
+//!   without search at several node budgets (Phase 3).
 
 use burn::module::{AutodiffModule, Module as _};
+use burn::prelude::Backend as _;
 use burn::record::{BinFileRecorder, FullPrecisionSettings};
 use clap::{Parser, Subcommand};
-use selfplay_lab::evaluation::{evaluate_model_oracle, OracleMetrics};
+use selfplay_lab::evaluation::{
+    evaluate_model_oracle, exploitability_vs_perfect, searched_decision_metrics, CorpusSplit,
+    OracleMetrics,
+};
 use selfplay_lab::evaluation::{run_random_arena, ArenaSummary};
 use selfplay_lab::experiment::{
     collect_manifest, peak_rss_bytes, process_cpu_seconds, unix_seconds, Manifest, RunDir,
@@ -18,12 +25,13 @@ use selfplay_lab::experiment::{
 use selfplay_lab::game::Game;
 use selfplay_lab::games::connect_k::ConnectK;
 use selfplay_lab::games::GameSpec;
-use selfplay_lab::model::{InferBackend, ModelDims, PolicyValueNet};
+use selfplay_lab::model::{CompiledNet, InferBackend, ModelDims, PolicyValueNet, TrainBackend};
 use selfplay_lab::search::{
-    enumerate_solved, exhaustive_negamax, ExactSolver, MoveOrdering, Searcher, Wdl,
+    enumerate_solved, exhaustive_negamax, ExactSolver, MoveOrdering, Searcher, Wdl, ZeroEvaluator,
 };
 use selfplay_lab::training::{
-    build_exact_dataset, make_batch, train_supervised, Example, BATCH_SIZE, EVAL_EVERY,
+    build_exact_dataset, generate_selfplay, make_batch, train_steps, train_supervised, TrainRow,
+    BATCH_SIZE, EVAL_EVERY,
 };
 use serde::{Deserialize, Serialize};
 use std::io::Write as _;
@@ -57,6 +65,11 @@ enum LabCommand {
         /// Path to a training configuration file.
         config: PathBuf,
     },
+    /// Run synchronous Expert Iteration self-play generations.
+    Selfplay {
+        /// Path to a self-play configuration file.
+        config: PathBuf,
+    },
     /// Run a manifest of experiment configs with CPU-slot scheduling.
     Sweep {
         /// Path to a sweep manifest (JSONL: {"command","config","cores"}).
@@ -64,7 +77,19 @@ enum LabCommand {
     },
 }
 
-/// Fully explicit configuration for `lab evaluate`. Every field is required.
+/// Fully explicit configuration for `lab evaluate`, dispatched on `kind`.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum EvaluateConfig {
+    /// Paired random-versus-random arena (Phase 0).
+    RandomArena(EvaluationConfig),
+    /// Oracle-based probe of a saved checkpoint: raw metrics plus
+    /// searched decisions and exploitability at several node budgets
+    /// (Phase 3 diagnostic matrix).
+    OracleProbe(ProbeConfig),
+}
+
+/// Paired-arena parameters. Every field is required.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct EvaluationConfig {
@@ -72,6 +97,20 @@ struct EvaluationConfig {
     /// Number of game pairs (two games per pair, colours swapped).
     pairs: u64,
     /// Worker threads for independent games.
+    threads: usize,
+    game: GameSpec,
+}
+
+/// Oracle-probe parameters.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProbeConfig {
+    /// Checkpoint directory containing `model.bin` and `model.json`.
+    checkpoint: PathBuf,
+    /// Node budgets to probe (1 behaves as raw-policy play).
+    node_budgets: Vec<u64>,
+    /// Cap on test states for searched-decision metrics.
+    searched_sample: usize,
     threads: usize,
     game: GameSpec,
 }
@@ -131,6 +170,7 @@ fn main() {
         LabCommand::Evaluate { config } => evaluate(&config),
         LabCommand::Solve { config } => solve(&config),
         LabCommand::Train { config } => train(&config),
+        LabCommand::Selfplay { config } => selfplay(&config),
         LabCommand::Sweep { manifest } => sweep(&manifest),
     };
     if let Err(message) = result {
@@ -201,7 +241,13 @@ struct RunMetrics {
 }
 
 fn evaluate(config_path: &Path) -> Result<(), String> {
-    let config: EvaluationConfig = read_config(config_path)?;
+    match read_config::<EvaluateConfig>(config_path)? {
+        EvaluateConfig::RandomArena(config) => run_arena_command(config),
+        EvaluateConfig::OracleProbe(config) => probe(config),
+    }
+}
+
+fn run_arena_command(config: EvaluationConfig) -> Result<(), String> {
     if config.pairs == 0 {
         return Err("pairs must be positive".into());
     }
@@ -458,7 +504,7 @@ fn run_solve<G: Game>(
         SolveMethod::AlphaBeta | SolveMethod::AlphaBetaTt => {
             let tt = (config.method == SolveMethod::AlphaBetaTt).then_some(SOLVE_TT_LOG2);
             let mut searcher: Searcher<G> = Searcher::new(tt, config.ordering);
-            let result = searcher.search(game, &mut state, max_depth, u64::MAX, &|_, _| 0);
+            let result = searcher.search(game, &mut state, max_depth, u64::MAX, &mut ZeroEvaluator);
             let root = Wdl::from_solved_score(result.value);
             let best_action = result.best_move.map(|m| game.action_id(&state, m));
             let (tt_probes, tt_hits) = searcher.tt_stats();
@@ -600,7 +646,7 @@ fn run_train<G: Game>(
     }
     // Deterministic, seed-independent subset so data sweeps compare the
     // same subset across training seeds.
-    let subset: Vec<Example> = {
+    let subset: Vec<TrainRow> = {
         use rand::seq::SliceRandom;
         use rand::SeedableRng;
         let mut order: Vec<usize> = (0..dataset.train.len()).collect();
@@ -609,7 +655,7 @@ fn run_train<G: Game>(
         order
             .into_iter()
             .take(config.train_positions)
-            .map(|i| dataset.train[i].clone())
+            .map(|i| TrainRow::from(&dataset.train[i]))
             .collect()
     };
     let solve_seconds = started.elapsed().as_secs_f64();
@@ -691,7 +737,8 @@ fn run_train<G: Game>(
     let restored = PolicyValueNet::<InferBackend>::new(dims, &device)
         .load_file(&model_path, &recorder, &device)
         .map_err(|e| format!("reloading checkpoint: {e}"))?;
-    let probe: Vec<&Example> = dataset.val.iter().take(64).collect();
+    let probe_rows: Vec<TrainRow> = dataset.val.iter().take(64).map(TrainRow::from).collect();
+    let probe: Vec<&TrainRow> = probe_rows.iter().collect();
     let probe_batch = make_batch::<InferBackend>(&probe, dims, dataset.max_features, &device);
     let (a_wdl, a_act) = inference_net.forward(
         probe_batch.feature_ids.clone(),
@@ -706,7 +753,8 @@ fn run_train<G: Game>(
     say("checkpoint saved and reload-verified".to_string(), log);
 
     // Final evaluation on all three splits.
-    let train_metrics = evaluate_model_oracle(&restored, &subset, dims, dataset.max_features);
+    let train_metrics =
+        evaluate_model_oracle(&restored, &dataset.train, dims, dataset.max_features);
     let val_metrics = evaluate_model_oracle(&restored, &dataset.val, dims, dataset.max_features);
     let test_metrics = evaluate_model_oracle(&restored, &dataset.test, dims, dataset.max_features);
     let wall_seconds = started.elapsed().as_secs_f64();
@@ -802,7 +850,10 @@ fn sweep(manifest_path: &Path) -> Result<(), String> {
                 entry.cores
             ));
         }
-        if !matches!(entry.command.as_str(), "train" | "solve" | "evaluate") {
+        if !matches!(
+            entry.command.as_str(),
+            "train" | "solve" | "evaluate" | "selfplay"
+        ) {
             return Err(format!("unknown sweep command {:?}", entry.command));
         }
     }
@@ -894,4 +945,455 @@ fn sweep(manifest_path: &Path) -> Result<(), String> {
         return Err(format!("{failures} sweep run(s) failed"));
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// lab selfplay
+// ---------------------------------------------------------------------------
+
+/// Fully explicit configuration for `lab selfplay` (Expert Iteration,
+/// Phase 3). Every field is a §23-mandated experiment axis or a fixed
+/// mechanical parameter of the loop.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SelfPlayConfig {
+    seed: u64,
+    model_width: usize,
+    generations: u32,
+    games_per_generation: u64,
+    /// Optimizer steps per generation at the recipe batch size.
+    steps_per_generation: u64,
+    /// Exploration probability (§12.4); the label stays the expert move.
+    epsilon: f64,
+    /// Node budget per move during data generation.
+    gen_node_budget: u64,
+    /// Node budget per move for per-generation exploitability probes.
+    eval_node_budget: u64,
+    /// FIFO replay window in generations (1 = current generation only;
+    /// §12.5 sanctions one fixed window once forgetting is measured).
+    replay_generations: u32,
+    threads: usize,
+    game: GameSpec,
+}
+
+fn selfplay(config_path: &Path) -> Result<(), String> {
+    let config: SelfPlayConfig = read_config(config_path)?;
+    if config.generations == 0 || config.games_per_generation == 0 {
+        return Err("generations and games_per_generation must be positive".into());
+    }
+    if config.replay_generations == 0 {
+        return Err("replay_generations must be at least 1".into());
+    }
+    if !(0.0..=1.0).contains(&config.epsilon) {
+        return Err("epsilon must be in [0, 1]".into());
+    }
+    let label = format!(
+        "selfplay-{}-w{}-g{}-e{}-s{}",
+        config.game.label(),
+        config.model_width,
+        config.games_per_generation,
+        (config.epsilon * 100.0).round() as u32,
+        config.seed
+    );
+    let (run_dir, mut manifest) = start_run(&label, &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    say(
+        format!(
+            "thread plan: {} self-play workers; single-threaded training",
+            config.threads
+        ),
+        &mut log,
+    );
+    match &config.game {
+        GameSpec::ConnectK {
+            width,
+            height,
+            k,
+            gravity,
+        } => {
+            let game = ConnectK::new(*width, *height, *k, *gravity)?;
+            let dims = ModelDims {
+                feature_count: game.feature_count(),
+                action_count: game.action_count(),
+                width: config.model_width,
+            };
+            run_selfplay(&game, dims, &config, &run_dir, &mut manifest, &mut log)?;
+        }
+    }
+    finish_run(&run_dir, manifest, &log)
+}
+
+fn run_selfplay<G: Game>(
+    game: &G,
+    dims: ModelDims,
+    config: &SelfPlayConfig,
+    run_dir: &RunDir,
+    manifest: &mut Manifest,
+    log: &mut String,
+) -> Result<(), String> {
+    let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+    let started = Instant::now();
+    let device = Default::default();
+
+    // Oracle corpus for evaluation only (never for training labels).
+    let dataset = build_exact_dataset(game);
+    say(
+        format!(
+            "oracle corpus for evaluation: {} val / {} test states",
+            dataset.val.len(),
+            dataset.test.len()
+        ),
+        log,
+    );
+
+    run_dir
+        .create_subdir("selfplay")
+        .map_err(|e| e.to_string())?;
+    run_dir
+        .create_subdir("checkpoints")
+        .map_err(|e| e.to_string())?;
+
+    // Generation 0 champion: random initialization from the run seed.
+    TrainBackend::seed(&device, config.seed);
+    let mut champion = PolicyValueNet::<TrainBackend>::new(dims, &device);
+    manifest.model_parameter_count = champion.num_params() as u64;
+    let mut champion_val =
+        evaluate_model_oracle(&champion.valid(), &dataset.val, dims, dataset.max_features);
+    let recorder = BinFileRecorder::<FullPrecisionSettings>::new();
+    let mut generation_summaries: Vec<serde_json::Value> = Vec::new();
+    let mut consecutive_rejections = 0u32;
+    let mut replay: std::collections::VecDeque<Vec<TrainRow>> = std::collections::VecDeque::new();
+
+    for generation in 0..config.generations {
+        let gen_started = Instant::now();
+        let compiled = CompiledNet::from_net(&champion.valid(), dims);
+
+        // 1. Frozen-champion self-play data.
+        let (records, stats) = generate_selfplay(
+            game,
+            &compiled,
+            config.games_per_generation,
+            config.gen_node_budget,
+            config.epsilon,
+            config.seed,
+            generation,
+            config.threads,
+        );
+        let lines: Vec<String> = records
+            .iter()
+            .map(|r| serde_json::to_string(r).expect("serializable record"))
+            .collect();
+        run_dir
+            .write_text(
+                &format!("selfplay/gen_{generation:03}.jsonl"),
+                &(lines.join("\n") + "\n"),
+            )
+            .map_err(|e| e.to_string())?;
+
+        // 2. Candidate: warm start from champion, fixed optimizer steps
+        // on the FIFO replay window.
+        replay.push_back(
+            records
+                .iter()
+                .map(|r| r.to_row())
+                .collect::<Vec<TrainRow>>(),
+        );
+        while replay.len() > config.replay_generations as usize {
+            replay.pop_front();
+        }
+        let rows: Vec<TrainRow> = replay.iter().flatten().cloned().collect();
+        let max_features = dataset.max_features;
+        let stream_seed = config.seed ^ (u64::from(generation) << 20);
+        let mut last_losses = (f32::NAN, f32::NAN);
+        let candidate = train_steps(
+            champion.clone(),
+            dims,
+            &rows,
+            max_features,
+            stream_seed,
+            config.steps_per_generation,
+            |m, _| last_losses = (m.wdl_loss, m.policy_loss),
+        );
+
+        // 3. Promotion by oracle metrics on the validation split (§12.6),
+        // rule v2: candidate regret may exceed the champion's by at most
+        // a fixed noise tolerance (the strict rule halted runs on ~0.006
+        // regret jitter at plateau while exploitability was still
+        // improving; see DECISIONS.md).
+        const PROMOTION_REGRET_TOLERANCE: f64 = 0.005;
+        let candidate_val =
+            evaluate_model_oracle(&candidate.valid(), &dataset.val, dims, dataset.max_features);
+        let promoted = candidate_val.mean_regret_levels
+            <= champion_val.mean_regret_levels + PROMOTION_REGRET_TOLERANCE;
+        if promoted {
+            champion = candidate;
+            champion_val = candidate_val.clone();
+            consecutive_rejections = 0;
+        } else {
+            consecutive_rejections += 1;
+        }
+
+        // 4. Per-generation probes with the (possibly updated) champion.
+        let probe_net = CompiledNet::from_net(&champion.valid(), dims);
+        let exploit =
+            exploitability_vs_perfect(game, &probe_net, config.eval_node_budget, config.threads);
+        let searched = searched_decision_metrics(
+            game,
+            &probe_net,
+            CorpusSplit::Val,
+            500,
+            config.eval_node_budget,
+            config.threads,
+        );
+
+        champion
+            .valid()
+            .clone()
+            .save_file(
+                run_dir
+                    .path()
+                    .join(format!("checkpoints/gen_{generation:03}")),
+                &recorder,
+            )
+            .map_err(|e| format!("saving generation checkpoint: {e}"))?;
+
+        let distinct_positions = {
+            let mut keys = std::collections::HashSet::new();
+            for record in &records {
+                keys.insert(record.features.clone());
+            }
+            keys.len()
+        };
+        let gen_summary = serde_json::json!({
+            "generation": generation,
+            "selfplay": stats,
+            "distinct_positions": distinct_positions,
+            "replay_rows": rows.len(),
+            "train_wdl_loss": last_losses.0,
+            "train_policy_loss": last_losses.1,
+            "candidate_val": candidate_val,
+            "promoted": promoted,
+            "champion_val": champion_val,
+            "exploitability": exploit,
+            "searched_val": searched,
+            "generation_seconds": gen_started.elapsed().as_secs_f64(),
+        });
+        run_dir
+            .append_jsonl("metrics.jsonl", &[&gen_summary])
+            .map_err(|e| e.to_string())?;
+        say(
+            format!(
+                "gen {generation}: {} games, {} positions ({} explore), losses {:.3}/{:.3}, \
+                 val regret {:.4} ({}), searched@{} acc {:.4}, exploit drops {}/{} ({:.1}s)",
+                stats.games,
+                stats.positions,
+                stats.exploratory_moves,
+                last_losses.0,
+                last_losses.1,
+                candidate_val.mean_regret_levels,
+                if promoted { "promoted" } else { "REJECTED" },
+                config.eval_node_budget,
+                searched.action_accuracy,
+                exploit.avoidable_drops,
+                exploit.games,
+                gen_started.elapsed().as_secs_f64(),
+            ),
+            log,
+        );
+        generation_summaries.push(gen_summary);
+
+        if consecutive_rejections >= 2 {
+            say(
+                "halting: two consecutive candidates were worse than the champion \
+                 (plan §12.6: stop and diagnose)"
+                    .to_string(),
+                log,
+            );
+            break;
+        }
+    }
+
+    // Final champion: probe-compatible checkpoint plus full held-out
+    // evaluation.
+    let final_infer = champion.valid();
+    run_dir
+        .create_subdir("checkpoint")
+        .map_err(|e| e.to_string())?;
+    final_infer
+        .clone()
+        .save_file(run_dir.path().join("checkpoint/model"), &recorder)
+        .map_err(|e| format!("saving final checkpoint: {e}"))?;
+    run_dir
+        .write_json(
+            "checkpoint/model.json",
+            &serde_json::json!({
+                "dims": dims,
+                "max_features": dataset.max_features,
+                "seed": config.seed,
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    let final_compiled = CompiledNet::from_net(&final_infer, dims);
+    let raw_test = evaluate_model_oracle(&final_infer, &dataset.test, dims, dataset.max_features);
+    let searched_test = searched_decision_metrics(
+        game,
+        &final_compiled,
+        CorpusSplit::Test,
+        2000,
+        config.eval_node_budget,
+        config.threads,
+    );
+    let exploit_final = exploitability_vs_perfect(
+        game,
+        &final_compiled,
+        config.eval_node_budget,
+        config.threads,
+    );
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    say(
+        format!(
+            "final: raw test regret {:.4}, searched test acc {:.4} / regret {:.4}, \
+             exploit drops {}/{}; wall {:.0}s cpu {:.0}s",
+            raw_test.mean_regret_levels,
+            searched_test.action_accuracy,
+            searched_test.mean_regret_levels,
+            exploit_final.avoidable_drops,
+            exploit_final.games,
+            wall_seconds,
+            cpu_seconds,
+        ),
+        log,
+    );
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "config": config,
+                "parameter_count": manifest.model_parameter_count,
+                "generations": generation_summaries,
+                "final_raw_test": raw_test,
+                "final_searched_test": searched_test,
+                "final_exploitability": exploit_final,
+                "wall_seconds": wall_seconds,
+                "cpu_seconds": cpu_seconds,
+                "peak_rss_bytes": peak_rss_bytes().unwrap_or(0),
+            }),
+        )
+        .map_err(|e| e.to_string())
+}
+
+// ---------------------------------------------------------------------------
+// lab evaluate: oracle probe
+// ---------------------------------------------------------------------------
+
+/// Load a checkpoint directory (`model.bin` + `model.json`) into an
+/// inference network.
+fn load_checkpoint(dir: &Path) -> Result<(PolicyValueNet<InferBackend>, ModelDims, usize), String> {
+    let meta: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(dir.join("model.json"))
+            .map_err(|e| format!("reading {}/model.json: {e}", dir.display()))?,
+    )
+    .map_err(|e| format!("parsing model.json: {e}"))?;
+    let dims: ModelDims = serde_json::from_value(meta["dims"].clone())
+        .map_err(|e| format!("model.json dims: {e}"))?;
+    let max_features = meta["max_features"]
+        .as_u64()
+        .ok_or("model.json missing max_features")? as usize;
+    let device = Default::default();
+    let recorder = BinFileRecorder::<FullPrecisionSettings>::new();
+    let net = PolicyValueNet::<InferBackend>::new(dims, &device)
+        .load_file(dir.join("model"), &recorder, &device)
+        .map_err(|e| format!("loading checkpoint: {e}"))?;
+    Ok((net, dims, max_features))
+}
+
+fn probe(config: ProbeConfig) -> Result<(), String> {
+    if config.node_budgets.is_empty() {
+        return Err("node_budgets must not be empty".into());
+    }
+    let label = format!("probe-{}", config.game.label());
+    let (run_dir, manifest) = start_run(&label, &config, 0, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    let (net, dims, max_features) = load_checkpoint(&config.checkpoint)?;
+    let mut manifest = manifest;
+    manifest.model_parameter_count = net.num_params() as u64;
+
+    match &config.game {
+        GameSpec::ConnectK {
+            width,
+            height,
+            k,
+            gravity,
+        } => {
+            let game = ConnectK::new(*width, *height, *k, *gravity)?;
+            let started = Instant::now();
+            let dataset = build_exact_dataset(&game);
+            let raw_val = evaluate_model_oracle(&net, &dataset.val, dims, max_features);
+            let raw_test = evaluate_model_oracle(&net, &dataset.test, dims, max_features);
+            say(
+                format!(
+                    "raw: val regret {:.4}, test regret {:.4}, test action acc {:.4}",
+                    raw_val.mean_regret_levels,
+                    raw_test.mean_regret_levels,
+                    raw_test.action_accuracy
+                ),
+                &mut log,
+            );
+            let compiled = CompiledNet::from_net(&net, dims);
+            let mut budget_reports = Vec::new();
+            for &budget in &config.node_budgets {
+                let searched = searched_decision_metrics(
+                    &game,
+                    &compiled,
+                    CorpusSplit::Test,
+                    config.searched_sample,
+                    budget,
+                    config.threads,
+                );
+                let exploit = exploitability_vs_perfect(&game, &compiled, budget, config.threads);
+                say(
+                    format!(
+                        "searched@{budget}: acc {:.4}, regret {:.4}, depth {:.1}; \
+                         exploit drops {}/{} (mean levels {:.3})",
+                        searched.action_accuracy,
+                        searched.mean_regret_levels,
+                        searched.mean_completed_depth,
+                        exploit.avoidable_drops,
+                        exploit.games,
+                        exploit.mean_levels_lost,
+                    ),
+                    &mut log,
+                );
+                budget_reports.push(serde_json::json!({
+                    "node_budget": budget,
+                    "searched_test": searched,
+                    "exploitability": exploit,
+                }));
+            }
+            run_dir
+                .write_json(
+                    "summary.json",
+                    &serde_json::json!({
+                        "config": config,
+                        "parameter_count": manifest.model_parameter_count,
+                        "raw_val": raw_val,
+                        "raw_test": raw_test,
+                        "budgets": budget_reports,
+                        "wall_seconds": started.elapsed().as_secs_f64(),
+                        "peak_rss_bytes": peak_rss_bytes().unwrap_or(0),
+                    }),
+                )
+                .map_err(|e| e.to_string())?;
+        }
+    }
+    finish_run(&run_dir, manifest, &log)
 }

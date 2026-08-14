@@ -100,3 +100,43 @@ command instead of config-type sniffing.
 134k states train in ~1-4 min at useful quality (99.4% test WDL accuracy
 at w128/40k steps). 5x4 (3.1M states) remains available as a later
 stress instance. w128 is the reference capacity; w64 the fast variant.
+
+## 2026-08-14 — D015: Custom sparse inference path (plan §10.6 contingency)
+
+Profiling showed Burn batch-1 inference at 63.6 us/forward (w128) — >95%
+of projected self-play cost. CompiledNet extracts weights to plain
+row-major arrays; 8-accumulator vectorized dots give 6.4 us (10x). A
+mandatory test validates it against the framework to 1e-4 on 60 states.
+Framework path remains canonical for training and batched evaluation.
+
+## 2026-08-14 — D016: FIFO replay window (plan §12.5 escape clause)
+
+Current-generation-only training measurably forgot across generations
+(candidate val regret oscillated ±0.01 and the promotion gate halted
+runs while exploitability was still improving). One fixed FIFO window,
+`replay_generations = 4`, is now part of the self-play config. No other
+replay machinery.
+
+## 2026-08-14 — D017: Promotion rule v2
+
+Promote when candidate val regret <= champion regret + 0.005 (fixed
+noise tolerance); two consecutive rejections halt the run (§12.6 stop
+and diagnose). The strict lexicographic rule halted on metric jitter at
+plateau. Halts remain honest convergence signals, not errors.
+
+## 2026-08-14 — D018: Exploration epsilon frozen at 0.10
+
+Calibration (3 eps x 3 seeds, w64/400 games/600 nodes): raw-model
+recovery improves monotonically with eps (0.20 best), but final
+exploitability is unstable at 0.20 (drops 7/14/6 per seed) and reliably
+best at 0.10 (4/3/5, searched accuracy 99.3-99.8%). Chose reliability
+of exact-strategy recovery per §12.4; eps = 0.10 frozen.
+
+## 2026-08-14 — D019: Search leaf value = WDL expectation x 1000
+
+Leaf score = round(1000 * (P(win) - P(loss))), clamped to the eval
+range; policy ordering = TT move, then descending policy logits (stable
+sort keeps action-ID order on ties), then Reversed degradation if
+configured. Search with too small a budget for one iteration returns
+the first ordered move (the policy argmax), making node budget 1 behave
+as raw-policy play.

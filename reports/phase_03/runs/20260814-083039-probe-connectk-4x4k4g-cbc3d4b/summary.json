@@ -1,0 +1,154 @@
+{
+  "budgets": [
+    {
+      "exploitability": {
+        "agent_losses": 0,
+        "agent_wins": 0,
+        "avoidable_drops": 0,
+        "draws": 42,
+        "games": 42,
+        "levels_lost": 0,
+        "mean_levels_lost": 0.0
+      },
+      "node_budget": 1,
+      "searched_test": {
+        "action_accuracy": 0.9995,
+        "mean_completed_depth": 0.0,
+        "mean_nodes": 1.0,
+        "mean_regret_levels": 0.0005,
+        "node_budget": 1,
+        "states": 2000
+      }
+    },
+    {
+      "exploitability": {
+        "agent_losses": 0,
+        "agent_wins": 0,
+        "avoidable_drops": 0,
+        "draws": 42,
+        "games": 42,
+        "levels_lost": 0,
+        "mean_levels_lost": 0.0
+      },
+      "node_budget": 10,
+      "searched_test": {
+        "action_accuracy": 1.0,
+        "mean_completed_depth": 2.268,
+        "mean_nodes": 8.406,
+        "mean_regret_levels": 0.0,
+        "node_budget": 10,
+        "states": 2000
+      }
+    },
+    {
+      "exploitability": {
+        "agent_losses": 0,
+        "agent_wins": 0,
+        "avoidable_drops": 0,
+        "draws": 42,
+        "games": 42,
+        "levels_lost": 0,
+        "mean_levels_lost": 0.0
+      },
+      "node_budget": 100,
+      "searched_test": {
+        "action_accuracy": 1.0,
+        "mean_completed_depth": 17.572,
+        "mean_nodes": 72.5375,
+        "mean_regret_levels": 0.0,
+        "node_budget": 100,
+        "states": 2000
+      }
+    },
+    {
+      "exploitability": {
+        "agent_losses": 0,
+        "agent_wins": 0,
+        "avoidable_drops": 0,
+        "draws": 42,
+        "games": 42,
+        "levels_lost": 0,
+        "mean_levels_lost": 0.0
+      },
+      "node_budget": 1000,
+      "searched_test": {
+        "action_accuracy": 1.0,
+        "mean_completed_depth": 122.1265,
+        "mean_nodes": 613.9135,
+        "mean_regret_levels": 0.0,
+        "node_budget": 1000,
+        "states": 2000
+      }
+    },
+    {
+      "exploitability": {
+        "agent_losses": 0,
+        "agent_wins": 0,
+        "avoidable_drops": 0,
+        "draws": 42,
+        "games": 42,
+        "levels_lost": 0,
+        "mean_levels_lost": 0.0
+      },
+      "node_budget": 5000,
+      "searched_test": {
+        "action_accuracy": 1.0,
+        "mean_completed_depth": 241.0125,
+        "mean_nodes": 2213.586,
+        "mean_regret_levels": 0.0,
+        "node_budget": 5000,
+        "states": 2000
+      }
+    }
+  ],
+  "config": {
+    "checkpoint": "runs/20260814-075745-train-connectk-4x4k4g-w128-n107000-s1-e8c2276/checkpoint",
+    "game": {
+      "gravity": true,
+      "height": 4,
+      "k": 4,
+      "kind": "connect_k",
+      "width": 4
+    },
+    "node_budgets": [
+      1,
+      10,
+      100,
+      1000,
+      5000
+    ],
+    "searched_sample": 2000,
+    "threads": 7
+  },
+  "parameter_count": 38151,
+  "peak_rss_bytes": 120508416,
+  "raw_test": {
+    "action_accuracy": 0.9976334861706848,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.9976553341148886,
+      0.9969072164948454
+    ],
+    "brier": 0.009037942851170737,
+    "mean_regret_levels": 0.00236651382931519,
+    "optimal_mass": 0.9845257957599589,
+    "states": 13522,
+    "wdl_accuracy": 0.9943795296553765,
+    "wdl_log_loss": 0.02226796888903457
+  },
+  "raw_val": {
+    "action_accuracy": 0.9968731387730793,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.99705223440632,
+      0.9956230690010298
+    ],
+    "brier": 0.007322262379419478,
+    "mean_regret_levels": 0.003424657534246575,
+    "optimal_mass": 0.9835041294159155,
+    "states": 13432,
+    "wdl_accuracy": 0.9956819535437761,
+    "wdl_log_loss": 0.021110395223882528
+  },
+  "wall_seconds": 9.150813119
+}

@@ -4,23 +4,23 @@ One Cargo package. The five conceptual subsystems allowed by the governing
 plan (`Game`, `Search`, `Model`, `Training`, `Evaluation`) all exist as of
 Phase 2; each appeared in the phase that required it.
 
-## Current modules (Phase 2)
+## Current modules (Phase 3)
 
 | Module | Role |
 |---|---|
 | `src/game.rs` | Core `Game` trait: rule-level facts only (moves, transitions, outcomes, hashing, raw features, stable action IDs). |
 | `src/games/connect_k.rs` | Parameterized Connect-k (width, height, k, gravity), Zobrist hashing, incremental terminal detection, feature/action ID spaces. |
-| `src/search.rs` | Exact memoized WDL solver + reachable-state enumeration (research/test oracle); production alpha–beta with iterative deepening, transposition table, deterministic node budgets. |
-| `src/model.rs` | Sparse policy/value network in Burn (NdArray CPU backend): embedding-sum → 2×ReLU → WDL head + action-logit head. One capacity knob (`model_width`). |
-| `src/training.rs` | Exact-corpus dataset (hash-stratified 80/10/10 splits), fixed training recipe v1 (Adam, batch 256, lr 1e-3, `L = L_wdl + L_policy`), deterministic single-threaded training loop. |
-| `src/evaluation.rs` | Paired game arena (deterministic RNG per `(run_seed, pair, slot)`); oracle metrics for raw models (WDL accuracy/log-loss/Brier, optimal-action accuracy and mass, decision regret in WDL levels). |
+| `src/search.rs` | Exact memoized WDL solver + reachable-state enumeration (research/test oracle); production alpha–beta with iterative deepening, transposition table, deterministic node budgets, and `Evaluator`-supplied leaf values + policy move ordering. |
+| `src/model.rs` | Sparse policy/value network in Burn (NdArray CPU backend): embedding-sum → 2×ReLU → WDL head + action-logit head. One capacity knob (`model_width`). `CompiledNet`: validated plain-array inference path (6.4 µs batch-1) used by search and self-play. |
+| `src/training.rs` | Exact-corpus dataset (hash-stratified 80/10/10 splits), fixed training recipe v1 (Adam, batch 256, lr 1e-3, `L = L_wdl + L_policy`), deterministic warm-startable training loop, and deterministic self-play generation (frozen champion, ε-greedy exploration, §12.2 records). |
+| `src/evaluation.rs` | Paired game arena (deterministic RNG per `(run_seed, pair, slot)`); oracle metrics for raw models; searched-decision metrics and exploitability vs perfect opposition for model+search agents. |
 | `src/experiment.rs` | Self-contained run directories, environment manifests, CPU/RSS probes. |
-| `src/bin/lab.rs` | Typed CLI: `lab evaluate`, `lab solve`, `lab train`, `lab sweep` (CPU-slot scheduler over a JSONL manifest of runs). |
+| `src/bin/lab.rs` | Typed CLI: `lab evaluate` (arena / oracle probe), `lab solve`, `lab train`, `lab selfplay` (Expert Iteration generations), `lab sweep` (CPU-slot scheduler over a JSONL manifest of runs). |
 
 ## Not yet present (deferred to their phases)
 
-Search-integrated model evaluation (Phase 3), self-play training loop
-(Phase 3+), other games (Breakthrough, Othello), UCI binary.
+Other games (Breakthrough, Othello, chess), UCI binary, time-based
+search budgets.
 
 ## Determinism policy
 

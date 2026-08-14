@@ -1,0 +1,9 @@
+{"command": "selfplay", "config": "configs/phase_03/eps05_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps05_s2.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps05_s3.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps1_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps1_s2.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps1_s3.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps2_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps2_s2.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_03/eps2_s3.toml", "cores": 7}

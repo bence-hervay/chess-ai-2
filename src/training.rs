@@ -48,6 +48,33 @@ impl Example {
     }
 }
 
+/// One training row: the policy target is uniform over
+/// `policy_actions` and the value target is `wdl` (both side-to-move).
+/// Oracle rows target the optimal-action set; self-play rows target the
+/// single expert-search action (plan §12.2).
+#[derive(Clone, Debug)]
+pub struct TrainRow {
+    pub features: Vec<u32>,
+    pub legal: Vec<u32>,
+    pub wdl: Wdl,
+    pub policy_actions: Vec<u32>,
+}
+
+impl From<&Example> for TrainRow {
+    fn from(example: &Example) -> TrainRow {
+        TrainRow {
+            features: example.features.clone(),
+            legal: example.legal.clone(),
+            wdl: example.wdl,
+            policy_actions: example
+                .optimal_indices()
+                .into_iter()
+                .map(|i| example.legal[i])
+                .collect(),
+        }
+    }
+}
+
 /// Exact-state dataset stratified by position hash: 80% train, 10%
 /// validation, 10% test. States are unique, so splits cannot leak.
 pub struct ExactDataset {
@@ -112,19 +139,19 @@ pub struct Batch<B: Backend> {
 }
 
 pub fn make_batch<B: Backend>(
-    examples: &[&Example],
+    rows: &[&TrainRow],
     dims: ModelDims,
     max_features: usize,
     device: &B::Device,
 ) -> Batch<B> {
-    let n = examples.len();
+    let n = rows.len();
     let pad = dims.feature_count as i64;
     let mut ids = vec![pad; n * max_features];
     let mut mask = vec![0.0f32; n * max_features];
     let mut wdl = vec![0.0f32; n * 3];
     let mut policy = vec![0.0f32; n * dims.action_count];
     let mut legal = vec![0.0f32; n * dims.action_count];
-    for (row, example) in examples.iter().enumerate() {
+    for (row, example) in rows.iter().enumerate() {
         for (i, &f) in example.features.iter().enumerate() {
             ids[row * max_features + i] = i64::from(f);
             mask[row * max_features + i] = 1.0;
@@ -133,10 +160,9 @@ pub fn make_batch<B: Backend>(
         for &a in &example.legal {
             legal[row * dims.action_count + a as usize] = 1.0;
         }
-        let optimal = example.optimal_indices();
-        let share = 1.0 / optimal.len() as f32;
-        for i in optimal {
-            policy[row * dims.action_count + example.legal[i] as usize] = share;
+        let share = 1.0 / example.policy_actions.len() as f32;
+        for &a in &example.policy_actions {
+            policy[row * dims.action_count + a as usize] = share;
         }
     }
     Batch {
@@ -185,23 +211,46 @@ pub struct TrainStepMetrics {
 /// periodic validation).
 pub fn train_supervised(
     dims: ModelDims,
-    train: &[Example],
+    train: &[TrainRow],
     max_features: usize,
     seed: u64,
+    training_steps: u64,
+    on_step: impl FnMut(&TrainStepMetrics, &PolicyValueNet<TrainBackend>),
+) -> PolicyValueNet<TrainBackend> {
+    let device = Default::default();
+    TrainBackend::seed(&device, seed);
+    let net = PolicyValueNet::<TrainBackend>::new(dims, &device);
+    train_steps(
+        net,
+        dims,
+        train,
+        max_features,
+        seed,
+        training_steps,
+        on_step,
+    )
+}
+
+/// The core optimizer loop, warm-starting from `net` with a fresh Adam
+/// state. The batch stream is keyed by `stream_seed` only.
+pub fn train_steps(
+    mut net: PolicyValueNet<TrainBackend>,
+    dims: ModelDims,
+    train: &[TrainRow],
+    max_features: usize,
+    stream_seed: u64,
     training_steps: u64,
     mut on_step: impl FnMut(&TrainStepMetrics, &PolicyValueNet<TrainBackend>),
 ) -> PolicyValueNet<TrainBackend> {
     let device = Default::default();
-    TrainBackend::seed(&device, seed);
-    let mut net = PolicyValueNet::<TrainBackend>::new(dims, &device);
     let mut optim = AdamConfig::new().init::<TrainBackend, PolicyValueNet<TrainBackend>>();
-    let mut rng = ChaCha12Rng::seed_from_u64(splitmix64(seed) ^ 0x7261_696e);
+    let mut rng = ChaCha12Rng::seed_from_u64(splitmix64(stream_seed) ^ 0x7261_696e);
     let mut order: Vec<usize> = (0..train.len()).collect();
     let mut cursor = train.len(); // force initial shuffle
     let started = std::time::Instant::now();
 
     for step in 1..=training_steps {
-        let mut chosen: Vec<&Example> = Vec::with_capacity(BATCH_SIZE);
+        let mut chosen: Vec<&TrainRow> = Vec::with_capacity(BATCH_SIZE);
         while chosen.len() < BATCH_SIZE {
             if cursor >= order.len() {
                 order.shuffle(&mut rng);
@@ -226,6 +275,212 @@ pub fn train_supervised(
         );
     }
     net
+}
+
+/// Transposition-table size for self-play and probe searches (2^16
+/// entries per game; tables are per-game so results are independent of
+/// scheduling).
+pub const SELFPLAY_TT_LOG2: u32 = 16;
+
+/// One recorded self-play position (plan §12.2), written per generation.
+#[derive(Clone, Debug, Serialize)]
+pub struct SelfPlayRecord {
+    pub generation: u32,
+    pub game_index: u64,
+    pub ply: u32,
+    pub features: Vec<u32>,
+    pub legal: Vec<u32>,
+    /// Search-selected expert action (the policy target).
+    pub expert_action: u32,
+    /// Action actually played (differs when exploring).
+    pub played_action: u32,
+    pub exploratory: bool,
+    /// Final game outcome from this mover's perspective (the value target).
+    pub outcome_wdl: Wdl,
+    pub search_nodes: u64,
+    pub completed_depth: u32,
+}
+
+impl SelfPlayRecord {
+    pub fn to_row(&self) -> TrainRow {
+        TrainRow {
+            features: self.features.clone(),
+            legal: self.legal.clone(),
+            wdl: self.outcome_wdl,
+            policy_actions: vec![self.expert_action],
+        }
+    }
+}
+
+/// Aggregate statistics of one self-play generation.
+#[derive(Clone, Copy, Debug, Default, Serialize)]
+pub struct SelfPlayStats {
+    pub games: u64,
+    pub positions: u64,
+    pub exploratory_moves: u64,
+    pub total_search_nodes: u64,
+    pub total_plies: u64,
+    pub p1_wins: u64,
+    pub draws: u64,
+    pub p2_wins: u64,
+}
+
+fn selfplay_rng(run_seed: u64, generation: u32, game_index: u64) -> ChaCha12Rng {
+    let mixed =
+        splitmix64(splitmix64(run_seed) ^ splitmix64((u64::from(generation) << 40) | game_index));
+    ChaCha12Rng::seed_from_u64(mixed)
+}
+
+/// Play `games` self-play games with the frozen champion (plan §12.1/12.4):
+/// the expert search plays its best move except with probability
+/// `epsilon`, when a legal move is sampled from the apprentice policy;
+/// the recorded label is always the expert move. Deterministic per
+/// `(run_seed, generation, game_index)` regardless of thread count.
+#[allow(clippy::too_many_arguments)] // §12.1 loop parameters are irreducible
+pub fn generate_selfplay<G: Game>(
+    game: &G,
+    net: &crate::model::CompiledNet,
+    games: u64,
+    node_budget: u64,
+    epsilon: f64,
+    run_seed: u64,
+    generation: u32,
+    threads: usize,
+) -> (Vec<SelfPlayRecord>, SelfPlayStats) {
+    use crate::model::ModelEvaluator;
+    use crate::search::{MoveOrdering, Searcher};
+    use rand::Rng as _;
+
+    let max_depth = 512;
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("failed to build rayon pool");
+    let per_game: Vec<(Vec<SelfPlayRecord>, SelfPlayStats)> = pool.install(|| {
+        use rayon::prelude::*;
+        (0..games)
+            .into_par_iter()
+            .map(|game_index| {
+                let mut rng = selfplay_rng(run_seed, generation, game_index);
+                let mut evaluator = ModelEvaluator::new(net);
+                let mut searcher: Searcher<G> =
+                    Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+                let mut state = game.initial_state();
+                let mut records = Vec::new();
+                let mut stats = SelfPlayStats {
+                    games: 1,
+                    ..SelfPlayStats::default()
+                };
+                let mut moves = Vec::new();
+                let mut ply = 0u32;
+                let outcome = loop {
+                    if let Some(outcome) = game.outcome(&state) {
+                        break outcome;
+                    }
+                    let result =
+                        searcher.search(game, &mut state, max_depth, node_budget, &mut evaluator);
+                    let expert = result
+                        .best_move
+                        .expect("non-terminal search returns a move");
+                    game.legal_moves(&state, &mut moves);
+                    let exploratory = rng.gen::<f64>() < epsilon;
+                    let played = if exploratory {
+                        sample_policy_move(game, &state, &moves, &mut evaluator, &mut rng)
+                    } else {
+                        expert
+                    };
+                    let mut features = Vec::new();
+                    game.encode_features(&state, &mut features);
+                    records.push(SelfPlayRecord {
+                        generation,
+                        game_index,
+                        ply,
+                        features,
+                        legal: moves.iter().map(|&m| game.action_id(&state, m)).collect(),
+                        expert_action: game.action_id(&state, expert),
+                        played_action: game.action_id(&state, played),
+                        exploratory,
+                        outcome_wdl: Wdl::Draw, // back-filled below
+                        search_nodes: result.nodes,
+                        completed_depth: result.completed_depth,
+                    });
+                    stats.positions += 1;
+                    stats.exploratory_moves += u64::from(exploratory);
+                    stats.total_search_nodes += result.nodes;
+                    game.make_move(&mut state, played);
+                    ply += 1;
+                };
+                stats.total_plies = u64::from(ply);
+                match outcome {
+                    crate::game::Outcome::Win(crate::game::Player::One) => stats.p1_wins = 1,
+                    crate::game::Outcome::Win(crate::game::Player::Two) => stats.p2_wins = 1,
+                    crate::game::Outcome::Draw => stats.draws = 1,
+                }
+                // Value target: final outcome from each mover's perspective
+                // (§12.3). The mover at ply p is Player One iff p is even
+                // only if the game alternates strictly - derive instead
+                // from parity of plies remaining.
+                for record in &mut records {
+                    record.outcome_wdl = match outcome {
+                        crate::game::Outcome::Draw => Wdl::Draw,
+                        crate::game::Outcome::Win(winner) => {
+                            let mover_is_p1 = record.ply % 2 == 0;
+                            let winner_is_p1 = winner == crate::game::Player::One;
+                            if mover_is_p1 == winner_is_p1 {
+                                Wdl::Win
+                            } else {
+                                Wdl::Loss
+                            }
+                        }
+                    };
+                }
+                (records, stats)
+            })
+            .collect()
+    });
+
+    let mut records = Vec::new();
+    let mut stats = SelfPlayStats::default();
+    for (game_records, game_stats) in per_game {
+        records.extend(game_records);
+        stats.games += game_stats.games;
+        stats.positions += game_stats.positions;
+        stats.exploratory_moves += game_stats.exploratory_moves;
+        stats.total_search_nodes += game_stats.total_search_nodes;
+        stats.total_plies += game_stats.total_plies;
+        stats.p1_wins += game_stats.p1_wins;
+        stats.draws += game_stats.draws;
+        stats.p2_wins += game_stats.p2_wins;
+    }
+    (records, stats)
+}
+
+/// Sample a legal move from the apprentice policy (masked softmax over
+/// the champion's action logits).
+fn sample_policy_move<G: Game>(
+    game: &G,
+    state: &G::State,
+    moves: &[G::Move],
+    evaluator: &mut crate::model::ModelEvaluator<'_>,
+    rng: &mut ChaCha12Rng,
+) -> G::Move {
+    use rand::Rng as _;
+    let logits = evaluator.action_logits(game, state);
+    let scores: Vec<f64> = moves
+        .iter()
+        .map(|&m| f64::from(logits[game.action_id(state, m) as usize]))
+        .collect();
+    let max = scores.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let weights: Vec<f64> = scores.iter().map(|s| (s - max).exp()).collect();
+    let total: f64 = weights.iter().sum();
+    let mut draw = rng.gen::<f64>() * total;
+    for (i, w) in weights.iter().enumerate() {
+        draw -= w;
+        if draw <= 0.0 {
+            return moves[i];
+        }
+    }
+    moves[moves.len() - 1]
 }
 
 #[cfg(test)]
@@ -257,7 +512,7 @@ mod tests {
             .unwrap_or_else(|e| e.into_inner());
         let game = ConnectK::new(3, 3, 3, true).unwrap();
         let ds = build_exact_dataset(&game);
-        let tiny: Vec<Example> = ds.train.iter().take(32).cloned().collect();
+        let tiny: Vec<TrainRow> = ds.train.iter().take(32).map(TrainRow::from).collect();
         let dims = ModelDims {
             feature_count: game.feature_count(),
             action_count: game.action_count(),
@@ -275,6 +530,55 @@ mod tests {
     }
 
     #[test]
+    fn selfplay_generation_is_deterministic_and_well_formed() {
+        let _guard = crate::model::BACKEND_RNG_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let game = ConnectK::new(3, 3, 3, true).unwrap();
+        let dims = crate::model::ModelDims {
+            feature_count: game.feature_count(),
+            action_count: game.action_count(),
+            width: 16,
+        };
+        let device = Default::default();
+        use burn::prelude::Backend as _;
+        crate::model::InferBackend::seed(&device, 5);
+        let net = crate::model::PolicyValueNet::<crate::model::InferBackend>::new(dims, &device);
+        let compiled = crate::model::CompiledNet::from_net(&net, dims);
+        let run = |threads: usize| {
+            let (records, stats) = generate_selfplay(&game, &compiled, 6, 100, 0.2, 42, 0, threads);
+            (
+                records
+                    .iter()
+                    .map(|r| {
+                        (
+                            r.game_index,
+                            r.ply,
+                            r.expert_action,
+                            r.played_action,
+                            r.outcome_wdl,
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+                stats.positions,
+            )
+        };
+        let (a, positions) = run(1);
+        let (b, _) = run(4);
+        assert_eq!(a, b, "self-play must not depend on thread count");
+        assert!(positions > 0);
+        // Expert and played actions are always legal; the label is the
+        // expert action even on exploratory moves.
+        let (records, _) = generate_selfplay(&game, &compiled, 6, 100, 1.0, 42, 0, 2);
+        for r in &records {
+            assert!(r.legal.contains(&r.expert_action));
+            assert!(r.legal.contains(&r.played_action));
+            assert!(r.exploratory);
+            assert_eq!(r.to_row().policy_actions, vec![r.expert_action]);
+        }
+    }
+
+    #[test]
     fn training_is_deterministic() {
         let _guard = crate::model::BACKEND_RNG_LOCK
             .lock()
@@ -288,7 +592,8 @@ mod tests {
         };
         let run = || {
             let mut losses = Vec::new();
-            train_supervised(dims, &ds.train, ds.max_features, 9, 30, |m, _| {
+            let rows: Vec<TrainRow> = ds.train.iter().map(TrainRow::from).collect();
+            train_supervised(dims, &rows, ds.max_features, 9, 30, |m, _| {
                 losses.push((m.wdl_loss, m.policy_loss));
             });
             losses

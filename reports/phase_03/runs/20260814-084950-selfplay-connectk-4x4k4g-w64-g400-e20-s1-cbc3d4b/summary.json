@@ -1,0 +1,570 @@
+{
+  "config": {
+    "epsilon": 0.2,
+    "eval_node_budget": 600,
+    "game": {
+      "gravity": true,
+      "height": 4,
+      "k": 4,
+      "kind": "connect_k",
+      "width": 4
+    },
+    "games_per_generation": 400,
+    "gen_node_budget": 600,
+    "generations": 12,
+    "model_width": 64,
+    "replay_generations": 4,
+    "seed": 1,
+    "steps_per_generation": 2000,
+    "threads": 7
+  },
+  "cpu_seconds": 152.43,
+  "final_exploitability": {
+    "agent_losses": 7,
+    "agent_wins": 0,
+    "avoidable_drops": 7,
+    "draws": 35,
+    "games": 42,
+    "levels_lost": 7,
+    "mean_levels_lost": 0.16666666666666666
+  },
+  "final_raw_test": {
+    "action_accuracy": 0.8216240201153675,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.8872215709261431,
+      0.6262886597938144
+    ],
+    "brier": 0.5977394105943992,
+    "mean_regret_levels": 0.20004437213429965,
+    "optimal_mass": 0.8193402946962861,
+    "states": 13522,
+    "wdl_accuracy": 0.632081053098654,
+    "wdl_log_loss": 1.4314589399332602
+  },
+  "final_searched_test": {
+    "action_accuracy": 0.9955,
+    "mean_completed_depth": 91.35,
+    "mean_nodes": 393.023,
+    "mean_regret_levels": 0.005,
+    "node_budget": 600,
+    "states": 2000
+  },
+  "generations": [
+    {
+      "candidate_val": {
+        "action_accuracy": 0.7976474091721263,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8546162009197029,
+          0.6176622039134912
+        ],
+        "brier": 0.5808245826582586,
+        "mean_regret_levels": 0.22826086956521738,
+        "optimal_mass": 0.7941767501156156,
+        "states": 13432,
+        "wdl_accuracy": 0.6230643240023823,
+        "wdl_log_loss": 1.245751569959556
+      },
+      "champion_val": {
+        "action_accuracy": 0.7976474091721263,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8546162009197029,
+          0.6176622039134912
+        ],
+        "brier": 0.5808245826582586,
+        "mean_regret_levels": 0.22826086956521738,
+        "optimal_mass": 0.7941767501156156,
+        "states": 13432,
+        "wdl_accuracy": 0.6230643240023823,
+        "wdl_log_loss": 1.245751569959556
+      },
+      "distinct_positions": 1443,
+      "exploitability": {
+        "agent_losses": 6,
+        "agent_wins": 0,
+        "avoidable_drops": 6,
+        "draws": 36,
+        "games": 42,
+        "levels_lost": 6,
+        "mean_levels_lost": 0.14285714285714285
+      },
+      "generation": 0,
+      "generation_seconds": 9.126299333,
+      "promoted": true,
+      "replay_rows": 6047,
+      "searched_val": {
+        "action_accuracy": 0.992,
+        "mean_completed_depth": 95.852,
+        "mean_nodes": 409.886,
+        "mean_regret_levels": 0.008,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 160,
+        "exploratory_moves": 1221,
+        "games": 400,
+        "p1_wins": 91,
+        "p2_wins": 149,
+        "positions": 6047,
+        "total_plies": 6047,
+        "total_search_nodes": 2698268
+      },
+      "train_policy_loss": 0.0761835128068924,
+      "train_wdl_loss": 0.6714725494384766
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.8097081596188207,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8681759226506308,
+          0.629763130792997
+        ],
+        "brier": 0.5763837298648521,
+        "mean_regret_levels": 0.21351995235259083,
+        "optimal_mass": 0.8064033859657951,
+        "states": 13432,
+        "wdl_accuracy": 0.6184484812388327,
+        "wdl_log_loss": 1.201619074695417
+      },
+      "champion_val": {
+        "action_accuracy": 0.8097081596188207,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8681759226506308,
+          0.629763130792997
+        ],
+        "brier": 0.5763837298648521,
+        "mean_regret_levels": 0.21351995235259083,
+        "optimal_mass": 0.8064033859657951,
+        "states": 13432,
+        "wdl_accuracy": 0.6184484812388327,
+        "wdl_log_loss": 1.201619074695417
+      },
+      "distinct_positions": 1166,
+      "exploitability": {
+        "agent_losses": 3,
+        "agent_wins": 0,
+        "avoidable_drops": 3,
+        "draws": 39,
+        "games": 42,
+        "levels_lost": 3,
+        "mean_levels_lost": 0.07142857142857142
+      },
+      "generation": 1,
+      "generation_seconds": 9.415799102,
+      "promoted": true,
+      "replay_rows": 12360,
+      "searched_val": {
+        "action_accuracy": 0.998,
+        "mean_completed_depth": 96.4,
+        "mean_nodes": 409.862,
+        "mean_regret_levels": 0.002,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 320,
+        "exploratory_moves": 1317,
+        "games": 400,
+        "p1_wins": 37,
+        "p2_wins": 43,
+        "positions": 6313,
+        "total_plies": 6313,
+        "total_search_nodes": 3487413
+      },
+      "train_policy_loss": 0.2116931527853012,
+      "train_wdl_loss": 0.5027188062667847
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.820726622989875,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8778445937979011,
+          0.646755921730175
+        ],
+        "brier": 0.5788250048822063,
+        "mean_regret_levels": 0.1993001786777844,
+        "optimal_mass": 0.8169738455725174,
+        "states": 13432,
+        "wdl_accuracy": 0.6182995830851697,
+        "wdl_log_loss": 1.1906429029548904
+      },
+      "champion_val": {
+        "action_accuracy": 0.820726622989875,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8778445937979011,
+          0.646755921730175
+        ],
+        "brier": 0.5788250048822063,
+        "mean_regret_levels": 0.1993001786777844,
+        "optimal_mass": 0.8169738455725174,
+        "states": 13432,
+        "wdl_accuracy": 0.6182995830851697,
+        "wdl_log_loss": 1.1906429029548904
+      },
+      "distinct_positions": 578,
+      "exploitability": {
+        "agent_losses": 5,
+        "agent_wins": 0,
+        "avoidable_drops": 5,
+        "draws": 37,
+        "games": 42,
+        "levels_lost": 5,
+        "mean_levels_lost": 0.11904761904761904
+      },
+      "generation": 2,
+      "generation_seconds": 9.506050471,
+      "promoted": true,
+      "replay_rows": 18714,
+      "searched_val": {
+        "action_accuracy": 0.998,
+        "mean_completed_depth": 96.528,
+        "mean_nodes": 409.466,
+        "mean_regret_levels": 0.002,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 376,
+        "exploratory_moves": 1281,
+        "games": 400,
+        "p1_wins": 14,
+        "p2_wins": 10,
+        "positions": 6354,
+        "total_plies": 6354,
+        "total_search_nodes": 3722750
+      },
+      "train_policy_loss": 0.19135624170303345,
+      "train_wdl_loss": 0.4771099090576172
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.8230345443716498,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8791416106591203,
+          0.6519052523171988
+        ],
+        "brier": 0.5552763596878614,
+        "mean_regret_levels": 0.19721560452650388,
+        "optimal_mass": 0.8187166932288721,
+        "states": 13432,
+        "wdl_accuracy": 0.6357951161405598,
+        "wdl_log_loss": 1.172900969198608
+      },
+      "champion_val": {
+        "action_accuracy": 0.8230345443716498,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8791416106591203,
+          0.6519052523171988
+        ],
+        "brier": 0.5552763596878614,
+        "mean_regret_levels": 0.19721560452650388,
+        "optimal_mass": 0.8187166932288721,
+        "states": 13432,
+        "wdl_accuracy": 0.6357951161405598,
+        "wdl_log_loss": 1.172900969198608
+      },
+      "distinct_positions": 534,
+      "exploitability": {
+        "agent_losses": 10,
+        "agent_wins": 0,
+        "avoidable_drops": 10,
+        "draws": 32,
+        "games": 42,
+        "levels_lost": 10,
+        "mean_levels_lost": 0.23809523809523808
+      },
+      "generation": 3,
+      "generation_seconds": 9.58717412,
+      "promoted": true,
+      "replay_rows": 25070,
+      "searched_val": {
+        "action_accuracy": 1.0,
+        "mean_completed_depth": 96.372,
+        "mean_nodes": 409.594,
+        "mean_regret_levels": 0.0,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 363,
+        "exploratory_moves": 1291,
+        "games": 400,
+        "p1_wins": 28,
+        "p2_wins": 9,
+        "positions": 6356,
+        "total_plies": 6356,
+        "total_search_nodes": 3690868
+      },
+      "train_policy_loss": 0.13965193927288055,
+      "train_wdl_loss": 0.3521890640258789
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.8199821322215605,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.878905789411626,
+          0.6418640576725025
+        ],
+        "brier": 0.5595988773822113,
+        "mean_regret_levels": 0.19982132221560453,
+        "optimal_mass": 0.8171116992180002,
+        "states": 13432,
+        "wdl_accuracy": 0.6336360929124479,
+        "wdl_log_loss": 1.1833601675318566
+      },
+      "champion_val": {
+        "action_accuracy": 0.8199821322215605,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.878905789411626,
+          0.6418640576725025
+        ],
+        "brier": 0.5595988773822113,
+        "mean_regret_levels": 0.19982132221560453,
+        "optimal_mass": 0.8171116992180002,
+        "states": 13432,
+        "wdl_accuracy": 0.6336360929124479,
+        "wdl_log_loss": 1.1833601675318566
+      },
+      "distinct_positions": 284,
+      "exploitability": {
+        "agent_losses": 7,
+        "agent_wins": 0,
+        "avoidable_drops": 7,
+        "draws": 35,
+        "games": 42,
+        "levels_lost": 7,
+        "mean_levels_lost": 0.16666666666666666
+      },
+      "generation": 4,
+      "generation_seconds": 9.484492816,
+      "promoted": true,
+      "replay_rows": 25420,
+      "searched_val": {
+        "action_accuracy": 1.0,
+        "mean_completed_depth": 96.474,
+        "mean_nodes": 409.5,
+        "mean_regret_levels": 0.0,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 393,
+        "exploratory_moves": 1259,
+        "games": 400,
+        "p1_wins": 3,
+        "p2_wins": 4,
+        "positions": 6397,
+        "total_plies": 6397,
+        "total_search_nodes": 3780811
+      },
+      "train_policy_loss": 0.17430488765239716,
+      "train_wdl_loss": 0.24721315503120422
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.8196098868374032,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8823251975002948,
+          0.6331101956745623
+        ],
+        "brier": 0.6061236393024569,
+        "mean_regret_levels": 0.20078916021441334,
+        "optimal_mass": 0.8172555409218423,
+        "states": 13432,
+        "wdl_accuracy": 0.6268612269207862,
+        "wdl_log_loss": 1.4711607846654438
+      },
+      "champion_val": {
+        "action_accuracy": 0.8196098868374032,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8823251975002948,
+          0.6331101956745623
+        ],
+        "brier": 0.6061236393024569,
+        "mean_regret_levels": 0.20078916021441334,
+        "optimal_mass": 0.8172555409218423,
+        "states": 13432,
+        "wdl_accuracy": 0.6268612269207862,
+        "wdl_log_loss": 1.4711607846654438
+      },
+      "distinct_positions": 177,
+      "exploitability": {
+        "agent_losses": 7,
+        "agent_wins": 0,
+        "avoidable_drops": 7,
+        "draws": 35,
+        "games": 42,
+        "levels_lost": 7,
+        "mean_levels_lost": 0.16666666666666666
+      },
+      "generation": 5,
+      "generation_seconds": 9.570364104,
+      "promoted": true,
+      "replay_rows": 25507,
+      "searched_val": {
+        "action_accuracy": 0.99,
+        "mean_completed_depth": 96.408,
+        "mean_nodes": 409.472,
+        "mean_regret_levels": 0.01,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 400,
+        "exploratory_moves": 1290,
+        "games": 400,
+        "p1_wins": 0,
+        "p2_wins": 0,
+        "positions": 6400,
+        "total_plies": 6400,
+        "total_search_nodes": 3804800
+      },
+      "train_policy_loss": 0.12878331542015076,
+      "train_wdl_loss": 0.11638946831226349
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.8141006551518761,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8786699681641316,
+          0.6220391349124614
+        ],
+        "brier": 0.6047451534193491,
+        "mean_regret_levels": 0.20979749851101848,
+        "optimal_mass": 0.812257150227953,
+        "states": 13432,
+        "wdl_accuracy": 0.6283502084574152,
+        "wdl_log_loss": 1.5299987477410288
+      },
+      "champion_val": {
+        "action_accuracy": 0.8196098868374032,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8823251975002948,
+          0.6331101956745623
+        ],
+        "brier": 0.6061236393024569,
+        "mean_regret_levels": 0.20078916021441334,
+        "optimal_mass": 0.8172555409218423,
+        "states": 13432,
+        "wdl_accuracy": 0.6268612269207862,
+        "wdl_log_loss": 1.4711607846654438
+      },
+      "distinct_positions": 607,
+      "exploitability": {
+        "agent_losses": 7,
+        "agent_wins": 0,
+        "avoidable_drops": 7,
+        "draws": 35,
+        "games": 42,
+        "levels_lost": 7,
+        "mean_levels_lost": 0.16666666666666666
+      },
+      "generation": 6,
+      "generation_seconds": 9.327690271,
+      "promoted": false,
+      "replay_rows": 25533,
+      "searched_val": {
+        "action_accuracy": 0.99,
+        "mean_completed_depth": 96.408,
+        "mean_nodes": 409.472,
+        "mean_regret_levels": 0.01,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 335,
+        "exploratory_moves": 1307,
+        "games": 400,
+        "p1_wins": 4,
+        "p2_wins": 61,
+        "positions": 6380,
+        "total_plies": 6380,
+        "total_search_nodes": 3484808
+      },
+      "train_policy_loss": 0.1384126991033554,
+      "train_wdl_loss": 0.1086152195930481
+    },
+    {
+      "candidate_val": {
+        "action_accuracy": 0.812090530077427,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8725386157292772,
+          0.628475798146241
+        ],
+        "brier": 0.6297650198581763,
+        "mean_regret_levels": 0.21136092912447885,
+        "optimal_mass": 0.810963362672396,
+        "states": 13432,
+        "wdl_accuracy": 0.6199374627754616,
+        "wdl_log_loss": 1.6721941380043104
+      },
+      "champion_val": {
+        "action_accuracy": 0.8196098868374032,
+        "action_accuracy_by_wdl": [
+          1.0,
+          0.8823251975002948,
+          0.6331101956745623
+        ],
+        "brier": 0.6061236393024569,
+        "mean_regret_levels": 0.20078916021441334,
+        "optimal_mass": 0.8172555409218423,
+        "states": 13432,
+        "wdl_accuracy": 0.6268612269207862,
+        "wdl_log_loss": 1.4711607846654438
+      },
+      "distinct_positions": 551,
+      "exploitability": {
+        "agent_losses": 7,
+        "agent_wins": 0,
+        "avoidable_drops": 7,
+        "draws": 35,
+        "games": 42,
+        "levels_lost": 7,
+        "mean_levels_lost": 0.16666666666666666
+      },
+      "generation": 7,
+      "generation_seconds": 9.374165667,
+      "promoted": false,
+      "replay_rows": 25564,
+      "searched_val": {
+        "action_accuracy": 0.99,
+        "mean_completed_depth": 96.408,
+        "mean_nodes": 409.472,
+        "mean_regret_levels": 0.01,
+        "node_budget": 600,
+        "states": 500
+      },
+      "selfplay": {
+        "draws": 324,
+        "exploratory_moves": 1245,
+        "games": 400,
+        "p1_wins": 1,
+        "p2_wins": 75,
+        "positions": 6387,
+        "total_plies": 6387,
+        "total_search_nodes": 3428729
+      },
+      "train_policy_loss": 0.1676279604434967,
+      "train_wdl_loss": 0.10979874432086945
+    }
+  ],
+  "parameter_count": 10887,
+  "peak_rss_bytes": 120233984,
+  "wall_seconds": 76.410584612
+}

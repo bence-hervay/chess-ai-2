@@ -1,0 +1,23 @@
+{
+  "git_commit": "cbc3d4b44a2bf592992be7c16a1014aa82666aae",
+  "git_dirty": true,
+  "rust_toolchain": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo_lock_hash": "fnv1a64:9d71ee10a68cb62c",
+  "os": "Ubuntu 26.04 LTS",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.80GHz",
+  "logical_cpus": 8,
+  "allocated_threads": 7,
+  "ram_bytes": 8316657664,
+  "build_profile": "release",
+  "build_rustflags": "",
+  "model_parameter_count": 10887,
+  "seed": 1,
+  "command": [
+    "/home/hervay_bence_gmail_com/chess-ai-2/target/release/lab",
+    "selfplay",
+    "configs/phase_03/games1600.toml"
+  ],
+  "start_unix_seconds": 1786697801,
+  "end_unix_seconds": 1786697957,
+  "exit_status": "success"
+}

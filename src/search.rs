@@ -245,9 +245,41 @@ fn terminal_score(outcome: Outcome, side_to_move: Player, ply: u32) -> i32 {
     }
 }
 
+/// Leaf evaluation and policy move ordering supplied to the search
+/// (plan §11.2).
+pub trait Evaluator<G: Game> {
+    /// Score a non-terminal depth-0 leaf from the side to move's
+    /// perspective, within `[-SCORE_EVAL_MAX, SCORE_EVAL_MAX]`.
+    fn leaf_value(&mut self, game: &G, state: &G::State) -> i32;
+
+    /// Policy scores for `moves` (higher = search first), aligned by
+    /// index. Return `false` to keep pure stable action-ID order.
+    fn policy_scores(
+        &mut self,
+        game: &G,
+        state: &G::State,
+        moves: &[G::Move],
+        out: &mut Vec<f32>,
+    ) -> bool {
+        let _ = (game, state, moves, out);
+        false
+    }
+}
+
+/// Zero leaf value, no policy ordering: the model-free baseline.
+pub struct ZeroEvaluator;
+
+impl<G: Game> Evaluator<G> for ZeroEvaluator {
+    fn leaf_value(&mut self, _game: &G, _state: &G::State) -> i32 {
+        0
+    }
+}
+
 /// Move iteration order. `Natural` follows the game's generation order
 /// (stable action-ID order); `Reversed` deliberately degrades ordering for
-/// controlled experiments.
+/// controlled experiments. Policy scores (when the evaluator provides
+/// them) are applied before this flag, and the transposition-table move
+/// always comes first.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MoveOrdering {
@@ -351,6 +383,7 @@ pub struct Searcher<G: Game> {
     nodes: u64,
     node_limit: u64,
     aborted: bool,
+    scores: Vec<f32>,
 }
 
 impl<G: Game> Searcher<G> {
@@ -363,6 +396,7 @@ impl<G: Game> Searcher<G> {
             nodes: 0,
             node_limit: u64::MAX,
             aborted: false,
+            scores: Vec::new(),
         }
     }
 
@@ -385,7 +419,7 @@ impl<G: Game> Searcher<G> {
         state: &mut G::State,
         max_depth: u32,
         max_nodes: u64,
-        eval: &impl Fn(&G, &G::State) -> i32,
+        eval: &mut impl Evaluator<G>,
     ) -> SearchResult<G::Move> {
         self.nodes = 0;
         self.node_limit = max_nodes;
@@ -404,7 +438,11 @@ impl<G: Game> Searcher<G> {
 
         let mut moves = Vec::new();
         game.legal_moves(state, &mut moves);
-        self.order_moves(game.position_key(state), &mut moves);
+        self.order_moves(game, state, game.position_key(state), &mut moves, eval);
+        // If the budget is too small for even one completed iteration,
+        // fall back to the first ordered move (the policy argmax when the
+        // evaluator provides scores).
+        result.best_move = Some(moves[0]);
 
         for depth in 1..=max_depth {
             let mut best_move = moves[0];
@@ -446,7 +484,28 @@ impl<G: Game> Searcher<G> {
         result
     }
 
-    fn order_moves(&mut self, key: u64, moves: &mut [G::Move]) {
+    /// Order: transposition-table move, then descending policy score,
+    /// then stable action-ID order (§11.2). `Reversed` degrades the
+    /// non-TT portion for controlled experiments.
+    fn order_moves(
+        &mut self,
+        game: &G,
+        state: &G::State,
+        key: u64,
+        moves: &mut [G::Move],
+        eval: &mut impl Evaluator<G>,
+    ) {
+        let mut scores = std::mem::take(&mut self.scores);
+        if eval.policy_scores(game, state, moves, &mut scores) {
+            debug_assert_eq!(scores.len(), moves.len());
+            // Stable sort keeps action-ID order among equal scores.
+            let mut indexed: Vec<(usize, G::Move)> = moves.iter().copied().enumerate().collect();
+            indexed.sort_by(|(i, _), (j, _)| scores[*j].total_cmp(&scores[*i]));
+            for (slot, (_, mv)) in indexed.into_iter().enumerate() {
+                moves[slot] = mv;
+            }
+        }
+        self.scores = scores;
         if self.ordering == MoveOrdering::Reversed {
             moves.reverse();
         }
@@ -470,7 +529,7 @@ impl<G: Game> Searcher<G> {
         ply: u32,
         mut alpha: i32,
         mut beta: i32,
-        eval: &impl Fn(&G, &G::State) -> i32,
+        eval: &mut impl Evaluator<G>,
     ) -> i32 {
         self.nodes += 1;
         if self.nodes >= self.node_limit {
@@ -481,7 +540,7 @@ impl<G: Game> Searcher<G> {
             return terminal_score(outcome, game.side_to_move(state), ply);
         }
         if depth == 0 {
-            let value = eval(game, state);
+            let value = eval.leaf_value(game, state);
             debug_assert!(value.abs() <= SCORE_EVAL_MAX, "leaf eval out of range");
             return value;
         }
@@ -509,6 +568,16 @@ impl<G: Game> Searcher<G> {
         let mut moves = Vec::new();
         game.legal_moves(state, &mut moves);
         debug_assert!(!moves.is_empty(), "non-terminal state without moves");
+        let mut scores = std::mem::take(&mut self.scores);
+        if eval.policy_scores(game, state, &moves, &mut scores) {
+            debug_assert_eq!(scores.len(), moves.len());
+            let mut indexed: Vec<(usize, G::Move)> = moves.iter().copied().enumerate().collect();
+            indexed.sort_by(|(i, _), (j, _)| scores[*j].total_cmp(&scores[*i]));
+            for (slot, (_, mv)) in indexed.into_iter().enumerate() {
+                moves[slot] = mv;
+            }
+        }
+        self.scores = scores;
         if self.ordering == MoveOrdering::Reversed {
             moves.reverse();
         }
@@ -562,8 +631,39 @@ mod tests {
     use super::*;
     use crate::games::connect_k::{ConnectK, ConnectKMove};
 
-    fn zero_eval(_: &ConnectK, _: &<ConnectK as Game>::State) -> i32 {
-        0
+    /// Exact-oracle leaf evaluator: Win=+1000, Draw=0, Loss=-1000.
+    struct OracleLeafEval(ExactSolver);
+
+    impl Evaluator<ConnectK> for OracleLeafEval {
+        fn leaf_value(&mut self, game: &ConnectK, state: &<ConnectK as Game>::State) -> i32 {
+            let mut s = state.clone();
+            match self.0.solve(game, &mut s) {
+                Wdl::Win => SCORE_EVAL_MAX,
+                Wdl::Draw => 0,
+                Wdl::Loss => -SCORE_EVAL_MAX,
+            }
+        }
+    }
+
+    /// Deterministic non-trivial policy: prefers high action IDs, so
+    /// ordering differs from both natural and reversed baselines.
+    struct HighIdPolicy;
+
+    impl Evaluator<ConnectK> for HighIdPolicy {
+        fn leaf_value(&mut self, _: &ConnectK, _: &<ConnectK as Game>::State) -> i32 {
+            0
+        }
+        fn policy_scores(
+            &mut self,
+            game: &ConnectK,
+            state: &<ConnectK as Game>::State,
+            moves: &[ConnectKMove],
+            out: &mut Vec<f32>,
+        ) -> bool {
+            out.clear();
+            out.extend(moves.iter().map(|&m| game.action_id(state, m) as f32));
+            true
+        }
     }
 
     fn full_depth(game: &ConnectK) -> u32 {
@@ -625,8 +725,13 @@ mod tests {
 
         for tt in [None, Some(16)] {
             let mut searcher = Searcher::new(tt, MoveOrdering::Natural);
-            let result =
-                searcher.search(&game, &mut state, full_depth(&game), u64::MAX, &zero_eval);
+            let result = searcher.search(
+                &game,
+                &mut state,
+                full_depth(&game),
+                u64::MAX,
+                &mut ZeroEvaluator,
+            );
             assert_eq!(result.completed_depth, full_depth(&game));
             assert_eq!(Wdl::from_solved_score(result.value), Wdl::Draw);
         }
@@ -645,8 +750,13 @@ mod tests {
                     (Some(14), MoveOrdering::Reversed),
                 ] {
                     let mut searcher = Searcher::new(tt, ordering);
-                    let result =
-                        searcher.search(&game, &mut state, full_depth(&game), u64::MAX, &zero_eval);
+                    let result = searcher.search(
+                        &game,
+                        &mut state,
+                        full_depth(&game),
+                        u64::MAX,
+                        &mut ZeroEvaluator,
+                    );
                     assert_eq!(
                         result.value, reference,
                         "tt={tt:?} ordering={ordering:?} disagrees with exhaustive negamax"
@@ -665,8 +775,13 @@ mod tests {
                 let wdl = solver.optimal_moves(&game, &mut state, &mut optimal);
                 for ordering in [MoveOrdering::Natural, MoveOrdering::Reversed] {
                     let mut searcher: Searcher<ConnectK> = Searcher::new(Some(14), ordering);
-                    let result =
-                        searcher.search(&game, &mut state, full_depth(&game), u64::MAX, &zero_eval);
+                    let result = searcher.search(
+                        &game,
+                        &mut state,
+                        full_depth(&game),
+                        u64::MAX,
+                        &mut ZeroEvaluator,
+                    );
                     assert_eq!(Wdl::from_solved_score(result.value), wdl);
                     let best = result
                         .best_move
@@ -683,21 +798,13 @@ mod tests {
     #[test]
     fn oracle_leaves_produce_optimal_root_actions_at_depth_one() {
         let game = ConnectK::new(4, 3, 3, true).unwrap();
-        let solver = std::cell::RefCell::new(ExactSolver::new());
-        let oracle_eval = |g: &ConnectK, s: &<ConnectK as Game>::State| -> i32 {
-            let mut s = s.clone();
-            match solver.borrow_mut().solve(g, &mut s) {
-                Wdl::Win => 500,
-                Wdl::Draw => 0,
-                Wdl::Loss => -500,
-            }
-        };
+        let mut oracle_eval = OracleLeafEval(ExactSolver::new());
         let mut check_solver = ExactSolver::new();
         for mut state in sample_states(&game, 40, 0x2468) {
             let mut optimal = Vec::new();
             check_solver.optimal_moves(&game, &mut state, &mut optimal);
             let mut searcher: Searcher<ConnectK> = Searcher::new(None, MoveOrdering::Natural);
-            let result = searcher.search(&game, &mut state, 1, u64::MAX, &oracle_eval);
+            let result = searcher.search(&game, &mut state, 1, u64::MAX, &mut oracle_eval);
             let best = result.best_move.unwrap();
             assert!(
                 optimal.contains(&best),
@@ -707,18 +814,49 @@ mod tests {
     }
 
     #[test]
+    fn policy_ordering_changes_nodes_but_never_values() {
+        let game = ConnectK::new(4, 4, 4, true).unwrap();
+        let (mut nodes_plain, mut nodes_policy) = (0u64, 0u64);
+        for mut state in sample_states(&game, 15, 0x77aa) {
+            let mut plain: Searcher<ConnectK> = Searcher::new(Some(16), MoveOrdering::Natural);
+            let a = plain.search(
+                &game,
+                &mut state,
+                full_depth(&game),
+                u64::MAX,
+                &mut ZeroEvaluator,
+            );
+            let mut ordered: Searcher<ConnectK> = Searcher::new(Some(16), MoveOrdering::Natural);
+            let b = ordered.search(
+                &game,
+                &mut state,
+                full_depth(&game),
+                u64::MAX,
+                &mut HighIdPolicy,
+            );
+            assert_eq!(a.value, b.value, "policy ordering changed the search value");
+            nodes_plain += a.nodes;
+            nodes_policy += b.nodes;
+        }
+        assert_ne!(
+            nodes_plain, nodes_policy,
+            "high-id policy should change node counts on some position"
+        );
+    }
+
+    #[test]
     fn node_budget_returns_last_completed_iteration() {
         let game = ConnectK::new(4, 4, 3, true).unwrap();
         let mut state = game.initial_state();
         let mut full: Searcher<ConnectK> = Searcher::new(Some(14), MoveOrdering::Natural);
-        let unlimited = full.search(&game, &mut state, 10, u64::MAX, &zero_eval);
+        let unlimited = full.search(&game, &mut state, 10, u64::MAX, &mut ZeroEvaluator);
         assert!(unlimited.nodes > 2_000);
 
         // A budget that lands mid-iteration must reproduce the result of an
         // unlimited search truncated at the completed depth.
         for budget in [500u64, 2_000, 10_000] {
             let mut limited: Searcher<ConnectK> = Searcher::new(Some(14), MoveOrdering::Natural);
-            let capped = limited.search(&game, &mut state, 10, budget, &zero_eval);
+            let capped = limited.search(&game, &mut state, 10, budget, &mut ZeroEvaluator);
             assert!(capped.nodes <= budget);
             let mut reference: Searcher<ConnectK> = Searcher::new(Some(14), MoveOrdering::Natural);
             let truncated = reference.search(
@@ -726,7 +864,7 @@ mod tests {
                 &mut state,
                 capped.completed_depth,
                 u64::MAX,
-                &zero_eval,
+                &mut ZeroEvaluator,
             );
             assert_eq!(capped.value, truncated.value);
             assert_eq!(capped.best_move, truncated.best_move);
@@ -744,7 +882,7 @@ mod tests {
         let run = || {
             let mut searcher: Searcher<ConnectK> = Searcher::new(Some(16), MoveOrdering::Natural);
             let mut state2 = state.clone();
-            let r = searcher.search(&game, &mut state2, 12, 200_000, &zero_eval);
+            let r = searcher.search(&game, &mut state2, 12, 200_000, &mut ZeroEvaluator);
             (
                 r.value,
                 r.best_move,
@@ -766,7 +904,7 @@ mod tests {
             game.make_move(&mut state, ConnectKMove(cell));
         }
         let mut searcher: Searcher<ConnectK> = Searcher::new(Some(14), MoveOrdering::Natural);
-        let result = searcher.search(&game, &mut state, 6, u64::MAX, &zero_eval);
+        let result = searcher.search(&game, &mut state, 6, u64::MAX, &mut ZeroEvaluator);
         assert_eq!(result.value, SCORE_WIN - 1, "win in one ply");
         assert_eq!(result.best_move, Some(ConnectKMove(3)));
     }
@@ -784,7 +922,13 @@ mod tests {
             let mut results = Vec::new();
             for ordering in [MoveOrdering::Natural, MoveOrdering::Reversed] {
                 let mut searcher: Searcher<ConnectK> = Searcher::new(None, ordering);
-                let r = searcher.search(&game, &mut state, full_depth(&game), u64::MAX, &zero_eval);
+                let r = searcher.search(
+                    &game,
+                    &mut state,
+                    full_depth(&game),
+                    u64::MAX,
+                    &mut ZeroEvaluator,
+                );
                 results.push(r);
             }
             assert_eq!(results[0].value, results[1].value);
