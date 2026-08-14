@@ -1,0 +1,39 @@
+//! Game implementations. Each game is a static Rust module implementing
+//! [`crate::game::Game`]; there is no plugin system.
+
+pub mod connect_k;
+
+use serde::{Deserialize, Serialize};
+
+/// Typed, fully explicit game selection used in experiment configurations.
+///
+/// The CLI matches on this enum and dispatches to generic functions; the
+/// search/training/evaluation code never sees it.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", deny_unknown_fields)]
+pub enum GameSpec {
+    #[serde(rename = "connect_k")]
+    ConnectK {
+        width: u16,
+        height: u16,
+        k: u16,
+        gravity: bool,
+    },
+}
+
+impl GameSpec {
+    /// Short label used in run-directory names.
+    pub fn label(&self) -> String {
+        match self {
+            GameSpec::ConnectK {
+                width,
+                height,
+                k,
+                gravity,
+            } => {
+                let g = if *gravity { "g" } else { "f" };
+                format!("connectk-{width}x{height}k{k}{g}")
+            }
+        }
+    }
+}
