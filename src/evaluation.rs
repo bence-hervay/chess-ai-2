@@ -129,17 +129,29 @@ impl ArenaSummary {
         self.agent_a_points += record.agent_a_score();
         self.total_plies += u64::from(record.plies);
     }
+
+    fn add(&mut self, other: &ArenaSummary) {
+        self.games += other.games;
+        self.p1_wins += other.p1_wins;
+        self.p2_wins += other.p2_wins;
+        self.draws += other.draws;
+        self.agent_a_points += other.agent_a_points;
+        self.total_plies += other.total_plies;
+        self.counters.add(&other.counters);
+    }
 }
 
 /// Run `pairs` paired random-versus-random games on `threads` workers.
 ///
-/// `sink` receives each batch of game records in deterministic order.
+/// `sink` receives the JSONL-serialized game records of each batch in
+/// deterministic pair order. Serialization happens inside the workers so
+/// the serial section is only the file write.
 pub fn run_random_arena<G: Game>(
     game: &G,
     pairs: u64,
     run_seed: u64,
     threads: usize,
-    mut sink: impl FnMut(&[GameRecord]),
+    mut sink: impl FnMut(&str),
 ) -> ArenaSummary {
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
@@ -153,38 +165,37 @@ pub fn run_random_arena<G: Game>(
     let mut batch_start = 0u64;
     while batch_start < pairs {
         let batch_end = (batch_start + PAIR_BATCH).min(pairs);
-        let results: Vec<(Vec<GameRecord>, ArenaCounters)> = pool.install(|| {
+        let results: Vec<(ArenaSummary, String)> = pool.install(|| {
             (batch_start..batch_end)
                 .into_par_iter()
                 .map(|pair| {
-                    let mut counters = ArenaCounters::default();
-                    let mut records = Vec::with_capacity(2);
+                    let mut local = ArenaSummary::default();
+                    let mut lines = String::new();
                     for slot in 0..2u64 {
                         let mut rng = game_rng(run_seed, pair, slot);
-                        let (actions, outcome) = play_random_game(game, &mut rng, &mut counters);
-                        records.push(GameRecord {
+                        let (actions, outcome) =
+                            play_random_game(game, &mut rng, &mut local.counters);
+                        let record = GameRecord {
                             pair,
                             slot: slot as u8,
                             plies: actions.len() as u32,
                             outcome: outcome_str(outcome),
                             actions,
-                        });
+                        };
+                        local.absorb(&record);
+                        lines.push_str(
+                            &serde_json::to_string(&record).expect("serializable record"),
+                        );
+                        lines.push('\n');
                     }
-                    (records, counters)
+                    (local, lines)
                 })
                 .collect()
         });
-        for (records, counters) in &results {
-            for record in records {
-                summary.absorb(record);
-            }
-            summary.counters.add(counters);
+        for (local, lines) in &results {
+            summary.add(local);
+            sink(lines);
         }
-        let flat: Vec<GameRecord> = results
-            .into_iter()
-            .flat_map(|(records, _)| records)
-            .collect();
-        sink(&flat);
         batch_start = batch_end;
     }
     summary
@@ -195,13 +206,11 @@ mod tests {
     use super::*;
     use crate::games::connect_k::ConnectK;
 
-    fn run(threads: usize, seed: u64) -> (ArenaSummary, Vec<GameRecord>) {
+    fn run(threads: usize, seed: u64) -> (ArenaSummary, String) {
         let game = ConnectK::new(7, 6, 4, true).unwrap();
-        let mut records = Vec::new();
-        let summary = run_random_arena(&game, 50, seed, threads, |batch| {
-            records.extend_from_slice(batch)
-        });
-        (summary, records)
+        let mut jsonl = String::new();
+        let summary = run_random_arena(&game, 50, seed, threads, |lines| jsonl.push_str(lines));
+        (summary, jsonl)
     }
 
     #[test]
@@ -212,33 +221,32 @@ mod tests {
         assert_eq!(s1.p1_wins, s4.p1_wins);
         assert_eq!(s1.p2_wins, s4.p2_wins);
         assert_eq!(s1.draws, s4.draws);
-        assert_eq!(r1.len(), r4.len());
-        for (a, b) in r1.iter().zip(r4.iter()) {
-            assert_eq!(a.pair, b.pair);
-            assert_eq!(a.slot, b.slot);
-            assert_eq!(a.outcome, b.outcome);
-            assert_eq!(a.actions, b.actions);
-        }
+        assert_eq!(
+            r1, r4,
+            "records must be byte-identical across thread counts"
+        );
     }
 
     #[test]
     fn different_seeds_differ() {
         let (_, r1) = run(2, 1);
         let (_, r2) = run(2, 2);
-        let same = r1
-            .iter()
-            .zip(r2.iter())
-            .all(|(a, b)| a.actions == b.actions);
-        assert!(!same, "different run seeds should produce different games");
+        assert_ne!(r1, r2, "different run seeds should produce different games");
     }
 
     #[test]
-    fn all_recorded_games_are_terminal_and_legal_length() {
-        let (summary, records) = run(2, 3);
+    fn recorded_games_are_terminal_and_legal_length() {
+        let (summary, jsonl) = run(2, 3);
+        let records: Vec<serde_json::Value> = jsonl
+            .lines()
+            .map(|l| serde_json::from_str(l).unwrap())
+            .collect();
         assert_eq!(summary.games, records.len() as u64);
         for r in &records {
-            assert!(r.plies >= 7, "a 7x6 k=4 game needs at least 7 plies");
-            assert!(r.plies <= 42);
+            let plies = r["plies"].as_u64().unwrap();
+            assert!(plies >= 7, "a 7x6 k=4 game needs at least 7 plies");
+            assert!(plies <= 42);
+            assert_eq!(r["actions"].as_array().unwrap().len() as u64, plies);
         }
     }
 }

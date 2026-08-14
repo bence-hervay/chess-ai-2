@@ -1,0 +1,10 @@
+seed = 5
+pairs = 50000
+threads = 7
+
+[game]
+kind = "connect_k"
+width = 5
+height = 5
+k = 4
+gravity = false

@@ -1,0 +1,24 @@
+{
+  "arena": {
+    "agent_a_points": 1000194.5,
+    "counters": {
+      "games": 2000000,
+      "legal_moves_generated": 287954609,
+      "moves_played": 42615637
+    },
+    "draws": 5061,
+    "games": 2000000,
+    "p1_wins": 1111411,
+    "p2_wins": 883528,
+    "pairs": 1000000,
+    "total_plies": 42615637
+  },
+  "metrics": {
+    "cpu_seconds": 8.15,
+    "games_per_second": 891467.532023709,
+    "moves_per_second": 18995228.37100413,
+    "peak_rss_bytes": 8273920,
+    "utilization": 0.9081825482491536,
+    "wall_seconds": 2.24349169
+  }
+}

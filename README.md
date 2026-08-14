@@ -33,11 +33,23 @@ environment manifest, metrics, and game records.
 
 | Phase | Result | Report |
 |---|---|---|
-| 0 — Deterministic foundation | in progress | — |
+| 0 — Deterministic foundation | **PASS** | [reports/phase_00.md](reports/phase_00.md) |
+| 1 — Exact solving and search correctness | not started | — |
 
 ### Current state (2026-08-14)
 
-Phase 0 implementation complete: `Game` trait, parameterized Connect-k
-(width x height, target k, gravity on/off), random agent, paired arena with
-deterministic per-game RNG streams, self-contained run directories, and
-unit/property tests. Benchmarks pending.
+Phase 0 complete and promoted. The foundation exists: a rule-facts-only
+`Game` trait, parameterized Connect-k (gravity on/off), a paired
+random-agent arena, and self-contained run directories with full
+environment manifests. Key evidence:
+
+- **Determinism**: four benchmark runs at 1/2/4/8 worker threads produced
+  byte-identical 209 MB game-record files (2,000,000 games, same sha256).
+- **Parallel scaling** on 4 physical cores / 8 SMT threads: 247k games/s
+  (1 worker, 99.8% utilization) → 891k (4 workers, 90% efficiency) → 1.13M
+  (8 workers, SMT). ~24M moves/s peak.
+- 20 unit/property tests plus differential terminal-detection oracle;
+  fmt/clippy/test clean in debug and release.
+
+Next: Phase 1 — exact negamax solver, alpha–beta with iterative deepening
+and transposition table, proven equivalent on small Connect-k instances.

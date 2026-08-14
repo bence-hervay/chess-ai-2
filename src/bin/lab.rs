@@ -12,6 +12,7 @@ use selfplay_lab::game::Game;
 use selfplay_lab::games::connect_k::ConnectK;
 use selfplay_lab::games::GameSpec;
 use serde::{Deserialize, Serialize};
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -176,12 +177,15 @@ fn run_arena<G: Game>(
     config: &EvaluationConfig,
     run_dir: &RunDir,
 ) -> Result<EvaluationResult, String> {
+    let games_file = std::fs::File::create(run_dir.path().join("games/games.jsonl"))
+        .map_err(|e| format!("creating games file: {e}"))?;
+    let mut writer = std::io::BufWriter::new(games_file);
     let cpu_before = process_cpu_seconds().unwrap_or(0.0);
     let started = Instant::now();
     let mut sink_error: Option<std::io::Error> = None;
-    let arena = run_random_arena(game, config.pairs, config.seed, config.threads, |batch| {
+    let arena = run_random_arena(game, config.pairs, config.seed, config.threads, |lines| {
         if sink_error.is_none() {
-            if let Err(e) = run_dir.append_jsonl("games/games.jsonl", batch) {
+            if let Err(e) = writer.write_all(lines.as_bytes()) {
                 sink_error = Some(e);
             }
         }
@@ -189,6 +193,9 @@ fn run_arena<G: Game>(
     if let Some(e) = sink_error {
         return Err(format!("writing game records: {e}"));
     }
+    writer
+        .flush()
+        .map_err(|e| format!("flushing game records: {e}"))?;
     let wall_seconds = started.elapsed().as_secs_f64();
     let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
     let metrics = RunMetrics {
