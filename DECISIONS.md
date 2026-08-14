@@ -277,3 +277,16 @@ file handle on a full disk). After the disk upgrade to 64 GB:
   (44.8M non-terminal: 11.2M win / 28.4M draw / 5.2M loss; 560 s,
   15 GB peak, 559 MB tablebase) — under the 60M cap that 4x5
   exceeded, validating the D028 rung sizing.
+- Selfplay probe soundness: `exploitability_vs_perfect` and the
+  candidate enumeration inside `searched_decision_metrics` use the
+  acyclic ExactSolver, which on loopy games is unsound (path-dependent
+  repetition memoization) and can return empty optimal-move lists —
+  this crashed the first fc-small selfplay mid-run, and invalidated
+  the first fc-tiny run's searched/exploit numbers (both runs deleted
+  and re-run). Forward chess selfplay now draws searched-decision
+  candidates from the retrograde solution with identical bucket and
+  selection-hash semantics (`retrograde_searched_candidates`), and
+  reports exploitability as null: a perfect-opponent play-out would
+  need the full solution resident for the whole run (~10 GB for
+  small), which is not worth one metric. Oracle regret metrics were
+  always retrograde-based and needed no change.

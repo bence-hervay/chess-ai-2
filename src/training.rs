@@ -6,7 +6,7 @@
 
 use crate::game::Game;
 use crate::model::{ModelDims, PolicyValueNet, TrainBackend};
-use crate::search::{enumerate_solved, solve_retrograde, ExactSolver, Wdl};
+use crate::search::{enumerate_solved, ExactSolver, RetrogradeSolution, Wdl};
 use burn::optim::{AdamConfig, GradientsParams, Optimizer};
 use burn::prelude::Backend;
 use burn::tensor::activation::log_softmax;
@@ -130,17 +130,16 @@ pub fn build_exact_dataset<G: Game>(game: &G) -> ExactDataset {
 /// independent of the split assignment.
 const EVAL_THIN_SALT: u64 = 0x5eed_ab1e_0f0f_0f0f;
 
-/// Oracle dataset for repetition-capable games via the retrograde
-/// solver. Evaluation-only: `train` stays empty; `val`/`test` are the
+/// Oracle dataset for repetition-capable games from a retrograde
+/// solution. Evaluation-only: `train` stays empty; `val`/`test` are the
 /// usual position-key buckets, deterministically thinned to at most
 /// about `eval_cap` states each so evaluation cost stays bounded on
 /// large instances.
 pub fn build_retrograde_dataset<G: Game>(
     game: &G,
-    max_positions: usize,
+    solution: &RetrogradeSolution<G>,
     eval_cap: usize,
-) -> Result<ExactDataset, String> {
-    let solution = solve_retrograde(game, max_positions)?;
+) -> ExactDataset {
     let mut dataset = ExactDataset {
         train: Vec::new(),
         val: Vec::new(),
@@ -191,7 +190,7 @@ pub fn build_retrograde_dataset<G: Game>(
             dataset.test.push(example);
         }
     }
-    Ok(dataset)
+    dataset
 }
 
 /// Tensor batch for a slice of examples.

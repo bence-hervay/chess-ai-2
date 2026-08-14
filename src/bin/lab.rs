@@ -16,7 +16,8 @@ use burn::record::{BinFileRecorder, FullPrecisionSettings};
 use clap::{Parser, Subcommand};
 use selfplay_lab::evaluation::{
     evaluate_model_oracle, exploitability_vs_perfect, play_paired_match,
-    search_disagreement_analysis, searched_decision_metrics, CorpusSplit, OracleMetrics,
+    retrograde_searched_candidates, search_disagreement_analysis, searched_decision_metrics,
+    searched_decision_metrics_on, CorpusSplit, OracleMetrics,
 };
 use selfplay_lab::evaluation::{run_random_arena, ArenaSummary};
 use selfplay_lab::experiment::{
@@ -1363,12 +1364,33 @@ fn run_selfplay<G: Game>(
     // Oracle corpus for evaluation only (never for training labels);
     // match-mode games are not exactly solvable, so they use paired
     // matches instead (§12.6).
+    // Loopy games must never touch the acyclic exact solver: its
+    // path-dependent repetition memoization is unsound and its
+    // optimal-move lists can come back empty (D029).
+    let loopy = matches!(config.game, GameSpec::ForwardChess { .. });
+    let mut fc_val_probes = None;
+    let mut fc_test_probes = None;
     let dataset = if config.promotion == "oracle" {
         // Forward chess repeats, so its oracle comes from the
         // retrograde solver (evaluation buckets thinned to stay
-        // bounded); acyclic games keep the exact-solver corpus.
-        let dataset = if matches!(config.game, GameSpec::ForwardChess { .. }) {
-            build_retrograde_dataset(game, 60_000_000, 20_000)?
+        // bounded); acyclic games keep the exact-solver corpus. The
+        // searched-decision probe states are drawn from the same
+        // solution before it is dropped.
+        let dataset = if loopy {
+            let solution = solve_retrograde(game, 60_000_000)?;
+            fc_val_probes = Some(retrograde_searched_candidates(
+                game,
+                &solution,
+                CorpusSplit::Val,
+                500,
+            ));
+            fc_test_probes = Some(retrograde_searched_candidates(
+                game,
+                &solution,
+                CorpusSplit::Test,
+                2000,
+            ));
+            build_retrograde_dataset(game, &solution, 20_000)
         } else {
             build_exact_dataset(game)
         };
@@ -1524,20 +1546,33 @@ fn run_selfplay<G: Game>(
         let mut searched = None;
         let mut progression = None;
         if dataset.is_some() {
-            exploit = Some(exploitability_vs_perfect(
-                game,
-                &probe_net,
-                config.eval_node_budget,
-                config.threads,
-            ));
-            searched = Some(searched_decision_metrics(
-                game,
-                &probe_net,
-                CorpusSplit::Val,
-                500,
-                config.eval_node_budget,
-                config.threads,
-            ));
+            // The exploitability play-out uses the acyclic exact solver
+            // as the perfect opponent; loopy games skip it (D029).
+            if !loopy {
+                exploit = Some(exploitability_vs_perfect(
+                    game,
+                    &probe_net,
+                    config.eval_node_budget,
+                    config.threads,
+                ));
+            }
+            searched = Some(match &fc_val_probes {
+                Some(probes) => searched_decision_metrics_on(
+                    game,
+                    &probe_net,
+                    probes,
+                    config.eval_node_budget,
+                    config.threads,
+                ),
+                None => searched_decision_metrics(
+                    game,
+                    &probe_net,
+                    CorpusSplit::Val,
+                    500,
+                    config.eval_node_budget,
+                    config.threads,
+                ),
+            });
         } else {
             progression = Some(play_paired_match(
                 game,
@@ -1589,12 +1624,14 @@ fn run_selfplay<G: Game>(
         run_dir
             .append_jsonl("metrics.jsonl", &[&gen_summary])
             .map_err(|e| e.to_string())?;
-        let line = if let (Some(candidate_val), Some(searched), Some(exploit)) =
-            (&candidate_val, &searched, &exploit)
-        {
+        let line = if let (Some(candidate_val), Some(searched)) = (&candidate_val, &searched) {
+            let exploit_part = match &exploit {
+                Some(e) => format!("exploit drops {}/{}", e.avoidable_drops, e.games),
+                None => "exploit n/a (loopy)".to_string(),
+            };
             format!(
                 "gen {generation}: {} games, {} positions ({} explore), losses {:.3}/{:.3}, \
-                 val regret {:.4} ({}), searched@{} acc {:.4}, exploit drops {}/{} ({:.1}s)",
+                 val regret {:.4} ({}), searched@{} acc {:.4}, {exploit_part} ({:.1}s)",
                 stats.games,
                 stats.positions,
                 stats.exploratory_moves,
@@ -1604,8 +1641,6 @@ fn run_selfplay<G: Game>(
                 if promoted { "promoted" } else { "REJECTED" },
                 config.eval_node_budget,
                 searched.action_accuracy,
-                exploit.avoidable_drops,
-                exploit.games,
                 gen_started.elapsed().as_secs_f64(),
             )
         } else {
@@ -1673,29 +1708,37 @@ fn run_selfplay<G: Game>(
     if let Some(dataset) = &dataset {
         let raw_test =
             evaluate_model_oracle(&final_infer, &dataset.test, dims, dataset.max_features);
-        let searched_test = searched_decision_metrics(
-            game,
-            &final_compiled,
-            CorpusSplit::Test,
-            2000,
-            config.eval_node_budget,
-            config.threads,
-        );
-        let exploit_final = exploitability_vs_perfect(
-            game,
-            &final_compiled,
-            config.eval_node_budget,
-            config.threads,
-        );
+        let searched_test = match &fc_test_probes {
+            Some(probes) => searched_decision_metrics_on(
+                game,
+                &final_compiled,
+                probes,
+                config.eval_node_budget,
+                config.threads,
+            ),
+            None => searched_decision_metrics(
+                game,
+                &final_compiled,
+                CorpusSplit::Test,
+                2000,
+                config.eval_node_budget,
+                config.threads,
+            ),
+        };
+        let exploit_final = (!loopy).then(|| {
+            exploitability_vs_perfect(game, &final_compiled, config.eval_node_budget, config.threads)
+        });
+        let exploit_part = match &exploit_final {
+            Some(e) => format!("exploit drops {}/{}", e.avoidable_drops, e.games),
+            None => "exploit n/a (loopy)".to_string(),
+        };
         say(
             format!(
                 "final: raw test regret {:.4}, searched test acc {:.4} / regret {:.4}, \
-                 exploit drops {}/{}",
+                 {exploit_part}",
                 raw_test.mean_regret_levels,
                 searched_test.action_accuracy,
                 searched_test.mean_regret_levels,
-                exploit_final.avoidable_drops,
-                exploit_final.games,
             ),
             log,
         );

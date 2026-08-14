@@ -348,7 +348,7 @@ pub enum CorpusSplit {
 
 /// A candidate state for searched-decision evaluation: selection hash,
 /// state, exact value, legal action IDs, exact child values.
-type SolvedCandidate<G> = (
+pub type SolvedCandidate<G> = (
     u64,
     <G as Game>::State,
     crate::search::Wdl,
@@ -375,7 +375,7 @@ pub fn searched_decision_metrics<G: Game>(
     node_budget: u64,
     threads: usize,
 ) -> SearchedMetrics {
-    use crate::search::{enumerate_solved, ExactSolver, MoveOrdering, Searcher, Wdl};
+    use crate::search::{enumerate_solved, ExactSolver};
 
     // Collect the split's states with their exact child values.
     let mut solver = ExactSolver::new();
@@ -403,6 +403,64 @@ pub fn searched_decision_metrics<G: Game>(
     });
     candidates.sort_by_key(|(selection, ..)| *selection);
     candidates.truncate(cap);
+    searched_decision_metrics_on(game, net, &candidates, node_budget, threads)
+}
+
+/// Searched-decision candidates for `split` drawn from a retrograde
+/// solution, with the same bucket and selection-hash semantics as the
+/// acyclic enumeration path. Indices are selected before states are
+/// materialized, so large solutions cost `cap` clones, not a bucket's.
+pub fn retrograde_searched_candidates<G: Game>(
+    game: &G,
+    solution: &crate::search::RetrogradeSolution<G>,
+    split: CorpusSplit,
+    cap: usize,
+) -> Vec<SolvedCandidate<G>> {
+    let wanted = match split {
+        CorpusSplit::Val => 8,
+        CorpusSplit::Test => 9,
+    };
+    let mut picks: Vec<(u64, u32)> = Vec::new();
+    for (index, state) in solution.states.iter().enumerate() {
+        if game.outcome(state).is_some() {
+            continue;
+        }
+        let key = game.position_key(state);
+        if splitmix64_local(key) % 10 != wanted {
+            continue;
+        }
+        picks.push((splitmix64_local(key ^ 0x5EA3C4), index as u32));
+    }
+    picks.sort_unstable();
+    picks.truncate(cap);
+    let mut legal = Vec::new();
+    picks
+        .into_iter()
+        .map(|(selection, index)| {
+            let index = index as usize;
+            let state = &solution.states[index];
+            game.legal_moves(state, &mut legal);
+            (
+                selection,
+                state.clone(),
+                solution.values[index],
+                legal.iter().map(|&m| game.action_id(state, m)).collect(),
+                solution.child_values(index),
+            )
+        })
+        .collect()
+}
+
+/// Measurement half of `searched_decision_metrics`, over pre-collected
+/// solved candidates (loopy games supply retrograde candidates).
+pub fn searched_decision_metrics_on<G: Game>(
+    game: &G,
+    net: &crate::model::CompiledNet,
+    candidates: &[SolvedCandidate<G>],
+    node_budget: u64,
+    threads: usize,
+) -> SearchedMetrics {
+    use crate::search::{MoveOrdering, Searcher, Wdl};
 
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
