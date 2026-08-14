@@ -779,6 +779,10 @@ pub struct MatchResult {
     /// 95% lower confidence bound on the score, treating pairs as the
     /// independent unit (normal approximation).
     pub score_lcb95: f64,
+    /// Matching 95% upper confidence bound: `ucb < 0.5` is evidence of
+    /// regression (the §12.6 strike criterion — a sub-0.5 score alone
+    /// is plateau noise; see DECISIONS.md D030).
+    pub score_ucb95: f64,
     pub candidate_wins: u64,
     pub draws: u64,
     pub candidate_losses: u64,
@@ -905,6 +909,7 @@ pub fn play_paired_match<G: Game>(
     let mean = pair_scores.iter().sum::<f64>() / n;
     let var = pair_scores.iter().map(|s| (s - mean).powi(2)).sum::<f64>() / n.max(1.0);
     let lcb = mean - 1.96 * (var / n).sqrt();
+    let ucb = mean + 1.96 * (var / n).sqrt();
     let total_plies: u64 = per_pair.iter().map(|(_, p, _)| p).sum();
     MatchResult {
         pairs,
@@ -912,6 +917,7 @@ pub fn play_paired_match<G: Game>(
         candidate_points: points,
         score,
         score_lcb95: lcb,
+        score_ucb95: ucb,
         candidate_wins: per_pair.iter().map(|(.., t)| t[0]).sum(),
         draws: per_pair.iter().map(|(.., t)| t[1]).sum(),
         candidate_losses: per_pair.iter().map(|(.., t)| t[2]).sum(),

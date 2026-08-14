@@ -290,3 +290,27 @@ file handle on a full disk). After the disk upgrade to 64 GB:
   need the full solution resident for the whole run (~10 GB for
   small), which is not worth one metric. Oracle regret metrics were
   always retrograde-based and needed no change.
+
+## 2026-08-14 — D030: Match-mode strike rule is UCB-based (Phase 9)
+
+§12.6 halts a run after two consecutive regressions. The original
+match-mode strike criterion (candidate score < 0.5) is noise-blind: at
+a plateau, a candidate truly equal to the champion scores below 0.5
+half the time, so two consecutive sub-0.5 draws — probability ~1/4 per
+window — halt a healthy run. This fired on the first fc-full campaign
+(candidates 0.433 and 0.475 over 60 games; UCB95 ≈ 0.54 and 0.58 —
+indistinguishable from equal strength), and only by luck not earlier
+(chunk 1 gen 5 scored 0.367, UCB95 ≈ 0.49, a genuine strike).
+
+Strike criterion now mirrors the promotion gate symmetrically:
+promote on `score_lcb95 > 0.5` (proof of improvement), strike on
+`score_ucb95 < 0.5` (proof of regression), keep the champion
+otherwise. True regressions still halt; plateau noise no longer does.
+A plateaued campaign now simply finishes its chunk budget without
+promotions, which the per-generation log and the rating curve make
+visible. Oracle-mode strikes are unchanged (regret tolerance, D-rule
+v2). Related campaign-boundary fix in the same investigation: the FIFO
+replay window persists across chunks (`replay.jsonl` + `init_replay`);
+without it a continuation chunk's first candidates train on a single
+generation of data (~26 epochs on ~19k positions) and genuinely
+regress.

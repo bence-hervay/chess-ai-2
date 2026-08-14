@@ -1608,11 +1608,13 @@ fn run_selfplay<G: Game>(
             promotion_match = Some(result);
             promoted
         };
-        // A match-mode candidate that is not provably better but not
-        // observably worse (score >= 0.5) keeps the champion without
-        // counting toward the halt: only evidence of regression strikes.
+        // A match-mode candidate that is not provably better keeps the
+        // champion, and only a PROVABLE regression (upper confidence
+        // bound below 0.5) strikes toward the §12.6 halt: a sub-0.5
+        // score alone is plateau noise and halted fc-full spuriously
+        // (0.433/0.475 over 60 games; D030).
         let regression = match &promotion_match {
-            Some(result) => result.score < 0.5,
+            Some(result) => result.score_ucb95 < 0.5,
             None => !promoted,
         };
         if promoted {
