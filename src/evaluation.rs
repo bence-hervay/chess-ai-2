@@ -457,6 +457,130 @@ pub fn searched_decision_metrics<G: Game>(
     }
 }
 
+/// Search-depth disagreement analysis (§24): on one shared state
+/// sample, compare the action chosen at each budget with the deepest
+/// budget's choice and with exact optimality.
+#[derive(Clone, Debug, Serialize)]
+pub struct DisagreementReport {
+    pub node_budget: u64,
+    pub states: usize,
+    /// Fraction of states where this budget picks a different action
+    /// than the deepest probed budget.
+    pub disagreement_with_deepest: f64,
+    /// Of the disagreeing states: deepest is optimal, this budget is not.
+    pub deeper_fixes: u64,
+    /// Of the disagreeing states: this budget is optimal, deepest is not.
+    pub deeper_breaks: u64,
+    /// Both optimal (equally good alternatives) or both suboptimal.
+    pub neutral: u64,
+    pub action_accuracy: f64,
+}
+
+/// Run every probed budget on the same hash-selected sample of `split`.
+pub fn search_disagreement_analysis<G: Game>(
+    game: &G,
+    net: &crate::model::CompiledNet,
+    split: CorpusSplit,
+    cap: usize,
+    budgets: &[u64],
+    threads: usize,
+) -> Vec<DisagreementReport> {
+    use crate::search::{enumerate_solved, ExactSolver, MoveOrdering, Searcher};
+    let mut solver = ExactSolver::new();
+    let mut candidates: Vec<SolvedCandidate<G>> = Vec::new();
+    enumerate_solved(game, &mut solver, |position| {
+        let bucket = splitmix64_local(game.position_key(position.state)) % 10;
+        let wanted = match split {
+            CorpusSplit::Val => 8,
+            CorpusSplit::Test => 9,
+        };
+        if bucket == wanted {
+            let selection = splitmix64_local(game.position_key(position.state) ^ 0x5EA3C4);
+            candidates.push((
+                selection,
+                position.state.clone(),
+                position.value,
+                position
+                    .legal
+                    .iter()
+                    .map(|&m| game.action_id(position.state, m))
+                    .collect(),
+                position.child_values.to_vec(),
+            ));
+        }
+    });
+    candidates.sort_by_key(|(selection, ..)| *selection);
+    candidates.truncate(cap);
+
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("failed to build rayon pool");
+    // Per state: chosen action index and optimality per budget.
+    let per_state: Vec<Vec<(usize, bool)>> = pool.install(|| {
+        candidates
+            .par_iter()
+            .map(|(_, state, value, legal, child_values)| {
+                let mut evaluator = crate::model::ModelEvaluator::new(net);
+                budgets
+                    .iter()
+                    .map(|&budget| {
+                        let mut searcher: Searcher<G> = Searcher::new(
+                            Some(crate::training::SELFPLAY_TT_LOG2),
+                            MoveOrdering::Natural,
+                        );
+                        let mut s = state.clone();
+                        let result = searcher.search(game, &mut s, 512, budget, &mut evaluator);
+                        let chosen = result.best_move.expect("non-terminal state");
+                        let chosen_id = game.action_id(state, chosen);
+                        let index = legal
+                            .iter()
+                            .position(|&a| a == chosen_id)
+                            .expect("chosen move is legal");
+                        (index, child_values[index] == *value)
+                    })
+                    .collect()
+            })
+            .collect()
+    });
+
+    let deepest = budgets.len() - 1;
+    let n = per_state.len().max(1) as f64;
+    budgets
+        .iter()
+        .enumerate()
+        .map(|(bi, &budget)| {
+            let mut disagree = 0u64;
+            let mut fixes = 0u64;
+            let mut breaks = 0u64;
+            let mut neutral = 0u64;
+            let mut correct = 0u64;
+            for row in &per_state {
+                let (index, optimal) = row[bi];
+                let (deep_index, deep_optimal) = row[deepest];
+                correct += u64::from(optimal);
+                if index != deep_index {
+                    disagree += 1;
+                    match (deep_optimal, optimal) {
+                        (true, false) => fixes += 1,
+                        (false, true) => breaks += 1,
+                        _ => neutral += 1,
+                    }
+                }
+            }
+            DisagreementReport {
+                node_budget: budget,
+                states: per_state.len(),
+                disagreement_with_deepest: disagree as f64 / n,
+                deeper_fixes: fixes,
+                deeper_breaks: breaks,
+                neutral,
+                action_accuracy: correct as f64 / n,
+            }
+        })
+        .collect()
+}
+
 /// Exploitability against perfect opposition (plan §32.3): the agent
 /// (search + model) plays both colours from the initial state and every
 /// distinct state at ply 1 and 2; the opponent always plays the first
@@ -582,6 +706,158 @@ pub fn exploitability_vs_perfect<G: Game>(
         agent_wins: games.iter().filter(|(.., s)| *s > 0).count() as u64,
         draws: games.iter().filter(|(.., s)| *s == 0).count() as u64,
         agent_losses: games.iter().filter(|(.., s)| *s < 0).count() as u64,
+    }
+}
+
+/// Result of a paired model-versus-model match (§12.6 non-exact
+/// promotion). The candidate's score is 1 per win, 0.5 per draw.
+#[derive(Clone, Debug, Serialize)]
+pub struct MatchResult {
+    pub pairs: u64,
+    pub games: u64,
+    pub candidate_points: f64,
+    /// candidate_points / games, in [0, 1].
+    pub score: f64,
+    /// 95% lower confidence bound on the score, treating pairs as the
+    /// independent unit (normal approximation).
+    pub score_lcb95: f64,
+    pub candidate_wins: u64,
+    pub draws: u64,
+    pub candidate_losses: u64,
+    pub mean_plies: f64,
+}
+
+/// Play `pairs` paired games between two model+search agents. Each pair
+/// shares one opening (uniform random legal moves for `opening_plies`
+/// plies, seeded by `(run_seed, pair)`) and swaps colours between its
+/// two games; both agents search deterministically with `node_budget`.
+#[allow(clippy::too_many_arguments)] // match protocol parameters are irreducible
+pub fn play_paired_match<G: Game>(
+    game: &G,
+    candidate: &crate::model::CompiledNet,
+    champion: &crate::model::CompiledNet,
+    pairs: u64,
+    opening_plies: u32,
+    candidate_nodes: u64,
+    champion_nodes: u64,
+    run_seed: u64,
+    threads: usize,
+) -> MatchResult {
+    use crate::model::ModelEvaluator;
+    use crate::search::{MoveOrdering, Searcher};
+
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("failed to build rayon pool");
+    // (candidate score per pair over 2 games, plies)
+    let per_pair: Vec<(f64, u64, [u64; 3])> = pool.install(|| {
+        (0..pairs)
+            .into_par_iter()
+            .map(|pair| {
+                let mut pair_score = 0.0f64;
+                let mut plies_total = 0u64;
+                let mut tally = [0u64; 3]; // win/draw/loss for candidate
+                for slot in 0..2u64 {
+                    // Shared opening: derived from the pair only, so both
+                    // slots start from the same position.
+                    let mut opening_rng = game_rng(run_seed, pair, 2);
+                    let mut state = game.initial_state();
+                    let mut moves = Vec::new();
+                    for _ in 0..opening_plies {
+                        if game.outcome(&state).is_some() {
+                            break;
+                        }
+                        game.legal_moves(&state, &mut moves);
+                        let mv = moves[opening_rng.gen_range(0..moves.len())];
+                        game.make_move(&mut state, mv);
+                    }
+                    let candidate_is_p1 = slot == 0;
+                    let mut cand_eval = ModelEvaluator::new(candidate);
+                    let mut champ_eval = ModelEvaluator::new(champion);
+                    let mut cand_search: Searcher<G> = Searcher::new(
+                        Some(crate::training::SELFPLAY_TT_LOG2),
+                        MoveOrdering::Natural,
+                    );
+                    let mut champ_search: Searcher<G> = Searcher::new(
+                        Some(crate::training::SELFPLAY_TT_LOG2),
+                        MoveOrdering::Natural,
+                    );
+                    let outcome = loop {
+                        if let Some(outcome) = game.outcome(&state) {
+                            break outcome;
+                        }
+                        let mover_is_candidate =
+                            (game.side_to_move(&state) == Player::One) == candidate_is_p1;
+                        let result = if mover_is_candidate {
+                            cand_search.search(
+                                game,
+                                &mut state,
+                                512,
+                                candidate_nodes,
+                                &mut cand_eval,
+                            )
+                        } else {
+                            champ_search.search(
+                                game,
+                                &mut state,
+                                512,
+                                champion_nodes,
+                                &mut champ_eval,
+                            )
+                        };
+                        game.make_move(
+                            &mut state,
+                            result
+                                .best_move
+                                .expect("non-terminal search returns a move"),
+                        );
+                        plies_total += 1;
+                    };
+                    let score = match outcome {
+                        Outcome::Draw => 0.5,
+                        Outcome::Win(winner) => {
+                            if (winner == Player::One) == candidate_is_p1 {
+                                1.0
+                            } else {
+                                0.0
+                            }
+                        }
+                    };
+                    pair_score += score;
+                    if score > 0.75 {
+                        tally[0] += 1;
+                    } else if score > 0.25 {
+                        tally[1] += 1;
+                    } else {
+                        tally[2] += 1;
+                    }
+                }
+                (pair_score, plies_total, tally)
+            })
+            .collect()
+    });
+
+    let games = pairs * 2;
+    let points: f64 = per_pair.iter().map(|(s, ..)| s).sum();
+    let score = points / games as f64;
+    // Variance over per-pair scores (each pair contributes score/2 in [0,1]).
+    let pair_scores: Vec<f64> = per_pair.iter().map(|(s, ..)| s / 2.0).collect();
+    let n = pairs.max(1) as f64;
+    let mean = pair_scores.iter().sum::<f64>() / n;
+    let var = pair_scores.iter().map(|s| (s - mean).powi(2)).sum::<f64>() / n.max(1.0);
+    let lcb = mean - 1.96 * (var / n).sqrt();
+    let total_plies: u64 = per_pair.iter().map(|(_, p, _)| p).sum();
+    MatchResult {
+        pairs,
+        games,
+        candidate_points: points,
+        score,
+        score_lcb95: lcb,
+        candidate_wins: per_pair.iter().map(|(.., t)| t[0]).sum(),
+        draws: per_pair.iter().map(|(.., t)| t[1]).sum(),
+        candidate_losses: per_pair.iter().map(|(.., t)| t[2]).sum(),
+        mean_plies: total_plies as f64 / games.max(1) as f64,
     }
 }
 

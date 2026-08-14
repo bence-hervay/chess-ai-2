@@ -1,0 +1,10 @@
+seed = 1
+model_width = 128
+train_positions = 130000
+training_steps = 40000
+
+[game]
+kind = "breakthrough"
+width = 4
+height = 4
+rows = 1

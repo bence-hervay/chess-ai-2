@@ -1,6 +1,7 @@
 //! Game implementations. Each game is a static Rust module implementing
 //! [`crate::game::Game`]; there is no plugin system.
 
+pub mod breakthrough;
 pub mod connect_k;
 
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,8 @@ pub enum GameSpec {
         k: u16,
         gravity: bool,
     },
+    #[serde(rename = "breakthrough")]
+    Breakthrough { width: u16, height: u16, rows: u16 },
 }
 
 impl GameSpec {
@@ -33,6 +36,13 @@ impl GameSpec {
             } => {
                 let g = if *gravity { "g" } else { "f" };
                 format!("connectk-{width}x{height}k{k}{g}")
+            }
+            GameSpec::Breakthrough {
+                width,
+                height,
+                rows,
+            } => {
+                format!("breakthrough-{width}x{height}r{rows}")
             }
         }
     }

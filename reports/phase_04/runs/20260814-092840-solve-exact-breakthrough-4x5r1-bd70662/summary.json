@@ -1,0 +1,28 @@
+{
+  "corpus_states": 1800365,
+  "cpu_seconds": 7.98,
+  "memo_hits": 15709802,
+  "method": "exact",
+  "nodes": 24134219,
+  "optimal_root_actions": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8,
+    9,
+    10
+  ],
+  "ordering": "natural",
+  "peak_rss_bytes": 78761984,
+  "root_wdl": "Win",
+  "solve_seconds": 1.9052273880000001,
+  "solved_states": 1800365,
+  "wall_seconds": 7.987533111,
+  "wdl_counts": {
+    "draw": 0,
+    "loss": 414064,
+    "win": 1386301
+  }
+}

@@ -949,6 +949,32 @@ mod tests {
     }
 
     #[test]
+    fn breakthrough_small_boards_solve_consistently() {
+        use crate::games::breakthrough::Breakthrough;
+        for (w, h, rows) in [(2, 4, 1), (3, 4, 1), (2, 5, 1)] {
+            let game = Breakthrough::new(w, h, rows).unwrap();
+            let mut state = game.initial_state();
+            let mut solver = ExactSolver::new();
+            let exact = solver.solve(&game, &mut state);
+            let mut nodes = 0u64;
+            let exhaustive =
+                Wdl::from_solved_score(exhaustive_negamax(&game, &mut state, 0, &mut nodes));
+            assert_eq!(exact, exhaustive, "{w}x{h}r{rows} root value");
+            let mut searcher: Searcher<Breakthrough> =
+                Searcher::new(Some(14), MoveOrdering::Natural);
+            let depth = game.cell_count() * 2; // captures shorten games; bound generously
+            let result = searcher.search(&game, &mut state, depth, u64::MAX, &mut ZeroEvaluator);
+            assert_eq!(
+                Wdl::from_solved_score(result.value),
+                exact,
+                "{w}x{h}r{rows} alpha-beta agreement"
+            );
+            // Breakthrough has no draws: the root is decisive.
+            assert_ne!(exact, Wdl::Draw, "{w}x{h}r{rows} must be decisive");
+        }
+    }
+
+    #[test]
     fn enumeration_matches_state_based_reference_on_tic_tac_toe() {
         let game = ConnectK::new(3, 3, 3, false).unwrap();
 

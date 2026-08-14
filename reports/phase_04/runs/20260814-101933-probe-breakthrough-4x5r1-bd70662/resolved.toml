@@ -1,0 +1,16 @@
+checkpoint = "runs/20260814-095222-selfplay-breakthrough-4x5r1-w64-g400-e10-s1-bd70662/checkpoint"
+node_budgets = [
+    1,
+    10,
+    100,
+    600,
+    5000,
+]
+searched_sample = 2000
+threads = 7
+
+[game]
+kind = "breakthrough"
+width = 4
+height = 5
+rows = 1

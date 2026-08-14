@@ -1,0 +1,83 @@
+{
+  "config": {
+    "game": {
+      "height": 5,
+      "kind": "breakthrough",
+      "rows": 1,
+      "width": 4
+    },
+    "model_width": 128,
+    "seed": 1,
+    "train_positions": 1400000,
+    "training_steps": 40000
+  },
+  "cpu_seconds": 319.6,
+  "dataset": {
+    "test": 179662,
+    "train": 1441047,
+    "used_train_positions": 1400000,
+    "val": 179656
+  },
+  "dataset_seconds": 8.137550617,
+  "examples_per_second": 34697.873782760544,
+  "last_periodic_val": {
+    "action_accuracy": 0.9993710201718841,
+    "action_accuracy_by_wdl": [
+      1.0,
+      null,
+      0.999183053788317
+    ],
+    "brier": 0.0017413248037536537,
+    "mean_regret_levels": 0.0012579596562319099,
+    "optimal_mass": 0.9957445418961111,
+    "states": 179656,
+    "wdl_accuracy": 0.9988255332413056,
+    "wdl_log_loss": 0.003175651737593734
+  },
+  "parameter_count": 46399,
+  "peak_rss_bytes": 662683648,
+  "test_metrics": {
+    "action_accuracy": 0.9993766071846022,
+    "action_accuracy_by_wdl": [
+      1.0,
+      null,
+      0.9991890345891229
+    ],
+    "brier": 0.0018321285654994235,
+    "mean_regret_levels": 0.001246785630795605,
+    "optimal_mass": 0.995898531827895,
+    "states": 179662,
+    "wdl_accuracy": 0.9988311384711291,
+    "wdl_log_loss": 0.003439579913906081
+  },
+  "train_metrics": {
+    "action_accuracy": 0.9995572663487035,
+    "action_accuracy_by_wdl": [
+      1.0,
+      null,
+      0.9994251599731141
+    ],
+    "brier": 0.0014015736533932546,
+    "mean_regret_levels": 0.0008854673025931839,
+    "optimal_mass": 0.9960354258830394,
+    "states": 1441047,
+    "wdl_accuracy": 0.9990833054022527,
+    "wdl_log_loss": 0.002607610489960383
+  },
+  "train_seconds": 295.118947752,
+  "val_metrics": {
+    "action_accuracy": 0.9993710201718841,
+    "action_accuracy_by_wdl": [
+      1.0,
+      null,
+      0.999183053788317
+    ],
+    "brier": 0.0017413248037536537,
+    "mean_regret_levels": 0.0012579596562319099,
+    "optimal_mass": 0.9957445418961111,
+    "states": 179656,
+    "wdl_accuracy": 0.9988255332413056,
+    "wdl_log_loss": 0.003175651737593734
+  },
+  "wall_seconds": 320.069314866
+}

@@ -1,0 +1,8 @@
+method = "exact"
+ordering = "natural"
+
+[game]
+kind = "breakthrough"
+width = 4
+height = 5
+rows = 1

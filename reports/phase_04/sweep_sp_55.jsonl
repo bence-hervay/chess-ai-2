@@ -1,0 +1,2 @@
+{"command": "selfplay", "config": "configs/phase_04/sp_bt55_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_04/sp_bt55_s2.toml", "cores": 7}

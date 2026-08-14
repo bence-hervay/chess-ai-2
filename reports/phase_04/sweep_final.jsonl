@@ -1,0 +1,3 @@
+{"command": "train", "config": "configs/phase_04/train_4x4r1_n16000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_04/train_4x4r1_n65000.toml", "cores": 1}
+{"command": "selfplay", "config": "configs/phase_04/sp_bt44_b150.toml", "cores": 5}

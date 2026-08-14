@@ -37,11 +37,25 @@ environment manifest, metrics, and game records.
 | 1 — Exact solving and search correctness | **PASS** | [reports/phase_01.md](reports/phase_01.md) |
 | 2 — Supervised oracle ceiling | **PASS** | [reports/phase_02.md](reports/phase_02.md) |
 | 3 — Self-play recovery of exact strategy | **PASS** | [reports/phase_03.md](reports/phase_03.md) |
-| 4 — Breakthrough curriculum | not started | — |
+| 4 — Breakthrough curriculum | **PASS** | [reports/phase_04.md](reports/phase_04.md) |
+| 5 — Othello benchmark | not started | — |
 
 ### Current state (2026-08-14)
 
-Phases 0–3 complete and promoted. **Expert Iteration recovers exact
+Phases 0–4 complete and promoted. **The frozen stack transfers to a new
+game with rule code only** (Breakthrough, §24 integrity gate intact):
+
+- Exact sizes: supervised ceiling 99.97% WDL accuracy; self-play
+  recovery reaches **99%+ raw** and 100% searched optimal decisions —
+  no Connect-k-style coverage plateau (decisive games, richer lines).
+- Strategic 5x5 (not exactly solvable): match-based promotion (paired
+  colour-swapped games, LCB gate) drives champions from 0.94 to 0.99
+  score vs the generation-0 baseline; a frozen champion at 4× search
+  beats itself at 1× with 73% (the equal-budget control ties exactly).
+- Search-depth disagreement analysis: deeper search fixes decisions and
+  breaks none, at both exact sizes.
+
+Phase 3 established ExIt recovery on Connect-k. **Expert Iteration recovers exact
 play without oracle labels** on the solved benchmark (4x4 k=4 gravity):
 
 - The searched self-play agent reaches **100% oracle-optimal decisions**
@@ -80,7 +94,7 @@ is mathematically correct before any learning exists:
 - Phase 0 foundation: byte-identical game records across 1/2/4/8 worker
   threads; 1.13M random games/s at 8 workers.
 
-Next: Phase 4 — the Breakthrough curriculum: new game rules only
-(search/model/training frozen), rule-correctness tests, exact solving
-on small boards, then the same supervised-ceiling and self-play
-experiments up to the first strategic (non-exact) size.
+Next: Phase 5 — Othello as an independent positional benchmark (flip
+mechanics, pass moves, unstable material), same curriculum: rule tests,
+exact small boards, supervised ceiling, self-play recovery, match-based
+machinery at full size.

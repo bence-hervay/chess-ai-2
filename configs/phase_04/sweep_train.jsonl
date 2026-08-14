@@ -1,0 +1,5 @@
+{"command": "train", "config": "configs/phase_04/train_4x4r1_w64_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_04/train_4x4r1_w128_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_04/train_4x4r1_w128_t40000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_04/train_4x5r1_w64_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_04/train_4x5r1_w128_t40000.toml", "cores": 1}

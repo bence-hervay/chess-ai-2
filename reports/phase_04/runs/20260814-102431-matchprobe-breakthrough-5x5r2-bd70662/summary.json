@@ -1,0 +1,86 @@
+{
+  "budgets": [
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 113,
+        "candidate_points": 47.0,
+        "candidate_wins": 47,
+        "draws": 0,
+        "games": 160,
+        "mean_plies": 17.71875,
+        "pairs": 80,
+        "score": 0.29375,
+        "score_lcb95": 0.21884698458172727
+      },
+      "node_budget": 60
+    },
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 124,
+        "candidate_points": 36.0,
+        "candidate_wins": 36,
+        "draws": 0,
+        "games": 160,
+        "mean_plies": 18.3125,
+        "pairs": 80,
+        "score": 0.225,
+        "score_lcb95": 0.1704909411198469
+      },
+      "node_budget": 200
+    },
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 80,
+        "candidate_points": 80.0,
+        "candidate_wins": 80,
+        "draws": 0,
+        "games": 160,
+        "mean_plies": 17.9375,
+        "pairs": 80,
+        "score": 0.5,
+        "score_lcb95": 0.5
+      },
+      "node_budget": 600
+    },
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 43,
+        "candidate_points": 117.0,
+        "candidate_wins": 117,
+        "draws": 0,
+        "games": 160,
+        "mean_plies": 18.54375,
+        "pairs": 80,
+        "score": 0.73125,
+        "score_lcb95": 0.6713783208123406
+      },
+      "node_budget": 2400
+    }
+  ],
+  "config": {
+    "baseline_nodes": 600,
+    "checkpoint": "runs/20260814-101500-selfplay-breakthrough-5x5r2-w64-g400-e10-s2-bd70662/checkpoint",
+    "game": {
+      "height": 5,
+      "kind": "breakthrough",
+      "rows": 2,
+      "width": 5
+    },
+    "node_budgets": [
+      60,
+      200,
+      600,
+      2400
+    ],
+    "opening_plies": 2,
+    "pairs": 80,
+    "seed": 7,
+    "threads": 7
+  },
+  "parameter_count": 16654,
+  "wall_seconds": 5.159292218
+}

@@ -7,6 +7,9 @@ epsilon = 0.2
 gen_node_budget = 600
 eval_node_budget = 600
 replay_generations = 4
+promotion = "oracle"
+promotion_pairs = 0
+opening_plies = 0
 threads = 7
 
 [game]

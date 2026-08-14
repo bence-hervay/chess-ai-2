@@ -1,0 +1,19 @@
+seed = 1
+model_width = 64
+generations = 16
+games_per_generation = 400
+steps_per_generation = 2000
+epsilon = 0.1
+gen_node_budget = 600
+eval_node_budget = 600
+replay_generations = 4
+promotion = "match"
+promotion_pairs = 40
+opening_plies = 2
+threads = 7
+
+[game]
+kind = "breakthrough"
+width = 5
+height = 5
+rows = 2

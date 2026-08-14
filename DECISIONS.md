@@ -140,3 +140,31 @@ sort keeps action-ID order on ties), then Reversed degradation if
 configured. Search with too small a budget for one iteration returns
 the first ordered move (the policy argmax), making node budget 1 behave
 as raw-policy play.
+
+## 2026-08-14 — D020: Breakthrough ruleset
+
+Selected rules: pawns move one square straight or diagonally forward;
+diagonal moves may capture, straight moves never; reaching the
+opponent's home rank wins; a side with no legal move (subsuming loss of
+all pawns) loses. No draws are possible (pawns only advance). rows =
+initial pawn ranks per side is a game parameter (rows=1 for small exact
+boards, rows=2 standard).
+
+## 2026-08-14 — D021: Match-based promotion and probes for non-exact games
+
+`lab selfplay` gains promotion = "oracle" | "match" (§12.6): match mode
+plays paired games vs the frozen champion from shared random openings
+(promotion_pairs pairs, opening_plies uniform-random plies, colour
+swap); promote only when the candidate's 95% LCB exceeds 0.5. Champion
+progression is measured per generation against the frozen generation-0
+baseline. `lab evaluate` kind match_probe plays a checkpoint at several
+budgets against itself at a baseline budget (search-scaling evidence
+without an oracle). play_paired_match takes asymmetric budgets.
+
+## 2026-08-14 — D022: Breakthrough exact ladder capped at 4x5 rows=1
+
+Measured: 3x5r1 = 30k states (0.07s), 4x4r1 = 164k (0.5s), 4x5r1 = 1.8M
+(8s, 75MB). 4x5r2 exceeded a 10-minute budget and multi-GB corpus;
+aborted and deleted. Strategic (non-exact) size: 5x5 rows=2.
+exploitability_vs_perfect now pre-solves once and clones the memo per
+game (ExactSolver is Clone) so large exact instances stay probe-able.

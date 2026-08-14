@@ -15,14 +15,15 @@ use burn::prelude::Backend as _;
 use burn::record::{BinFileRecorder, FullPrecisionSettings};
 use clap::{Parser, Subcommand};
 use selfplay_lab::evaluation::{
-    evaluate_model_oracle, exploitability_vs_perfect, searched_decision_metrics, CorpusSplit,
-    OracleMetrics,
+    evaluate_model_oracle, exploitability_vs_perfect, play_paired_match,
+    search_disagreement_analysis, searched_decision_metrics, CorpusSplit, OracleMetrics,
 };
 use selfplay_lab::evaluation::{run_random_arena, ArenaSummary};
 use selfplay_lab::experiment::{
     collect_manifest, peak_rss_bytes, process_cpu_seconds, unix_seconds, Manifest, RunDir,
 };
 use selfplay_lab::game::Game;
+use selfplay_lab::games::breakthrough::Breakthrough;
 use selfplay_lab::games::connect_k::ConnectK;
 use selfplay_lab::games::GameSpec;
 use selfplay_lab::model::{CompiledNet, InferBackend, ModelDims, PolicyValueNet, TrainBackend};
@@ -37,6 +38,33 @@ use serde::{Deserialize, Serialize};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+
+/// Construct the concrete game named by a [`GameSpec`] and evaluate the
+/// same generic body for it. Both games expose inherent
+/// `feature_count()` / `action_count()` methods, so bodies may use them.
+macro_rules! dispatch_game {
+    ($spec:expr, $game:ident, $body:expr) => {
+        match $spec {
+            GameSpec::ConnectK {
+                width,
+                height,
+                k,
+                gravity,
+            } => {
+                let $game = ConnectK::new(*width, *height, *k, *gravity)?;
+                $body
+            }
+            GameSpec::Breakthrough {
+                width,
+                height,
+                rows,
+            } => {
+                let $game = Breakthrough::new(*width, *height, *rows)?;
+                $body
+            }
+        }
+    };
+}
 
 /// Transposition-table size used by solve experiments (2^20 entries).
 const SOLVE_TT_LOG2: u32 = 20;
@@ -87,6 +115,26 @@ enum EvaluateConfig {
     /// searched decisions and exploitability at several node budgets
     /// (Phase 3 diagnostic matrix).
     OracleProbe(ProbeConfig),
+    /// Search-scaling probe without an oracle: the checkpoint at each
+    /// probed node budget plays paired matches against itself at a
+    /// fixed baseline budget (Phase 4, non-exact sizes).
+    MatchProbe(MatchProbeConfig),
+}
+
+/// Match-probe parameters.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MatchProbeConfig {
+    /// Checkpoint directory containing `model.bin` and `model.json`.
+    checkpoint: PathBuf,
+    /// Node budgets to probe against the baseline.
+    node_budgets: Vec<u64>,
+    baseline_nodes: u64,
+    pairs: u64,
+    opening_plies: u32,
+    seed: u64,
+    threads: usize,
+    game: GameSpec,
 }
 
 /// Paired-arena parameters. Every field is required.
@@ -244,7 +292,73 @@ fn evaluate(config_path: &Path) -> Result<(), String> {
     match read_config::<EvaluateConfig>(config_path)? {
         EvaluateConfig::RandomArena(config) => run_arena_command(config),
         EvaluateConfig::OracleProbe(config) => probe(config),
+        EvaluateConfig::MatchProbe(config) => match_probe(config),
     }
+}
+
+fn match_probe(config: MatchProbeConfig) -> Result<(), String> {
+    if config.node_budgets.is_empty() || config.pairs == 0 {
+        return Err("node_budgets and pairs must be non-empty/positive".into());
+    }
+    let label = format!("matchprobe-{}", config.game.label());
+    let (run_dir, manifest) = start_run(&label, &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    let (net, dims, _max_features) = load_checkpoint(&config.checkpoint)?;
+    let mut manifest = manifest;
+    manifest.model_parameter_count = net.num_params() as u64;
+    let compiled = CompiledNet::from_net(&net, dims);
+    let started = Instant::now();
+    let mut reports = Vec::new();
+    dispatch_game!(&config.game, game, {
+        for &budget in &config.node_budgets {
+            let result = play_paired_match(
+                &game,
+                &compiled,
+                &compiled,
+                config.pairs,
+                config.opening_plies,
+                budget,
+                config.baseline_nodes,
+                config.seed ^ budget,
+                config.threads,
+            );
+            say(
+                format!(
+                    "budget {budget} vs baseline {}: score {:.3} (lcb {:.3}), \
+                     +{} ={} -{} over {} games",
+                    config.baseline_nodes,
+                    result.score,
+                    result.score_lcb95,
+                    result.candidate_wins,
+                    result.draws,
+                    result.candidate_losses,
+                    result.games,
+                ),
+                &mut log,
+            );
+            reports.push(serde_json::json!({
+                "node_budget": budget,
+                "baseline_nodes": config.baseline_nodes,
+                "match": result,
+            }));
+        }
+    });
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "config": config,
+                "parameter_count": manifest.model_parameter_count,
+                "budgets": reports,
+                "wall_seconds": started.elapsed().as_secs_f64(),
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(&run_dir, manifest, &log)
 }
 
 fn run_arena_command(config: EvaluationConfig) -> Result<(), String> {
@@ -271,17 +385,7 @@ fn run_arena_command(config: EvaluationConfig) -> Result<(), String> {
         &mut log,
     );
 
-    let (arena, metrics) = match &config.game {
-        GameSpec::ConnectK {
-            width,
-            height,
-            k,
-            gravity,
-        } => {
-            let game = ConnectK::new(*width, *height, *k, *gravity)?;
-            run_arena(&game, &config, &run_dir)?
-        }
-    };
+    let (arena, metrics) = dispatch_game!(&config.game, game, run_arena(&game, &config, &run_dir)?);
 
     say(
         format!(
@@ -373,18 +477,10 @@ fn solve(config_path: &Path) -> Result<(), String> {
     );
     say("thread plan: 1 solver thread".to_string(), &mut log);
 
-    match &config.game {
-        GameSpec::ConnectK {
-            width,
-            height,
-            k,
-            gravity,
-        } => {
-            let game = ConnectK::new(*width, *height, *k, *gravity)?;
-            let max_depth = u32::from(*width) * u32::from(*height);
-            run_solve(&game, max_depth, &config, &run_dir, &mut log)?;
-        }
-    }
+    dispatch_game!(&config.game, game, {
+        let max_depth = game.cell_count();
+        run_solve(&game, max_depth, &config, &run_dir, &mut log)?;
+    });
     finish_run(&run_dir, manifest, &log)
 }
 
@@ -595,22 +691,14 @@ fn train(config_path: &Path) -> Result<(), String> {
         &mut log,
     );
 
-    match &config.game {
-        GameSpec::ConnectK {
-            width,
-            height,
-            k,
-            gravity,
-        } => {
-            let game = ConnectK::new(*width, *height, *k, *gravity)?;
-            let dims = ModelDims {
-                feature_count: game.feature_count(),
-                action_count: game.action_count(),
-                width: config.model_width,
-            };
-            run_train(&game, dims, &config, &run_dir, &mut manifest, &mut log)?;
-        }
-    }
+    dispatch_game!(&config.game, game, {
+        let dims = ModelDims {
+            feature_count: game.feature_count(),
+            action_count: game.action_count(),
+            width: config.model_width,
+        };
+        run_train(&game, dims, &config, &run_dir, &mut manifest, &mut log)?;
+    });
     finish_run(&run_dir, manifest, &log)
 }
 
@@ -972,6 +1060,15 @@ struct SelfPlayConfig {
     /// FIFO replay window in generations (1 = current generation only;
     /// §12.5 sanctions one fixed window once forgetting is measured).
     replay_generations: u32,
+    /// Promotion mode (§12.6): "oracle" for exactly solved games,
+    /// "match" for paired games against the champion.
+    promotion: String,
+    /// Pairs per promotion/progression match. Must be 0 in oracle mode
+    /// and positive in match mode.
+    promotion_pairs: u64,
+    /// Uniform-random shared opening plies per match pair. Must be 0 in
+    /// oracle mode.
+    opening_plies: u32,
     threads: usize,
     game: GameSpec,
 }
@@ -983,6 +1080,21 @@ fn selfplay(config_path: &Path) -> Result<(), String> {
     }
     if config.replay_generations == 0 {
         return Err("replay_generations must be at least 1".into());
+    }
+    match config.promotion.as_str() {
+        "oracle" => {
+            if config.promotion_pairs != 0 || config.opening_plies != 0 {
+                return Err(
+                    "oracle promotion takes promotion_pairs = 0 and opening_plies = 0".into(),
+                );
+            }
+        }
+        "match" => {
+            if config.promotion_pairs == 0 {
+                return Err("match promotion requires positive promotion_pairs".into());
+            }
+        }
+        other => return Err(format!("unknown promotion mode {other:?}")),
     }
     if !(0.0..=1.0).contains(&config.epsilon) {
         return Err("epsilon must be in [0, 1]".into());
@@ -1008,22 +1120,14 @@ fn selfplay(config_path: &Path) -> Result<(), String> {
         ),
         &mut log,
     );
-    match &config.game {
-        GameSpec::ConnectK {
-            width,
-            height,
-            k,
-            gravity,
-        } => {
-            let game = ConnectK::new(*width, *height, *k, *gravity)?;
-            let dims = ModelDims {
-                feature_count: game.feature_count(),
-                action_count: game.action_count(),
-                width: config.model_width,
-            };
-            run_selfplay(&game, dims, &config, &run_dir, &mut manifest, &mut log)?;
-        }
-    }
+    dispatch_game!(&config.game, game, {
+        let dims = ModelDims {
+            feature_count: game.feature_count(),
+            action_count: game.action_count(),
+            width: config.model_width,
+        };
+        run_selfplay(&game, dims, &config, &run_dir, &mut manifest, &mut log)?;
+    });
     finish_run(&run_dir, manifest, &log)
 }
 
@@ -1039,16 +1143,24 @@ fn run_selfplay<G: Game>(
     let started = Instant::now();
     let device = Default::default();
 
-    // Oracle corpus for evaluation only (never for training labels).
-    let dataset = build_exact_dataset(game);
-    say(
-        format!(
-            "oracle corpus for evaluation: {} val / {} test states",
-            dataset.val.len(),
-            dataset.test.len()
-        ),
-        log,
-    );
+    // Oracle corpus for evaluation only (never for training labels);
+    // match-mode games are not exactly solvable, so they use paired
+    // matches instead (§12.6).
+    let dataset = if config.promotion == "oracle" {
+        let dataset = build_exact_dataset(game);
+        say(
+            format!(
+                "oracle corpus for evaluation: {} val / {} test states",
+                dataset.val.len(),
+                dataset.test.len()
+            ),
+            log,
+        );
+        Some(dataset)
+    } else {
+        say("match promotion: no oracle corpus".to_string(), log);
+        None
+    };
 
     run_dir
         .create_subdir("selfplay")
@@ -1061,11 +1173,14 @@ fn run_selfplay<G: Game>(
     TrainBackend::seed(&device, config.seed);
     let mut champion = PolicyValueNet::<TrainBackend>::new(dims, &device);
     manifest.model_parameter_count = champion.num_params() as u64;
-    let mut champion_val =
-        evaluate_model_oracle(&champion.valid(), &dataset.val, dims, dataset.max_features);
+    let mut champion_val = dataset
+        .as_ref()
+        .map(|d| evaluate_model_oracle(&champion.valid(), &d.val, dims, d.max_features));
+    let gen0_compiled = CompiledNet::from_net(&champion.valid(), dims);
     let recorder = BinFileRecorder::<FullPrecisionSettings>::new();
     let mut generation_summaries: Vec<serde_json::Value> = Vec::new();
     let mut consecutive_rejections = 0u32;
+    let mut max_features_seen = 1usize;
     let mut replay: std::collections::VecDeque<Vec<TrainRow>> = std::collections::VecDeque::new();
 
     for generation in 0..config.generations {
@@ -1106,7 +1221,11 @@ fn run_selfplay<G: Game>(
             replay.pop_front();
         }
         let rows: Vec<TrainRow> = replay.iter().flatten().cloned().collect();
-        let max_features = dataset.max_features;
+        let max_features = dataset
+            .as_ref()
+            .map(|d| d.max_features)
+            .unwrap_or_else(|| rows.iter().map(|r| r.features.len()).max().unwrap_or(1));
+        max_features_seen = max_features_seen.max(max_features);
         let stream_seed = config.seed ^ (u64::from(generation) << 20);
         let mut last_losses = (f32::NAN, f32::NAN);
         let candidate = train_steps(
@@ -1119,36 +1238,95 @@ fn run_selfplay<G: Game>(
             |m, _| last_losses = (m.wdl_loss, m.policy_loss),
         );
 
-        // 3. Promotion by oracle metrics on the validation split (§12.6),
-        // rule v2: candidate regret may exceed the champion's by at most
-        // a fixed noise tolerance (the strict rule halted runs on ~0.006
-        // regret jitter at plateau while exploitability was still
-        // improving; see DECISIONS.md).
+        // 3. Promotion (§12.6). Oracle mode, rule v2: candidate regret
+        // may exceed the champion's by at most a fixed noise tolerance
+        // (the strict rule halted runs on ~0.006 regret jitter at
+        // plateau; see DECISIONS.md). Match mode: paired games against
+        // the frozen champion; promote only when the candidate's 95%
+        // lower confidence bound exceeds 0.5.
         const PROMOTION_REGRET_TOLERANCE: f64 = 0.005;
-        let candidate_val =
-            evaluate_model_oracle(&candidate.valid(), &dataset.val, dims, dataset.max_features);
-        let promoted = candidate_val.mean_regret_levels
-            <= champion_val.mean_regret_levels + PROMOTION_REGRET_TOLERANCE;
+        let mut candidate_val = None;
+        let mut promotion_match = None;
+        let promoted = if let Some(dataset) = &dataset {
+            let metrics =
+                evaluate_model_oracle(&candidate.valid(), &dataset.val, dims, dataset.max_features);
+            let promoted = metrics.mean_regret_levels
+                <= champion_val
+                    .as_ref()
+                    .expect("oracle mode")
+                    .mean_regret_levels
+                    + PROMOTION_REGRET_TOLERANCE;
+            if promoted {
+                champion_val = Some(metrics.clone());
+            }
+            candidate_val = Some(metrics);
+            promoted
+        } else {
+            let candidate_compiled = CompiledNet::from_net(&candidate.valid(), dims);
+            let result = play_paired_match(
+                game,
+                &candidate_compiled,
+                &compiled,
+                config.promotion_pairs,
+                config.opening_plies,
+                config.gen_node_budget,
+                config.gen_node_budget,
+                config.seed ^ (u64::from(generation) << 32) ^ 0x9a7c,
+                config.threads,
+            );
+            let promoted = result.score_lcb95 > 0.5;
+            promotion_match = Some(result);
+            promoted
+        };
+        // A match-mode candidate that is not provably better but not
+        // observably worse (score >= 0.5) keeps the champion without
+        // counting toward the halt: only evidence of regression strikes.
+        let regression = match &promotion_match {
+            Some(result) => result.score < 0.5,
+            None => !promoted,
+        };
         if promoted {
             champion = candidate;
-            champion_val = candidate_val.clone();
             consecutive_rejections = 0;
-        } else {
+        } else if regression {
             consecutive_rejections += 1;
         }
 
-        // 4. Per-generation probes with the (possibly updated) champion.
+        // 4. Per-generation probes with the (possibly updated) champion:
+        // oracle metrics when solvable, otherwise a champion-progression
+        // match against the frozen generation-0 baseline.
         let probe_net = CompiledNet::from_net(&champion.valid(), dims);
-        let exploit =
-            exploitability_vs_perfect(game, &probe_net, config.eval_node_budget, config.threads);
-        let searched = searched_decision_metrics(
-            game,
-            &probe_net,
-            CorpusSplit::Val,
-            500,
-            config.eval_node_budget,
-            config.threads,
-        );
+        let mut exploit = None;
+        let mut searched = None;
+        let mut progression = None;
+        if dataset.is_some() {
+            exploit = Some(exploitability_vs_perfect(
+                game,
+                &probe_net,
+                config.eval_node_budget,
+                config.threads,
+            ));
+            searched = Some(searched_decision_metrics(
+                game,
+                &probe_net,
+                CorpusSplit::Val,
+                500,
+                config.eval_node_budget,
+                config.threads,
+            ));
+        } else {
+            progression = Some(play_paired_match(
+                game,
+                &probe_net,
+                &gen0_compiled,
+                config.promotion_pairs,
+                config.opening_plies,
+                config.eval_node_budget,
+                config.eval_node_budget,
+                config.seed ^ 0x6e40,
+                config.threads,
+            ));
+        }
 
         champion
             .valid()
@@ -1176,16 +1354,20 @@ fn run_selfplay<G: Game>(
             "train_wdl_loss": last_losses.0,
             "train_policy_loss": last_losses.1,
             "candidate_val": candidate_val,
+            "promotion_match": promotion_match,
             "promoted": promoted,
             "champion_val": champion_val,
             "exploitability": exploit,
             "searched_val": searched,
+            "progression_vs_gen0": progression,
             "generation_seconds": gen_started.elapsed().as_secs_f64(),
         });
         run_dir
             .append_jsonl("metrics.jsonl", &[&gen_summary])
             .map_err(|e| e.to_string())?;
-        say(
+        let line = if let (Some(candidate_val), Some(searched), Some(exploit)) =
+            (&candidate_val, &searched, &exploit)
+        {
             format!(
                 "gen {generation}: {} games, {} positions ({} explore), losses {:.3}/{:.3}, \
                  val regret {:.4} ({}), searched@{} acc {:.4}, exploit drops {}/{} ({:.1}s)",
@@ -1201,9 +1383,26 @@ fn run_selfplay<G: Game>(
                 exploit.avoidable_drops,
                 exploit.games,
                 gen_started.elapsed().as_secs_f64(),
-            ),
-            log,
-        );
+            )
+        } else {
+            let m = promotion_match.as_ref().expect("match mode");
+            let p = progression.as_ref().expect("match mode");
+            format!(
+                "gen {generation}: {} games, {} positions ({} explore), losses {:.3}/{:.3}, \
+                 vs champion {:.3} (lcb {:.3}, {}), vs gen0 {:.3} ({:.1}s)",
+                stats.games,
+                stats.positions,
+                stats.exploratory_moves,
+                last_losses.0,
+                last_losses.1,
+                m.score,
+                m.score_lcb95,
+                if promoted { "promoted" } else { "REJECTED" },
+                p.score,
+                gen_started.elapsed().as_secs_f64(),
+            )
+        };
+        say(line, log);
         generation_summaries.push(gen_summary);
 
         if consecutive_rejections >= 2 {
@@ -1227,63 +1426,97 @@ fn run_selfplay<G: Game>(
         .clone()
         .save_file(run_dir.path().join("checkpoint/model"), &recorder)
         .map_err(|e| format!("saving final checkpoint: {e}"))?;
+    let checkpoint_max_features = dataset
+        .as_ref()
+        .map(|d| d.max_features)
+        .unwrap_or(max_features_seen);
     run_dir
         .write_json(
             "checkpoint/model.json",
             &serde_json::json!({
                 "dims": dims,
-                "max_features": dataset.max_features,
+                "max_features": checkpoint_max_features,
                 "seed": config.seed,
             }),
         )
         .map_err(|e| e.to_string())?;
     let final_compiled = CompiledNet::from_net(&final_infer, dims);
-    let raw_test = evaluate_model_oracle(&final_infer, &dataset.test, dims, dataset.max_features);
-    let searched_test = searched_decision_metrics(
-        game,
-        &final_compiled,
-        CorpusSplit::Test,
-        2000,
-        config.eval_node_budget,
-        config.threads,
-    );
-    let exploit_final = exploitability_vs_perfect(
-        game,
-        &final_compiled,
-        config.eval_node_budget,
-        config.threads,
-    );
+    let mut final_summary = serde_json::json!({
+        "config": config,
+        "parameter_count": manifest.model_parameter_count,
+        "generations": generation_summaries,
+    });
+    if let Some(dataset) = &dataset {
+        let raw_test =
+            evaluate_model_oracle(&final_infer, &dataset.test, dims, dataset.max_features);
+        let searched_test = searched_decision_metrics(
+            game,
+            &final_compiled,
+            CorpusSplit::Test,
+            2000,
+            config.eval_node_budget,
+            config.threads,
+        );
+        let exploit_final = exploitability_vs_perfect(
+            game,
+            &final_compiled,
+            config.eval_node_budget,
+            config.threads,
+        );
+        say(
+            format!(
+                "final: raw test regret {:.4}, searched test acc {:.4} / regret {:.4}, \
+                 exploit drops {}/{}",
+                raw_test.mean_regret_levels,
+                searched_test.action_accuracy,
+                searched_test.mean_regret_levels,
+                exploit_final.avoidable_drops,
+                exploit_final.games,
+            ),
+            log,
+        );
+        final_summary["final_raw_test"] = serde_json::to_value(&raw_test).expect("serializable");
+        final_summary["final_searched_test"] =
+            serde_json::to_value(&searched_test).expect("serializable");
+        final_summary["final_exploitability"] =
+            serde_json::to_value(&exploit_final).expect("serializable");
+    } else {
+        // Champion progression: a larger final match against the frozen
+        // generation-0 baseline.
+        let final_match = play_paired_match(
+            game,
+            &final_compiled,
+            &gen0_compiled,
+            config.promotion_pairs * 2,
+            config.opening_plies,
+            config.eval_node_budget,
+            config.eval_node_budget,
+            config.seed ^ 0xf17a1,
+            config.threads,
+        );
+        say(
+            format!(
+                "final: vs gen0 score {:.3} (lcb {:.3}) over {} games, mean plies {:.1}",
+                final_match.score,
+                final_match.score_lcb95,
+                final_match.games,
+                final_match.mean_plies,
+            ),
+            log,
+        );
+        final_summary["final_vs_gen0"] = serde_json::to_value(&final_match).expect("serializable");
+    }
     let wall_seconds = started.elapsed().as_secs_f64();
     let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
     say(
-        format!(
-            "final: raw test regret {:.4}, searched test acc {:.4} / regret {:.4}, \
-             exploit drops {}/{}; wall {:.0}s cpu {:.0}s",
-            raw_test.mean_regret_levels,
-            searched_test.action_accuracy,
-            searched_test.mean_regret_levels,
-            exploit_final.avoidable_drops,
-            exploit_final.games,
-            wall_seconds,
-            cpu_seconds,
-        ),
+        format!("wall {wall_seconds:.0}s cpu {cpu_seconds:.0}s"),
         log,
     );
+    final_summary["wall_seconds"] = serde_json::json!(wall_seconds);
+    final_summary["cpu_seconds"] = serde_json::json!(cpu_seconds);
+    final_summary["peak_rss_bytes"] = serde_json::json!(peak_rss_bytes().unwrap_or(0));
     run_dir
-        .write_json(
-            "summary.json",
-            &serde_json::json!({
-                "config": config,
-                "parameter_count": manifest.model_parameter_count,
-                "generations": generation_summaries,
-                "final_raw_test": raw_test,
-                "final_searched_test": searched_test,
-                "final_exploitability": exploit_final,
-                "wall_seconds": wall_seconds,
-                "cpu_seconds": cpu_seconds,
-                "peak_rss_bytes": peak_rss_bytes().unwrap_or(0),
-            }),
-        )
+        .write_json("summary.json", &final_summary)
         .map_err(|e| e.to_string())
 }
 
@@ -1327,18 +1560,38 @@ fn probe(config: ProbeConfig) -> Result<(), String> {
     let mut manifest = manifest;
     manifest.model_parameter_count = net.num_params() as u64;
 
-    match &config.game {
-        GameSpec::ConnectK {
-            width,
-            height,
-            k,
-            gravity,
-        } => {
-            let game = ConnectK::new(*width, *height, *k, *gravity)?;
+    dispatch_game!(&config.game, game, {
+        run_probe(
+            &game,
+            &net,
+            dims,
+            max_features,
+            &config,
+            &run_dir,
+            &manifest,
+            &mut log,
+        )?;
+    });
+    finish_run(&run_dir, manifest, &log)
+}
+
+#[allow(clippy::too_many_arguments)] // probe context: checkpoint + config + run plumbing
+fn run_probe<G: Game>(
+    game: &G,
+    net: &PolicyValueNet<InferBackend>,
+    dims: ModelDims,
+    max_features: usize,
+    config: &ProbeConfig,
+    run_dir: &RunDir,
+    manifest: &Manifest,
+    log: &mut String,
+) -> Result<(), String> {
+    {
+        {
             let started = Instant::now();
-            let dataset = build_exact_dataset(&game);
-            let raw_val = evaluate_model_oracle(&net, &dataset.val, dims, max_features);
-            let raw_test = evaluate_model_oracle(&net, &dataset.test, dims, max_features);
+            let dataset = build_exact_dataset(game);
+            let raw_val = evaluate_model_oracle(net, &dataset.val, dims, max_features);
+            let raw_test = evaluate_model_oracle(net, &dataset.test, dims, max_features);
             say(
                 format!(
                     "raw: val regret {:.4}, test regret {:.4}, test action acc {:.4}",
@@ -1346,20 +1599,20 @@ fn probe(config: ProbeConfig) -> Result<(), String> {
                     raw_test.mean_regret_levels,
                     raw_test.action_accuracy
                 ),
-                &mut log,
+                log,
             );
-            let compiled = CompiledNet::from_net(&net, dims);
+            let compiled = CompiledNet::from_net(net, dims);
             let mut budget_reports = Vec::new();
             for &budget in &config.node_budgets {
                 let searched = searched_decision_metrics(
-                    &game,
+                    game,
                     &compiled,
                     CorpusSplit::Test,
                     config.searched_sample,
                     budget,
                     config.threads,
                 );
-                let exploit = exploitability_vs_perfect(&game, &compiled, budget, config.threads);
+                let exploit = exploitability_vs_perfect(game, &compiled, budget, config.threads);
                 say(
                     format!(
                         "searched@{budget}: acc {:.4}, regret {:.4}, depth {:.1}; \
@@ -1371,13 +1624,35 @@ fn probe(config: ProbeConfig) -> Result<(), String> {
                         exploit.games,
                         exploit.mean_levels_lost,
                     ),
-                    &mut log,
+                    log,
                 );
                 budget_reports.push(serde_json::json!({
                     "node_budget": budget,
                     "searched_test": searched,
                     "exploitability": exploit,
                 }));
+            }
+            let disagreement = search_disagreement_analysis(
+                game,
+                &compiled,
+                CorpusSplit::Test,
+                config.searched_sample.min(1000),
+                &config.node_budgets,
+                config.threads,
+            );
+            for report in &disagreement {
+                say(
+                    format!(
+                        "disagreement@{} vs deepest: {:.3} (deeper fixes {}, breaks {}, \
+                         neutral {})",
+                        report.node_budget,
+                        report.disagreement_with_deepest,
+                        report.deeper_fixes,
+                        report.deeper_breaks,
+                        report.neutral,
+                    ),
+                    log,
+                );
             }
             run_dir
                 .write_json(
@@ -1388,6 +1663,7 @@ fn probe(config: ProbeConfig) -> Result<(), String> {
                         "raw_val": raw_val,
                         "raw_test": raw_test,
                         "budgets": budget_reports,
+                        "disagreement": disagreement,
                         "wall_seconds": started.elapsed().as_secs_f64(),
                         "peak_rss_bytes": peak_rss_bytes().unwrap_or(0),
                     }),
@@ -1395,5 +1671,5 @@ fn probe(config: ProbeConfig) -> Result<(), String> {
                 .map_err(|e| e.to_string())?;
         }
     }
-    finish_run(&run_dir, manifest, &log)
+    Ok(())
 }
