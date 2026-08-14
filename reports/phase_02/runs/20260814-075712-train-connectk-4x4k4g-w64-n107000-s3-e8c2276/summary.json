@@ -1,0 +1,84 @@
+{
+  "config": {
+    "game": {
+      "gravity": true,
+      "height": 4,
+      "k": 4,
+      "kind": "connect_k",
+      "width": 4
+    },
+    "model_width": 64,
+    "seed": 3,
+    "train_positions": 107000,
+    "training_steps": 10000
+  },
+  "cpu_seconds": 66.41,
+  "dataset": {
+    "test": 13522,
+    "train": 107335,
+    "used_train_positions": 107000,
+    "val": 13432
+  },
+  "dataset_seconds": 0.549403734,
+  "examples_per_second": 33314.11109903718,
+  "last_periodic_val": {
+    "action_accuracy": 0.9755807027992853,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.9792477302204928,
+      0.96086508753862
+    ],
+    "brier": 0.05662547560345884,
+    "mean_regret_levels": 0.026503871351995237,
+    "optimal_mass": 0.9156432944842954,
+    "states": 13432,
+    "wdl_accuracy": 0.9636688505062537,
+    "wdl_log_loss": 0.10464772757361197
+  },
+  "parameter_count": 10887,
+  "peak_rss_bytes": 68894720,
+  "test_metrics": {
+    "action_accuracy": 0.9760390474781837,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.9797186400937866,
+      0.9610824742268042
+    ],
+    "brier": 0.05563036148715988,
+    "mean_regret_levels": 0.025070255879307796,
+    "optimal_mass": 0.9196596982150852,
+    "states": 13522,
+    "wdl_accuracy": 0.9633190356456146,
+    "wdl_log_loss": 0.09943691861420313
+  },
+  "train_metrics": {
+    "action_accuracy": 0.9780747663551402,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.9812080139682164,
+      0.9650751403810575
+    ],
+    "brier": 0.04497659955886671,
+    "mean_regret_levels": 0.023261682242990654,
+    "optimal_mass": 0.9203493846763425,
+    "states": 107000,
+    "wdl_accuracy": 0.9709252336448598,
+    "wdl_log_loss": 0.08203467640180526
+  },
+  "train_seconds": 76.844313582,
+  "val_metrics": {
+    "action_accuracy": 0.9755807027992853,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.9792477302204928,
+      0.96086508753862
+    ],
+    "brier": 0.05662547560345884,
+    "mean_regret_levels": 0.026503871351995237,
+    "optimal_mass": 0.9156432944842954,
+    "states": 13432,
+    "wdl_accuracy": 0.9636688505062537,
+    "wdl_log_loss": 0.10464772757361197
+  },
+  "wall_seconds": 78.850135196
+}

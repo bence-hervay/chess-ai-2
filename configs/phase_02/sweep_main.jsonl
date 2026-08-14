@@ -1,0 +1,11 @@
+{"command": "train", "config": "configs/phase_02/cap_w16_n107000_s1_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w32_n107000_s1_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w128_n107000_s1_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w64_n13375_s1_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w64_n26750_s1_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w64_n53500_s1_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w64_n107000_s2_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w128_n107000_s2_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w64_n107000_s3_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w128_n107000_s3_t10000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_02/cap_w128_n107000_s1_t40000.toml", "cores": 1}

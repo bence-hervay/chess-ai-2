@@ -201,6 +201,128 @@ pub fn run_random_arena<G: Game>(
     summary
 }
 
+/// Raw-model quality against exact oracle labels (plan §17.3, §32).
+#[derive(Clone, Debug, Serialize)]
+pub struct OracleMetrics {
+    pub states: usize,
+    pub wdl_accuracy: f64,
+    /// Mean natural-log loss of the WDL head.
+    pub wdl_log_loss: f64,
+    /// Mean Brier score over the three WDL classes.
+    pub brier: f64,
+    /// Fraction of states where the argmax legal action is optimal.
+    pub action_accuracy: f64,
+    /// Mean policy probability mass on the optimal-action set.
+    pub optimal_mass: f64,
+    /// Mean decision regret in WDL levels lost (win->draw or draw->loss
+    /// = 1, win->loss = 2).
+    pub mean_regret_levels: f64,
+    /// Accuracy of the argmax action stratified by state value
+    /// `[loss, draw, win]`.
+    pub action_accuracy_by_wdl: [f64; 3],
+}
+
+/// Evaluate a raw model (no search) against exact labels.
+pub fn evaluate_model_oracle(
+    net: &crate::model::PolicyValueNet<crate::model::InferBackend>,
+    examples: &[crate::training::Example],
+    dims: crate::model::ModelDims,
+    max_features: usize,
+) -> OracleMetrics {
+    use crate::training::make_batch;
+    let device = Default::default();
+    let mut wdl_correct = 0usize;
+    let mut log_loss = 0.0f64;
+    let mut brier = 0.0f64;
+    let mut action_correct = 0usize;
+    let mut optimal_mass = 0.0f64;
+    let mut regret_levels = 0u64;
+    let mut by_wdl_correct = [0usize; 3];
+    let mut by_wdl_total = [0usize; 3];
+
+    for chunk in examples.chunks(1024) {
+        let refs: Vec<&crate::training::Example> = chunk.iter().collect();
+        let batch = make_batch::<crate::model::InferBackend>(&refs, dims, max_features, &device);
+        let (wdl_logits, action_logits) =
+            net.forward(batch.feature_ids.clone(), batch.feature_mask.clone());
+        let wdl_probs = burn::tensor::activation::softmax(wdl_logits, 1)
+            .to_data()
+            .to_vec::<f32>()
+            .unwrap();
+        let masked = action_logits + (batch.legal_mask.clone() - 1.0) * 1e9;
+        let action_probs = burn::tensor::activation::softmax(masked, 1)
+            .to_data()
+            .to_vec::<f32>()
+            .unwrap();
+        for (row, example) in chunk.iter().enumerate() {
+            let target = example.wdl as usize;
+            let probs = &wdl_probs[row * 3..row * 3 + 3];
+            let predicted = (0..3)
+                .max_by(|&a, &b| probs[a].total_cmp(&probs[b]))
+                .unwrap();
+            if predicted == target {
+                wdl_correct += 1;
+            }
+            log_loss += -f64::from(probs[target].max(1e-12)).ln();
+            for (class, &p) in probs.iter().enumerate() {
+                let t = if class == target { 1.0 } else { 0.0 };
+                brier += (f64::from(p) - t).powi(2);
+            }
+
+            let action_count = dims.action_count;
+            let row_probs = &action_probs[row * action_count..(row + 1) * action_count];
+            let chosen_index = example
+                .legal
+                .iter()
+                .enumerate()
+                .max_by(|(_, &a), (_, &b)| row_probs[a as usize].total_cmp(&row_probs[b as usize]))
+                .map(|(i, _)| i)
+                .expect("legal actions");
+            let optimal = example.optimal_indices();
+            by_wdl_total[target] += 1;
+            if optimal.contains(&chosen_index) {
+                action_correct += 1;
+                by_wdl_correct[target] += 1;
+            }
+            optimal_mass += optimal
+                .iter()
+                .map(|&i| f64::from(row_probs[example.legal[i] as usize]))
+                .sum::<f64>();
+            let child = example.child_wdl[chosen_index];
+            regret_levels += match (example.wdl, child) {
+                (a, b) if a == b => 0,
+                (crate::search::Wdl::Win, crate::search::Wdl::Draw) => 1,
+                (crate::search::Wdl::Win, crate::search::Wdl::Loss) => 2,
+                (crate::search::Wdl::Draw, crate::search::Wdl::Loss) => 1,
+                _ => 0,
+            };
+        }
+    }
+
+    let n = examples.len().max(1) as f64;
+    let ratio = |c: usize, t: usize| {
+        if t == 0 {
+            f64::NAN
+        } else {
+            c as f64 / t as f64
+        }
+    };
+    OracleMetrics {
+        states: examples.len(),
+        wdl_accuracy: wdl_correct as f64 / n,
+        wdl_log_loss: log_loss / n,
+        brier: brier / n,
+        action_accuracy: action_correct as f64 / n,
+        optimal_mass: optimal_mass / n,
+        mean_regret_levels: regret_levels as f64 / n,
+        action_accuracy_by_wdl: [
+            ratio(by_wdl_correct[0], by_wdl_total[0]),
+            ratio(by_wdl_correct[1], by_wdl_total[1]),
+            ratio(by_wdl_correct[2], by_wdl_total[2]),
+        ],
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

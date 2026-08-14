@@ -35,12 +35,25 @@ environment manifest, metrics, and game records.
 |---|---|---|
 | 0 — Deterministic foundation | **PASS** | [reports/phase_00.md](reports/phase_00.md) |
 | 1 — Exact solving and search correctness | **PASS** | [reports/phase_01.md](reports/phase_01.md) |
-| 2 — Supervised oracle ceiling | not started | — |
+| 2 — Supervised oracle ceiling | **PASS** | [reports/phase_02.md](reports/phase_02.md) |
+| 3 — Search + learned evaluation | not started | — |
 
 ### Current state (2026-08-14)
 
-Phases 0–1 complete and promoted. The search machinery is proven
-mathematically correct before any learning exists:
+Phases 0–2 complete and promoted. The supervised ceiling of the
+architecture is established on a solved oracle instance:
+
+- **Raw network ≈ oracle** on 4x4 k=4 gravity: 99.4% held-out WDL
+  accuracy, 99.8% optimal-action accuracy, 0.0024 WDL levels lost per
+  decision (w128, 40k steps, fixed recipe v1).
+- **Monotone scaling** in width (16→128: 78%→99.1% WDL acc) and data
+  (1/8→full: 90.5%→97.0% at w64), tight across seeds; residual error is
+  a generalization gap, not an optimization failure.
+- Deterministic training (identical seeds → identical loss traces),
+  in-run verified checkpoints, `lab sweep` CPU-slot scheduler.
+
+Phase 1 established the search machinery is mathematically correct
+before any learning exists:
 
 - **100% agreement** between the memoized exact solver, plain exhaustive
   negamax, and the production alpha–beta search (iterative deepening,
@@ -57,6 +70,6 @@ mathematically correct before any learning exists:
 - Phase 0 foundation: byte-identical game records across 1/2/4/8 worker
   threads; 1.13M random games/s at 8 workers.
 
-Next: Phase 2 — sparse embedding-sum policy/value network trained on the
-exact corpus; capacity/data/seed sweeps to establish the supervised
-ceiling before any self-play.
+Next: Phase 3 — the trained network as leaf evaluator and move-ordering
+policy inside alpha–beta; play-strength and exploitability measurement
+against perfect play.

@@ -97,6 +97,21 @@ impl ConnectK {
         u32::from(self.width) * u32::from(self.height)
     }
 
+    /// Total distinct feature IDs this game can emit (2 per cell:
+    /// own-stone and opponent-stone).
+    pub fn feature_count(&self) -> usize {
+        2 * self.cell_count() as usize
+    }
+
+    /// Total distinct action IDs (columns with gravity, cells without).
+    pub fn action_count(&self) -> usize {
+        if self.gravity {
+            usize::from(self.width)
+        } else {
+            self.cell_count() as usize
+        }
+    }
+
     /// Number of contiguous same-owner stones through `cell` in the best
     /// of the four line directions.
     fn longest_line_through(&self, cells: &[u8], cell: u16) -> u16 {

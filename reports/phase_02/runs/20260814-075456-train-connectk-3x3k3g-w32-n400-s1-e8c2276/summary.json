@@ -1,0 +1,84 @@
+{
+  "config": {
+    "game": {
+      "gravity": true,
+      "height": 3,
+      "k": 3,
+      "kind": "connect_k",
+      "width": 3
+    },
+    "model_width": 32,
+    "seed": 1,
+    "train_positions": 400,
+    "training_steps": 2000
+  },
+  "cpu_seconds": 4.8,
+  "dataset": {
+    "test": 43,
+    "train": 417,
+    "used_train_positions": 400,
+    "val": 45
+  },
+  "dataset_seconds": 0.000541614,
+  "examples_per_second": 106585.41325314435,
+  "last_periodic_val": {
+    "action_accuracy": 0.9111111111111111,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.7692307692307693,
+      0.9523809523809523
+    ],
+    "brier": 0.32594173690193107,
+    "mean_regret_levels": 0.1111111111111111,
+    "optimal_mass": 0.9045538880074914,
+    "states": 45,
+    "wdl_accuracy": 0.8222222222222222,
+    "wdl_log_loss": 1.0090118548144864
+  },
+  "parameter_count": 2918,
+  "peak_rss_bytes": 10080256,
+  "test_metrics": {
+    "action_accuracy": 0.8604651162790697,
+    "action_accuracy_by_wdl": [
+      1.0,
+      1.0,
+      0.8
+    ],
+    "brier": 0.74154129809679,
+    "mean_regret_levels": 0.2558139534883721,
+    "optimal_mass": 0.8861523887836235,
+    "states": 43,
+    "wdl_accuracy": 0.5813953488372093,
+    "wdl_log_loss": 3.0157050474646736
+  },
+  "train_metrics": {
+    "action_accuracy": 1.0,
+    "action_accuracy_by_wdl": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "brier": 0.000053788121688989364,
+    "mean_regret_levels": 0.0,
+    "optimal_mass": 0.9917875817418098,
+    "states": 400,
+    "wdl_accuracy": 1.0,
+    "wdl_log_loss": 0.0028206970360639743
+  },
+  "train_seconds": 4.8036591909999995,
+  "val_metrics": {
+    "action_accuracy": 0.9111111111111111,
+    "action_accuracy_by_wdl": [
+      1.0,
+      0.7692307692307693,
+      0.9523809523809523
+    ],
+    "brier": 0.32594173690193107,
+    "mean_regret_levels": 0.1111111111111111,
+    "optimal_mass": 0.9045538880074914,
+    "states": 45,
+    "wdl_accuracy": 0.8222222222222222,
+    "wdl_log_loss": 1.0090118548144864
+  },
+  "wall_seconds": 4.8068910559999996
+}

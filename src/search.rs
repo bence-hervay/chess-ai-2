@@ -138,12 +138,26 @@ impl ExactSolver {
 }
 
 /// A solved non-terminal position reported by [`enumerate_solved`].
+///
+/// `child_values[i]` is the exact value of playing `legal[i]`, from the
+/// current mover's perspective; a move is optimal iff its child value
+/// equals `value`.
 pub struct SolvedPosition<'a, G: Game> {
     pub state: &'a G::State,
     pub ply: u32,
     pub value: Wdl,
     pub legal: &'a [G::Move],
-    pub optimal: &'a [G::Move],
+    pub child_values: &'a [Wdl],
+}
+
+impl<G: Game> SolvedPosition<'_, G> {
+    pub fn optimal_moves(&self) -> impl Iterator<Item = G::Move> + '_ {
+        self.legal
+            .iter()
+            .zip(self.child_values)
+            .filter(|(_, &v)| v == self.value)
+            .map(|(&m, _)| m)
+    }
 }
 
 /// Depth-first enumeration of every reachable state from the initial
@@ -168,16 +182,25 @@ pub fn enumerate_solved<G: Game>(
         if !seen.insert(game.position_key(state)) {
             return;
         }
-        let mut optimal = Vec::new();
-        let value = solver.optimal_moves(game, state, &mut optimal);
         let mut legal = Vec::new();
         game.legal_moves(state, &mut legal);
+        let mut child_values = Vec::with_capacity(legal.len());
+        for &mv in &legal {
+            let undo = game.make_move(state, mv);
+            child_values.push(solver.solve(game, state).flip());
+            game.unmake_move(state, mv, undo);
+        }
+        let value = child_values
+            .iter()
+            .copied()
+            .max()
+            .expect("non-terminal has moves");
         visit(SolvedPosition {
             state,
             ply,
             value,
             legal: &legal,
-            optimal: &optimal,
+            child_values: &child_values,
         });
         for &mv in &legal {
             let undo = game.make_move(state, mv);
@@ -749,6 +772,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(debug_assertions, ignore = "measurement test; run in release")]
     fn ordering_changes_node_counts_but_never_values_on_asymmetric_states() {
         // From the (symmetric) initial position, natural and reversed
         // orderings explore mirror-isomorphic trees and cost identical
@@ -822,11 +846,12 @@ mod tests {
             if position.ply == 0 {
                 initial_value = Some(position.value);
             }
+            let optimal: Vec<_> = position.optimal_moves().collect();
             assert!(
-                !position.optimal.is_empty(),
+                !optimal.is_empty(),
                 "solved state must have an optimal move"
             );
-            assert!(position.optimal.len() <= position.legal.len());
+            assert!(optimal.len() <= position.legal.len());
         });
         assert_eq!(
             visited, reference,

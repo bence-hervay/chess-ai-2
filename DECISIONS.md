@@ -67,3 +67,36 @@ fixed budget". 4x4 k4 g (134k states) is the primary Phase 2 instance.
 They are the standing correctness harness that every future game phase
 must rerun (plan §14.2-14.3), not rejected experiment modes. Natural
 ordering with TT-move-first remains the sole production path.
+
+## 2026-08-14 — D010: Burn 0.21 (ndarray + autodiff) as the ML framework
+
+Plan-mandated (§10.6). Features limited to std/ndarray/autodiff; no GPU
+backends, no burn-train high-level loop (ours is ~60 lines and must be
+exactly reproducible). Latest stable at adoption time; MSRV compatible.
+
+## 2026-08-14 — D011: Training recipe v1
+
+Adam, constant lr 1e-3, batch 256, L = CE(WDL) + CE(policy), policy
+target uniform over optimal actions, illegal actions masked at -1e9,
+single-threaded runs. Constants live in training.rs and change only via
+named experiment. Chosen defaults, not tuned: Phase 2 sweeps showed
+monotone scaling and seed stability, so no tuning experiment was needed.
+
+## 2026-08-14 — D012: Burn's backend RNG is process-global
+
+Model init draws from a global RNG; determinism holds per-process, not
+per-thread. Consequences: training runs are one-per-process (sweep-level
+parallelism), and tests that seed the backend serialize on a shared lock.
+
+## 2026-08-14 — D013: Sweep scheduler admitted (plan §16.4)
+
+Phase 2's capacity/data/seed sweeps are the first meaningful sweep, so
+`lab sweep` exists now: JSONL manifest {command, config, cores},
+CPU-slot scheduling, fail-loud summary. Manifest lines carry an explicit
+command instead of config-type sniffing.
+
+## 2026-08-14 — D014: 4x4 k4 g is the Phase 2+ oracle instance; w128 reference
+
+134k states train in ~1-4 min at useful quality (99.4% test WDL accuracy
+at w128/40k steps). 5x4 (3.1M states) remains available as a later
+stress instance. w128 is the reference capacity; w64 the fast variant.

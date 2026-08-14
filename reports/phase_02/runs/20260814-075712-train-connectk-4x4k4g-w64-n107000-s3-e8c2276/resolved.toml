@@ -1,0 +1,11 @@
+seed = 3
+model_width = 64
+train_positions = 107000
+training_steps = 10000
+
+[game]
+kind = "connect_k"
+width = 4
+height = 4
+k = 4
+gravity = true
