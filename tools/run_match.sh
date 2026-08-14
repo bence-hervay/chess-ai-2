@@ -55,7 +55,7 @@ esac
 "$FASTCHESS" \
   $(engine_args "$E1" A) \
   $(engine_args "$E2" B) \
-  -each $LIMIT_ARG \
+  -each $LIMIT_ARG timemargin=${TIMEMARGIN:-100} \
   -openings file=$OPENINGS format=epd order=random \
   -rounds "$PAIRS" -games 2 -repeat \
   -srand "$SEED" \

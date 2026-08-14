@@ -1,0 +1,5 @@
+{"command": "selfplay", "config": "configs/phase_07/pilot_w64_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_07/pilot_w64_s2.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_07/width_w16.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_07/width_w32.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_07/width_w128.toml", "cores": 7}

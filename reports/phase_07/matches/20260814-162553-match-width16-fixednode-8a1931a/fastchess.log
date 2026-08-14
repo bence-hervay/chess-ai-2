@@ -1,0 +1,239 @@
+Indexing opening suite...
+Started game 1 of 100 (A vs B)
+Started game 3 of 100 (A vs B)
+Started game 2 of 100 (B vs A)
+Started game 5 of 100 (A vs B)
+Started game 4 of 100 (B vs A)
+Finished game 5 (A vs B): 0-1 {Black mates}
+Started game 6 of 100 (B vs A)
+Finished game 2 (B vs A): 1-0 {White mates}
+Started game 7 of 100 (A vs B)
+Finished game 3 (A vs B): 0-1 {Black mates}
+Started game 8 of 100 (B vs A)
+Finished game 1 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 9 of 100 (A vs B)
+Finished game 6 (B vs A): 1-0 {White mates}
+Started game 10 of 100 (B vs A)
+Finished game 4 (B vs A): 1-0 {White mates}
+Started game 11 of 100 (A vs B)
+Finished game 7 (A vs B): 0-1 {Black mates}
+Started game 12 of 100 (B vs A)
+Finished game 9 (A vs B): 0-1 {Black mates}
+Started game 13 of 100 (A vs B)
+Finished game 8 (B vs A): 1-0 {White mates}
+Started game 14 of 100 (B vs A)
+Finished game 10 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 15 of 100 (A vs B)
+Finished game 12 (B vs A): 1-0 {White mates}
+Started game 16 of 100 (B vs A)
+Finished game 16 (B vs A): 0-1 {Black mates}
+Started game 17 of 100 (A vs B)
+Finished game 14 (B vs A): 1-0 {White mates}
+Started game 18 of 100 (B vs A)
+Finished game 15 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 19 of 100 (A vs B)
+Finished game 18 (B vs A): 1-0 {White mates}
+Started game 20 of 100 (B vs A)
+Finished game 13 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 21 of 100 (A vs B)
+Finished game 19 (A vs B): 0-1 {Black mates}
+Started game 22 of 100 (B vs A)
+Finished game 17 (A vs B): 0-1 {Black mates}
+Started game 23 of 100 (A vs B)
+Finished game 11 (A vs B): 0-1 {Black mates}
+Started game 24 of 100 (B vs A)
+Finished game 21 (A vs B): 1-0 {White mates}
+Started game 25 of 100 (A vs B)
+Finished game 22 (B vs A): 0-1 {Black mates}
+Started game 26 of 100 (B vs A)
+Finished game 24 (B vs A): 1-0 {White mates}
+Started game 27 of 100 (A vs B)
+Finished game 20 (B vs A): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (400 nodes, NULL, NULL, openings_4ply.epd):
+Elo: -170.39 +/- 201.61, nElo: -170.34 +/- 145.18
+LOS: 1.07 %, DrawRatio: 9.09 %, PairsRatio: 0.25
+Games: 22, Wins: 4, Losses: 14, Draws: 4, Points: 6.0 (27.27 %)
+Ptnml(0-2): [5, 3, 1, 1, 1], WL/DD Ratio: inf
+--------------------------------------------------
+Started game 28 of 100 (B vs A)
+Finished game 23 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 29 of 100 (A vs B)
+Finished game 27 (A vs B): 0-1 {Black mates}
+Started game 30 of 100 (B vs A)
+Finished game 29 (A vs B): 0-1 {Black mates}
+Started game 31 of 100 (A vs B)
+Finished game 25 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 32 of 100 (B vs A)
+Finished game 28 (B vs A): 1-0 {White mates}
+Started game 33 of 100 (A vs B)
+Finished game 26 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 34 of 100 (B vs A)
+Finished game 33 (A vs B): 0-1 {Black mates}
+Started game 35 of 100 (A vs B)
+Finished game 34 (B vs A): 0-1 {Black mates}
+Started game 36 of 100 (B vs A)
+Finished game 32 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 37 of 100 (A vs B)
+Finished game 31 (A vs B): 1/2-1/2 {Draw by insufficient mating material}
+Started game 38 of 100 (B vs A)
+Finished game 30 (B vs A): 1-0 {White mates}
+Started game 39 of 100 (A vs B)
+Finished game 35 (A vs B): 0-1 {Black mates}
+Started game 40 of 100 (B vs A)
+Finished game 36 (B vs A): 1-0 {White mates}
+Started game 41 of 100 (A vs B)
+Finished game 37 (A vs B): 0-1 {Black mates}
+Started game 42 of 100 (B vs A)
+Finished game 40 (B vs A): 1-0 {White mates}
+Started game 43 of 100 (A vs B)
+Finished game 41 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 44 of 100 (B vs A)
+Finished game 39 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of A vs B (400 nodes, NULL, NULL, openings_4ply.epd):
+Elo: -178.86 +/- 123.69, nElo: -203.12 +/- 110.47
+LOS: 0.02 %, DrawRatio: 21.05 %, PairsRatio: 0.15
+Games: 38, Wins: 5, Losses: 23, Draws: 10, Points: 10.0 (26.32 %)
+Ptnml(0-2): [8, 5, 4, 1, 1], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 45 of 100 (A vs B)
+Finished game 44 (B vs A): 0-1 {Black mates}
+Started game 46 of 100 (B vs A)
+Finished game 42 (B vs A): 1-0 {White mates}
+Started game 47 of 100 (A vs B)
+Finished game 43 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 48 of 100 (B vs A)
+Finished game 48 (B vs A): 0-1 {Black mates}
+Started game 49 of 100 (A vs B)
+Finished game 45 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 50 of 100 (B vs A)
+Finished game 38 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 51 of 100 (A vs B)
+Finished game 47 (A vs B): 0-1 {Black mates}
+Started game 52 of 100 (B vs A)
+Finished game 52 (B vs A): 1-0 {White mates}
+Started game 53 of 100 (A vs B)
+Finished game 50 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 54 of 100 (B vs A)
+Finished game 51 (A vs B): 1-0 {White mates}
+Started game 55 of 100 (A vs B)
+Finished game 54 (B vs A): 1-0 {White mates}
+Started game 56 of 100 (B vs A)
+Finished game 56 (B vs A): 0-1 {Black mates}
+Started game 57 of 100 (A vs B)
+Finished game 46 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 58 of 100 (B vs A)
+Finished game 49 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 59 of 100 (A vs B)
+Finished game 55 (A vs B): 0-1 {Black mates}
+Started game 60 of 100 (B vs A)
+Finished game 53 (A vs B): 0-1 {Black mates}
+Started game 61 of 100 (A vs B)
+Finished game 61 (A vs B): 1-0 {White mates}
+Started game 62 of 100 (B vs A)
+Finished game 58 (B vs A): 1-0 {White mates}
+Started game 63 of 100 (A vs B)
+Finished game 60 (B vs A): 0-1 {Black mates}
+Started game 64 of 100 (B vs A)
+Finished game 59 (A vs B): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (400 nodes, NULL, NULL, openings_4ply.epd):
+Elo: -131.77 +/- 80.52, nElo: -164.80 +/- 89.41
+LOS: 0.02 %, DrawRatio: 34.48 %, PairsRatio: 0.19
+Games: 58, Wins: 10, Losses: 31, Draws: 17, Points: 18.5 (31.90 %)
+Ptnml(0-2): [9, 7, 10, 2, 1], WL/DD Ratio: 1.50
+--------------------------------------------------
+Started game 65 of 100 (A vs B)
+Finished game 64 (B vs A): 1-0 {White mates}
+Started game 66 of 100 (B vs A)
+Finished game 62 (B vs A): 1-0 {White mates}
+Started game 67 of 100 (A vs B)
+Finished game 63 (A vs B): 0-1 {Black mates}
+Started game 68 of 100 (B vs A)
+Finished game 57 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 69 of 100 (A vs B)
+Finished game 66 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 70 of 100 (B vs A)
+Finished game 65 (A vs B): 0-1 {Black mates}
+Started game 71 of 100 (A vs B)
+Finished game 69 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 72 of 100 (B vs A)
+Finished game 67 (A vs B): 0-1 {Black mates}
+Started game 73 of 100 (A vs B)
+Finished game 72 (B vs A): 1-0 {White mates}
+Started game 74 of 100 (B vs A)
+Finished game 70 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 75 of 100 (A vs B)
+Finished game 68 (B vs A): 0-1 {Black mates}
+Started game 76 of 100 (B vs A)
+Finished game 73 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 77 of 100 (A vs B)
+Finished game 71 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 78 of 100 (B vs A)
+Finished game 74 (B vs A): 1-0 {White mates}
+Started game 79 of 100 (A vs B)
+Finished game 77 (A vs B): 0-1 {Black mates}
+Started game 80 of 100 (B vs A)
+Finished game 75 (A vs B): 0-1 {Black mates}
+Started game 81 of 100 (A vs B)
+Finished game 78 (B vs A): 1-0 {White mates}
+Started game 82 of 100 (B vs A)
+Finished game 76 (B vs A): 1-0 {White mates}
+Started game 83 of 100 (A vs B)
+Finished game 81 (A vs B): 0-1 {Black mates}
+Started game 84 of 100 (B vs A)
+Finished game 82 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 85 of 100 (A vs B)
+Finished game 83 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 86 of 100 (B vs A)
+Finished game 79 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 87 of 100 (A vs B)
+Finished game 85 (A vs B): 1-0 {White mates}
+Started game 88 of 100 (B vs A)
+Finished game 87 (A vs B): 0-1 {Black mates}
+Started game 89 of 100 (A vs B)
+Finished game 80 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (400 nodes, NULL, NULL, openings_4ply.epd):
+Elo: -148.20 +/- 64.08, nElo: -199.10 +/- 75.20
+LOS: 0.00 %, DrawRatio: 31.71 %, PairsRatio: 0.12
+Games: 82, Wins: 12, Losses: 45, Draws: 25, Points: 24.5 (29.88 %)
+Ptnml(0-2): [12, 13, 13, 2, 1], WL/DD Ratio: 1.60
+--------------------------------------------------
+Started game 90 of 100 (B vs A)
+Finished game 90 (B vs A): 0-1 {Black mates}
+Started game 91 of 100 (A vs B)
+Finished game 88 (B vs A): 1-0 {White mates}
+Started game 92 of 100 (B vs A)
+Finished game 89 (A vs B): 0-1 {Black mates}
+Started game 93 of 100 (A vs B)
+Finished game 84 (B vs A): 1-0 {White mates}
+Started game 94 of 100 (B vs A)
+Finished game 86 (B vs A): 1-0 {White mates}
+Started game 95 of 100 (A vs B)
+Finished game 93 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 96 of 100 (B vs A)
+Finished game 91 (A vs B): 0-1 {Black mates}
+Started game 97 of 100 (A vs B)
+Finished game 96 (B vs A): 1-0 {White mates}
+Started game 98 of 100 (B vs A)
+Finished game 94 (B vs A): 0-1 {Black mates}
+Started game 99 of 100 (A vs B)
+Finished game 92 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 100 of 100 (B vs A)
+Finished game 97 (A vs B): 0-1 {Black mates}
+Finished game 99 (A vs B): 1-0 {White mates}
+Finished game 95 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Finished game 98 (B vs A): 1-0 {White mates}
+Finished game 100 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (400 nodes, NULL, NULL, openings_4ply.epd):
+Elo: -143.07 +/- 56.70, nElo: -194.41 +/- 68.10
+LOS: 0.00 %, DrawRatio: 32.00 %, PairsRatio: 0.13
+Games: 100, Wins: 16, Losses: 55, Draws: 29, Points: 30.5 (30.50 %)
+Ptnml(0-2): [14, 16, 16, 3, 1], WL/DD Ratio: 2.20
+--------------------------------------------------
+Finished match
+Total Time: 00:00:14 (hours:minutes:seconds)
+

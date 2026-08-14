@@ -1,0 +1,36 @@
+Indexing opening suite...
+Started game 1 of 10 (A vs B)
+Finished game 1 (A vs B): 1-0 {White mates}
+Started game 2 of 10 (B vs A)
+Finished game 2 (B vs A): 0-1 {Black mates}
+Started game 3 of 10 (A vs B)
+Finished game 3 (A vs B): 1-0 {White mates}
+Started game 4 of 10 (B vs A)
+Finished game 4 (B vs A): 0-1 {Black mates}
+Started game 5 of 10 (A vs B)
+Finished game 5 (A vs B): 1-0 {White mates}
+Started game 6 of 10 (B vs A)
+Finished game 6 (B vs A): 0-1 {Black mates}
+Started game 7 of 10 (A vs B)
+Finished game 7 (A vs B): 1-0 {White mates}
+Started game 8 of 10 (B vs A)
+Finished game 8 (B vs A): 0-1 {Black mates}
+Started game 9 of 10 (A vs B)
+Finished game 9 (A vs B): 0-1 {White loses on time (33ms overrun)}
+Started game 10 of 10 (B vs A)
+Finished game 10 (B vs A): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (0.1/move, NULL, NULL, openings_4ply.epd):
+Elo: 381.70 +/- -nan, nElo: 491.35 +/- 215.34
+LOS: 100.00 %, DrawRatio: 20.00 %, PairsRatio: inf
+Games: 10, Wins: 9, Losses: 1, Draws: 0, Points: 9.0 (90.00 %)
+Ptnml(0-2): [0, 0, 1, 0, 4], WL/DD Ratio: inf
+--------------------------------------------------
+
+Player: A
+  Timeouts: 1
+  Crashed: 0
+
+Finished match
+Total Time: 00:00:24 (hours:minutes:seconds)
+

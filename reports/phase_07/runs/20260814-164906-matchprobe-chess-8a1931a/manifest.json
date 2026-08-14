@@ -1,0 +1,23 @@
+{
+  "git_commit": "8a1931a9d95a17c103592dce9173778f364040ed",
+  "git_dirty": true,
+  "rust_toolchain": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo_lock_hash": "fnv1a64:4ebfead4952f552e",
+  "os": "Ubuntu 26.04 LTS",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.80GHz",
+  "logical_cpus": 8,
+  "allocated_threads": 7,
+  "ram_bytes": 8316657664,
+  "build_profile": "release",
+  "build_rustflags": "",
+  "model_parameter_count": 329419,
+  "seed": 21,
+  "command": [
+    "./target/release/lab",
+    "evaluate",
+    "configs/phase_07/matchprobe_search.toml"
+  ],
+  "start_unix_seconds": 1786726146,
+  "end_unix_seconds": 1786726283,
+  "exit_status": "success"
+}

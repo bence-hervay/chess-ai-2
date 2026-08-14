@@ -1,0 +1,3 @@
+name=width32-fixedtime e1=ckpt:runs/20260814-144846-selfplay-chess-w32-g200-e10-s1-8a1931a/checkpoint e2=ckpt:runs/20260814-131835-selfplay-chess-w64-g200-e10-s1-c03fefc/checkpoint pairs=50 limit=st=0.3 seed=113
+openings=9622341e6a9287d2cab2f247c566c18badeb05f2b39b557af00ab9488b0095fc  tools/openings_4ply.epd
+uci=ea2022aae9c9fb87e63e2462767db42446a6dae2dc21f122003cc1fdc847bc4e stockfish=Stockfish 17.1 by the Stockfish developers (see AUTHORS file)

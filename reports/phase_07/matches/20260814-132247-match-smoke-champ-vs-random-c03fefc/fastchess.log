@@ -1,0 +1,36 @@
+Indexing opening suite...
+Started game 1 of 10 (A vs B)
+Finished game 1 (A vs B): 0-1 {White loses on time (1ms overrun)}
+Started game 2 of 10 (B vs A)
+Finished game 2 (B vs A): 1-0 {Black loses on time (2ms overrun)}
+Started game 3 of 10 (A vs B)
+Finished game 3 (A vs B): 0-1 {White loses on time (2ms overrun)}
+Started game 4 of 10 (B vs A)
+Finished game 4 (B vs A): 1-0 {Black loses on time (3ms overrun)}
+Started game 5 of 10 (A vs B)
+Finished game 5 (A vs B): 0-1 {White loses on time (1ms overrun)}
+Started game 6 of 10 (B vs A)
+Finished game 6 (B vs A): 1-0 {Black loses on time (2ms overrun)}
+Started game 7 of 10 (A vs B)
+Finished game 7 (A vs B): 0-1 {White loses on time (2ms overrun)}
+Started game 8 of 10 (B vs A)
+Finished game 8 (B vs A): 1-0 {Black loses on time (1ms overrun)}
+Started game 9 of 10 (A vs B)
+Finished game 9 (A vs B): 0-1 {White loses on time (1ms overrun)}
+Started game 10 of 10 (B vs A)
+Finished game 10 (B vs A): 1-0 {Black loses on time (1ms overrun)}
+--------------------------------------------------
+Results of A vs B (0.1/move, NULL, NULL, openings_4ply.epd):
+Elo: -inf +/- -nan, nElo: -inf +/- -nan
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 10, Wins: 0, Losses: 10, Draws: 0, Points: 0.0 (0.00 %)
+Ptnml(0-2): [5, 0, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+
+Player: A
+  Timeouts: 10
+  Crashed: 0
+
+Finished match
+Total Time: 00:00:02 (hours:minutes:seconds)
+

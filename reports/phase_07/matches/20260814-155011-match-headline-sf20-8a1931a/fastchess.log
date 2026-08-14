@@ -1,0 +1,716 @@
+Indexing opening suite...
+Started game 2 of 300 (B vs A)
+Started game 4 of 300 (B vs A)
+Started game 3 of 300 (A vs B)
+Started game 1 of 300 (A vs B)
+Started game 5 of 300 (A vs B)
+Finished game 1 (A vs B): 0-1 {Black mates}
+Started game 6 of 300 (B vs A)
+Finished game 6 (B vs A): 1-0 {White mates}
+Started game 7 of 300 (A vs B)
+Finished game 5 (A vs B): 0-1 {Black mates}
+Started game 8 of 300 (B vs A)
+Finished game 2 (B vs A): 1-0 {White mates}
+Started game 9 of 300 (A vs B)
+Finished game 7 (A vs B): 0-1 {Black mates}
+Started game 10 of 300 (B vs A)
+Finished game 3 (A vs B): 0-1 {Black mates}
+Started game 11 of 300 (A vs B)
+Finished game 9 (A vs B): 0-1 {Black mates}
+Started game 12 of 300 (B vs A)
+Finished game 10 (B vs A): 1-0 {White mates}
+Started game 13 of 300 (A vs B)
+Finished game 12 (B vs A): 1-0 {White mates}
+Started game 14 of 300 (B vs A)
+Finished game 4 (B vs A): 1-0 {White mates}
+Started game 15 of 300 (A vs B)
+Finished game 14 (B vs A): 1-0 {White mates}
+Started game 16 of 300 (B vs A)
+Finished game 11 (A vs B): 0-1 {Black mates}
+Started game 17 of 300 (A vs B)
+Finished game 13 (A vs B): 0-1 {Black mates}
+Started game 18 of 300 (B vs A)
+Finished game 15 (A vs B): 0-1 {Black mates}
+Started game 19 of 300 (A vs B)
+Finished game 8 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 20 of 300 (B vs A)
+Finished game 17 (A vs B): 0-1 {Black mates}
+Started game 21 of 300 (A vs B)
+Finished game 16 (B vs A): 1-0 {White mates}
+Started game 22 of 300 (B vs A)
+Finished game 20 (B vs A): 1-0 {White mates}
+Started game 23 of 300 (A vs B)
+Finished game 19 (A vs B): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -617.63 +/- -nan, nElo: -1476.60 +/- 160.50
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 18, Wins: 0, Losses: 17, Draws: 1, Points: 0.5 (2.78 %)
+Ptnml(0-2): [8, 1, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Started game 24 of 300 (B vs A)
+Finished game 22 (B vs A): 1-0 {White mates}
+Started game 25 of 300 (A vs B)
+Finished game 24 (B vs A): 1-0 {White mates}
+Started game 26 of 300 (B vs A)
+Finished game 25 (A vs B): 0-1 {Black mates}
+Started game 27 of 300 (A vs B)
+Finished game 21 (A vs B): 0-1 {Black mates}
+Started game 28 of 300 (B vs A)
+Finished game 26 (B vs A): 1-0 {White mates}
+Started game 29 of 300 (A vs B)
+Finished game 18 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 30 of 300 (B vs A)
+Finished game 27 (A vs B): 0-1 {Black mates}
+Started game 31 of 300 (A vs B)
+Finished game 29 (A vs B): 0-1 {Black mates}
+Started game 32 of 300 (B vs A)
+Finished game 31 (A vs B): 0-1 {Black mates}
+Started game 33 of 300 (A vs B)
+Finished game 23 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 34 of 300 (B vs A)
+Finished game 28 (B vs A): 1-0 {White mates}
+Started game 35 of 300 (A vs B)
+Finished game 33 (A vs B): 0-1 {Black mates}
+Started game 36 of 300 (B vs A)
+Finished game 34 (B vs A): 1-0 {White mates}
+Started game 37 of 300 (A vs B)
+Finished game 30 (B vs A): 1-0 {White mates}
+Started game 38 of 300 (B vs A)
+Finished game 36 (B vs A): 1-0 {White mates}
+Started game 39 of 300 (A vs B)
+Finished game 38 (B vs A): 1-0 {White mates}
+Started game 40 of 300 (B vs A)
+Finished game 40 (B vs A): 1-0 {White mates}
+Started game 41 of 300 (A vs B)
+Finished game 32 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 42 of 300 (B vs A)
+Finished game 39 (A vs B): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -492.18 +/- 236.40, nElo: -1050.55 +/- 113.49
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 36, Wins: 0, Losses: 32, Draws: 4, Points: 2.0 (5.56 %)
+Ptnml(0-2): [14, 4, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Started game 43 of 300 (A vs B)
+Finished game 35 (A vs B): 0-1 {Black mates}
+Started game 44 of 300 (B vs A)
+Finished game 37 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 45 of 300 (A vs B)
+Finished game 44 (B vs A): 1-0 {White mates}
+Started game 46 of 300 (B vs A)
+Finished game 46 (B vs A): 1-0 {White mates}
+Started game 47 of 300 (A vs B)
+Finished game 42 (B vs A): 1-0 {White mates}
+Started game 48 of 300 (B vs A)
+Finished game 43 (A vs B): 0-1 {Black mates}
+Started game 49 of 300 (A vs B)
+Finished game 41 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 50 of 300 (B vs A)
+Finished game 48 (B vs A): 1-0 {White mates}
+Started game 51 of 300 (A vs B)
+Finished game 47 (A vs B): 0-1 {Black mates}
+Started game 52 of 300 (B vs A)
+Finished game 52 (B vs A): 1-0 {White mates}
+Started game 53 of 300 (A vs B)
+Finished game 51 (A vs B): 0-1 {Black mates}
+Started game 54 of 300 (B vs A)
+Finished game 54 (B vs A): 1-0 {White mates}
+Started game 55 of 300 (A vs B)
+Finished game 53 (A vs B): 0-1 {Black mates}
+Started game 56 of 300 (B vs A)
+Finished game 50 (B vs A): 1-0 {White mates}
+Started game 57 of 300 (A vs B)
+Finished game 55 (A vs B): 0-1 {Black mates}
+Started game 58 of 300 (B vs A)
+Finished game 58 (B vs A): 1-0 {White mates}
+Started game 59 of 300 (A vs B)
+Finished game 56 (B vs A): 1-0 {White mates}
+Started game 60 of 300 (B vs A)
+Finished game 57 (A vs B): 0-1 {Black mates}
+Started game 61 of 300 (A vs B)
+Finished game 59 (A vs B): 0-1 {Black mates}
+Started game 62 of 300 (B vs A)
+Finished game 61 (A vs B): 0-1 {Black mates}
+Started game 63 of 300 (A vs B)
+Finished game 62 (B vs A): 1-0 {White mates}
+Started game 64 of 300 (B vs A)
+Finished game 45 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 65 of 300 (A vs B)
+Finished game 49 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 66 of 300 (B vs A)
+Finished game 66 (B vs A): 1-0 {White mates}
+Started game 67 of 300 (A vs B)
+Finished game 60 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -464.55 +/- 126.72, nElo: -978.01 +/- 86.48
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 62, Wins: 0, Losses: 54, Draws: 8, Points: 4.0 (6.45 %)
+Ptnml(0-2): [23, 8, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Started game 68 of 300 (B vs A)
+Finished game 64 (B vs A): 1-0 {White mates}
+Started game 69 of 300 (A vs B)
+Finished game 65 (A vs B): 0-1 {Black mates}
+Started game 70 of 300 (B vs A)
+Finished game 67 (A vs B): 0-1 {Black mates}
+Started game 71 of 300 (A vs B)
+Finished game 69 (A vs B): 1-0 {White mates}
+Started game 72 of 300 (B vs A)
+Finished game 63 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 73 of 300 (A vs B)
+Finished game 73 (A vs B): 0-1 {Black mates}
+Started game 74 of 300 (B vs A)
+Finished game 71 (A vs B): 0-1 {Black mates}
+Started game 75 of 300 (A vs B)
+Finished game 70 (B vs A): 1-0 {White mates}
+Started game 76 of 300 (B vs A)
+Finished game 74 (B vs A): 1-0 {White mates}
+Started game 77 of 300 (A vs B)
+Finished game 75 (A vs B): 0-1 {Black mates}
+Started game 78 of 300 (B vs A)
+Finished game 76 (B vs A): 1-0 {White mates}
+Started game 79 of 300 (A vs B)
+Finished game 72 (B vs A): 1-0 {White mates}
+Started game 80 of 300 (B vs A)
+Finished game 68 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 81 of 300 (A vs B)
+Finished game 79 (A vs B): 0-1 {Black mates}
+Started game 82 of 300 (B vs A)
+Finished game 80 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -431.67 +/- 108.76, nElo: -808.71 +/- 77.10
+LOS: 0.00 %, DrawRatio: 2.56 %, PairsRatio: 0.00
+Games: 78, Wins: 1, Losses: 67, Draws: 10, Points: 6.0 (7.69 %)
+Ptnml(0-2): [28, 10, 1, 0, 0], WL/DD Ratio: inf
+--------------------------------------------------
+Started game 83 of 300 (A vs B)
+Finished game 81 (A vs B): 0-1 {Black mates}
+Started game 84 of 300 (B vs A)
+Finished game 78 (B vs A): 1-0 {White mates}
+Started game 85 of 300 (A vs B)
+Finished game 83 (A vs B): 0-1 {Black mates}
+Started game 86 of 300 (B vs A)
+Finished game 86 (B vs A): 1-0 {White mates}
+Started game 87 of 300 (A vs B)
+Finished game 82 (B vs A): 1-0 {White mates}
+Started game 88 of 300 (B vs A)
+Finished game 77 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 89 of 300 (A vs B)
+Finished game 87 (A vs B): 0-1 {Black mates}
+Started game 90 of 300 (B vs A)
+Finished game 89 (A vs B): 0-1 {Black mates}
+Started game 91 of 300 (A vs B)
+Finished game 85 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 92 of 300 (B vs A)
+Finished game 84 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 93 of 300 (A vs B)
+Finished game 93 (A vs B): 0-1 {Black mates}
+Started game 94 of 300 (B vs A)
+Finished game 91 (A vs B): 1/2-1/2 {Draw by stalemate}
+Started game 95 of 300 (A vs B)
+Finished game 94 (B vs A): 1-0 {White mates}
+Started game 96 of 300 (B vs A)
+Finished game 92 (B vs A): 1-0 {White mates}
+Started game 97 of 300 (A vs B)
+Finished game 96 (B vs A): 1-0 {White mates}
+Started game 98 of 300 (B vs A)
+Finished game 88 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 99 of 300 (A vs B)
+Finished game 95 (A vs B): 0-1 {Black mates}
+Started game 100 of 300 (B vs A)
+Finished game 90 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 101 of 300 (A vs B)
+Finished game 99 (A vs B): 0-1 {Black mates}
+Started game 102 of 300 (B vs A)
+Finished game 101 (A vs B): 0-1 {Black mates}
+Started game 103 of 300 (A vs B)
+Finished game 100 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -398.06 +/- 80.27, nElo: -767.36 +/- 68.79
+LOS: 0.00 %, DrawRatio: 2.04 %, PairsRatio: 0.00
+Games: 98, Wins: 1, Losses: 81, Draws: 16, Points: 9.0 (9.18 %)
+Ptnml(0-2): [32, 16, 1, 0, 0], WL/DD Ratio: inf
+--------------------------------------------------
+Started game 104 of 300 (B vs A)
+Finished game 104 (B vs A): 1-0 {White mates}
+Started game 105 of 300 (A vs B)
+Finished game 98 (B vs A): 1-0 {White mates}
+Started game 106 of 300 (B vs A)
+Finished game 97 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 107 of 300 (A vs B)
+Finished game 102 (B vs A): 1-0 {White mates}
+Started game 108 of 300 (B vs A)
+Finished game 103 (A vs B): 0-1 {Black mates}
+Started game 109 of 300 (A vs B)
+Finished game 107 (A vs B): 0-1 {Black mates}
+Started game 110 of 300 (B vs A)
+Finished game 108 (B vs A): 1-0 {White mates}
+Started game 111 of 300 (A vs B)
+Finished game 106 (B vs A): 1-0 {White mates}
+Started game 112 of 300 (B vs A)
+Finished game 109 (A vs B): 0-1 {Black mates}
+Started game 113 of 300 (A vs B)
+Finished game 105 (A vs B): 0-1 {Black mates}
+Started game 114 of 300 (B vs A)
+Finished game 110 (B vs A): 1-0 {White mates}
+Started game 115 of 300 (A vs B)
+Finished game 113 (A vs B): 0-1 {Black mates}
+Started game 116 of 300 (B vs A)
+Finished game 111 (A vs B): 0-1 {Black mates}
+Started game 117 of 300 (A vs B)
+Finished game 112 (B vs A): 1-0 {White mates}
+Started game 118 of 300 (B vs A)
+Finished game 115 (A vs B): 0-1 {Black mates}
+Started game 119 of 300 (A vs B)
+Finished game 116 (B vs A): 1-0 {White mates}
+Started game 120 of 300 (B vs A)
+Finished game 118 (B vs A): 1-0 {White mates}
+Started game 121 of 300 (A vs B)
+Finished game 114 (B vs A): 1-0 {White mates}
+Started game 122 of 300 (B vs A)
+Finished game 121 (A vs B): 0-1 {Black mates}
+Started game 123 of 300 (A vs B)
+Finished game 122 (B vs A): 1-0 {White mates}
+Started game 124 of 300 (B vs A)
+Finished game 119 (A vs B): 0-1 {Black mates}
+Started game 125 of 300 (A vs B)
+Finished game 125 (A vs B): 0-1 {Black mates}
+Started game 126 of 300 (B vs A)
+Finished game 123 (A vs B): 0-1 {Black mates}
+Started game 127 of 300 (A vs B)
+Finished game 120 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -426.26 +/- 79.42, nElo: -827.56 +/- 62.16
+LOS: 0.00 %, DrawRatio: 1.67 %, PairsRatio: 0.00
+Games: 120, Wins: 1, Losses: 102, Draws: 17, Points: 9.5 (7.92 %)
+Ptnml(0-2): [42, 17, 1, 0, 0], WL/DD Ratio: inf
+--------------------------------------------------
+Started game 128 of 300 (B vs A)
+Finished game 126 (B vs A): 1-0 {White mates}
+Started game 129 of 300 (A vs B)
+Finished game 117 (A vs B): 0-1 {Black mates}
+Started game 130 of 300 (B vs A)
+Finished game 124 (B vs A): 1/2-1/2 {Draw by insufficient mating material}
+Started game 131 of 300 (A vs B)
+Finished game 130 (B vs A): 0-1 {Black mates}
+Started game 132 of 300 (B vs A)
+Finished game 128 (B vs A): 1-0 {White mates}
+Started game 133 of 300 (A vs B)
+Finished game 133 (A vs B): 0-1 {Black mates}
+Started game 134 of 300 (B vs A)
+Finished game 134 (B vs A): 1-0 {White mates}
+Started game 135 of 300 (A vs B)
+Finished game 131 (A vs B): 0-1 {Black mates}
+Started game 136 of 300 (B vs A)
+Finished game 135 (A vs B): 0-1 {Black mates}
+Started game 137 of 300 (A vs B)
+Finished game 127 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 138 of 300 (B vs A)
+Finished game 137 (A vs B): 0-1 {Black mates}
+Started game 139 of 300 (A vs B)
+Finished game 138 (B vs A): 1-0 {White mates}
+Started game 140 of 300 (B vs A)
+Finished game 129 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 141 of 300 (A vs B)
+Finished game 136 (B vs A): 1-0 {White mates}
+Started game 142 of 300 (B vs A)
+Finished game 132 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 143 of 300 (A vs B)
+Finished game 143 (A vs B): 0-1 {Black mates}
+Started game 144 of 300 (B vs A)
+Finished game 144 (B vs A): 1-0 {White mates}
+Started game 145 of 300 (A vs B)
+Finished game 141 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 146 of 300 (B vs A)
+Finished game 139 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 147 of 300 (A vs B)
+Finished game 142 (B vs A): 1-0 {White mates}
+Started game 148 of 300 (B vs A)
+Finished game 147 (A vs B): 0-1 {Black mates}
+Started game 149 of 300 (A vs B)
+Finished game 140 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -387.13 +/- 73.19, nElo: -645.03 +/- 56.75
+LOS: 0.00 %, DrawRatio: 2.78 %, PairsRatio: 0.01
+Games: 144, Wins: 2, Losses: 118, Draws: 24, Points: 14.0 (9.72 %)
+Ptnml(0-2): [48, 21, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 150 of 300 (B vs A)
+Finished game 146 (B vs A): 1-0 {White mates}
+Started game 151 of 300 (A vs B)
+Finished game 148 (B vs A): 1-0 {White mates}
+Started game 152 of 300 (B vs A)
+Finished game 145 (A vs B): 0-1 {Black mates}
+Started game 153 of 300 (A vs B)
+Finished game 150 (B vs A): 1-0 {White mates}
+Started game 154 of 300 (B vs A)
+Finished game 153 (A vs B): 0-1 {Black mates}
+Started game 155 of 300 (A vs B)
+Finished game 149 (A vs B): 0-1 {Black mates}
+Started game 156 of 300 (B vs A)
+Finished game 152 (B vs A): 1-0 {White mates}
+Started game 157 of 300 (A vs B)
+Finished game 157 (A vs B): 0-1 {Black mates}
+Started game 158 of 300 (B vs A)
+Finished game 156 (B vs A): 1-0 {White mates}
+Started game 159 of 300 (A vs B)
+Finished game 155 (A vs B): 0-1 {Black mates}
+Started game 160 of 300 (B vs A)
+Finished game 151 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 161 of 300 (A vs B)
+Finished game 159 (A vs B): 0-1 {Black mates}
+Started game 162 of 300 (B vs A)
+Finished game 160 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -395.76 +/- 71.67, nElo: -665.05 +/- 54.52
+LOS: 0.00 %, DrawRatio: 2.56 %, PairsRatio: 0.01
+Games: 156, Wins: 2, Losses: 129, Draws: 25, Points: 14.5 (9.29 %)
+Ptnml(0-2): [53, 22, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 163 of 300 (A vs B)
+Finished game 154 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 164 of 300 (B vs A)
+Finished game 161 (A vs B): 0-1 {Black mates}
+Started game 165 of 300 (A vs B)
+Finished game 165 (A vs B): 0-1 {Black mates}
+Started game 166 of 300 (B vs A)
+Finished game 166 (B vs A): 1-0 {White mates}
+Started game 167 of 300 (A vs B)
+Finished game 162 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 168 of 300 (B vs A)
+Finished game 163 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 169 of 300 (A vs B)
+Finished game 164 (B vs A): 1-0 {White mates}
+Started game 170 of 300 (B vs A)
+Finished game 158 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 171 of 300 (A vs B)
+Finished game 170 (B vs A): 1-0 {White mates}
+Started game 172 of 300 (B vs A)
+Finished game 167 (A vs B): 0-1 {Black mates}
+Started game 173 of 300 (A vs B)
+Finished game 171 (A vs B): 0-1 {Black mates}
+Started game 174 of 300 (B vs A)
+Finished game 172 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 175 of 300 (A vs B)
+Finished game 173 (A vs B): 0-1 {Black mates}
+Started game 176 of 300 (B vs A)
+Finished game 168 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 177 of 300 (A vs B)
+Finished game 174 (B vs A): 1-0 {White mates}
+Started game 178 of 300 (B vs A)
+Finished game 176 (B vs A): 1-0 {White mates}
+Started game 179 of 300 (A vs B)
+Finished game 177 (A vs B): 0-1 {Black mates}
+Started game 180 of 300 (B vs A)
+Finished game 169 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 181 of 300 (A vs B)
+Finished game 180 (B vs A): 1-0 {White mates}
+Started game 182 of 300 (B vs A)
+Finished game 179 (A vs B): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -377.35 +/- 60.65, nElo: -655.64 +/- 51.33
+LOS: 0.00 %, DrawRatio: 2.27 %, PairsRatio: 0.01
+Games: 176, Wins: 2, Losses: 142, Draws: 32, Points: 18.0 (10.23 %)
+Ptnml(0-2): [56, 29, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 183 of 300 (A vs B)
+Finished game 182 (B vs A): 1-0 {White mates}
+Started game 184 of 300 (B vs A)
+Finished game 181 (A vs B): 1/2-1/2 {Draw by stalemate}
+Started game 185 of 300 (A vs B)
+Finished game 178 (B vs A): 1-0 {White mates}
+Started game 186 of 300 (B vs A)
+Finished game 185 (A vs B): 0-1 {Black mates}
+Started game 187 of 300 (A vs B)
+Finished game 183 (A vs B): 0-1 {Black mates}
+Started game 188 of 300 (B vs A)
+Finished game 184 (B vs A): 1-0 {White mates}
+Started game 189 of 300 (A vs B)
+Finished game 188 (B vs A): 1-0 {White mates}
+Started game 190 of 300 (B vs A)
+Finished game 175 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 191 of 300 (A vs B)
+Finished game 191 (A vs B): 0-1 {Black mates}
+Started game 192 of 300 (B vs A)
+Finished game 189 (A vs B): 0-1 {Black mates}
+Started game 193 of 300 (A vs B)
+Finished game 190 (B vs A): 1-0 {White mates}
+Started game 194 of 300 (B vs A)
+Finished game 192 (B vs A): 1-0 {White mates}
+Started game 195 of 300 (A vs B)
+Finished game 186 (B vs A): 1-0 {White mates}
+Started game 196 of 300 (B vs A)
+Finished game 195 (A vs B): 0-1 {Black mates}
+Started game 197 of 300 (A vs B)
+Finished game 196 (B vs A): 1-0 {White mates}
+Started game 198 of 300 (B vs A)
+Finished game 193 (A vs B): 0-1 {Black mates}
+Started game 199 of 300 (A vs B)
+Finished game 194 (B vs A): 1-0 {White mates}
+Started game 200 of 300 (B vs A)
+Finished game 200 (B vs A): 1-0 {White mates}
+Started game 201 of 300 (A vs B)
+Finished game 198 (B vs A): 1-0 {White mates}
+Started game 202 of 300 (B vs A)
+Finished game 202 (B vs A): 1-0 {White mates}
+Started game 203 of 300 (A vs B)
+Finished game 187 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 204 of 300 (B vs A)
+Finished game 201 (A vs B): 0-1 {Black mates}
+Started game 205 of 300 (A vs B)
+Finished game 203 (A vs B): 0-1 {Black mates}
+Started game 206 of 300 (B vs A)
+Finished game 199 (A vs B): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -386.58 +/- 57.76, nElo: -680.44 +/- 48.15
+LOS: 0.00 %, DrawRatio: 2.00 %, PairsRatio: 0.01
+Games: 200, Wins: 2, Losses: 163, Draws: 35, Points: 19.5 (9.75 %)
+Ptnml(0-2): [65, 32, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 207 of 300 (A vs B)
+Finished game 197 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 208 of 300 (B vs A)
+Finished game 204 (B vs A): 1-0 {White mates}
+Started game 209 of 300 (A vs B)
+Finished game 207 (A vs B): 0-1 {Black mates}
+Started game 210 of 300 (B vs A)
+Finished game 209 (A vs B): 0-1 {Black mates}
+Started game 211 of 300 (A vs B)
+Finished game 206 (B vs A): 1-0 {White mates}
+Started game 212 of 300 (B vs A)
+Finished game 212 (B vs A): 1-0 {White mates}
+Started game 213 of 300 (A vs B)
+Finished game 208 (B vs A): 1-0 {White mates}
+Started game 214 of 300 (B vs A)
+Finished game 214 (B vs A): 1-0 {White mates}
+Started game 215 of 300 (A vs B)
+Finished game 213 (A vs B): 0-1 {Black mates}
+Started game 216 of 300 (B vs A)
+Finished game 210 (B vs A): 1-0 {White mates}
+Started game 217 of 300 (A vs B)
+Finished game 211 (A vs B): 0-1 {Black mates}
+Started game 218 of 300 (B vs A)
+Finished game 216 (B vs A): 1-0 {White mates}
+Started game 219 of 300 (A vs B)
+Finished game 205 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 220 of 300 (B vs A)
+Finished game 220 (B vs A): 1-0 {White mates}
+Started game 221 of 300 (A vs B)
+Finished game 221 (A vs B): 0-1 {Black mates}
+Started game 222 of 300 (B vs A)
+Finished game 218 (B vs A): 1-0 {White mates}
+Started game 223 of 300 (A vs B)
+Finished game 223 (A vs B): 0-1 {Black mates}
+Started game 224 of 300 (B vs A)
+Finished game 217 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 225 of 300 (A vs B)
+Finished game 222 (B vs A): 1-0 {White mates}
+Started game 226 of 300 (B vs A)
+Finished game 226 (B vs A): 1-0 {White mates}
+Started game 227 of 300 (A vs B)
+Finished game 215 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 228 of 300 (B vs A)
+Finished game 225 (A vs B): 0-1 {Black mates}
+Started game 229 of 300 (A vs B)
+Finished game 229 (A vs B): 0-1 {Black mates}
+Started game 230 of 300 (B vs A)
+Finished game 230 (B vs A): 1-0 {White mates}
+Started game 231 of 300 (A vs B)
+Finished game 227 (A vs B): 0-1 {Black mates}
+Started game 232 of 300 (B vs A)
+Finished game 224 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 233 of 300 (A vs B)
+Finished game 232 (B vs A): 1-0 {White mates}
+Started game 234 of 300 (B vs A)
+Finished game 219 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -384.25 +/- 52.36, nElo: -690.04 +/- 45.10
+LOS: 0.00 %, DrawRatio: 1.75 %, PairsRatio: 0.01
+Games: 228, Wins: 2, Losses: 185, Draws: 41, Points: 22.5 (9.87 %)
+Ptnml(0-2): [73, 38, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 235 of 300 (A vs B)
+Finished game 233 (A vs B): 0-1 {Black mates}
+Started game 236 of 300 (B vs A)
+Finished game 234 (B vs A): 1-0 {White mates}
+Started game 237 of 300 (A vs B)
+Finished game 236 (B vs A): 1-0 {White mates}
+Started game 238 of 300 (B vs A)
+Finished game 231 (A vs B): 0-1 {Black mates}
+Started game 239 of 300 (A vs B)
+Finished game 228 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 240 of 300 (B vs A)
+Finished game 235 (A vs B): 0-1 {Black mates}
+Started game 241 of 300 (A vs B)
+Finished game 240 (B vs A): 1-0 {White mates}
+Started game 242 of 300 (B vs A)
+Finished game 237 (A vs B): 0-1 {Black mates}
+Started game 243 of 300 (A vs B)
+Finished game 243 (A vs B): 0-1 {Black mates}
+Started game 244 of 300 (B vs A)
+Finished game 238 (B vs A): 1-0 {White mates}
+Started game 245 of 300 (A vs B)
+Finished game 242 (B vs A): 1-0 {White mates}
+Started game 246 of 300 (B vs A)
+Finished game 244 (B vs A): 1-0 {White mates}
+Started game 247 of 300 (A vs B)
+Finished game 245 (A vs B): 0-1 {Black mates}
+Started game 248 of 300 (B vs A)
+Finished game 241 (A vs B): 0-1 {Black mates}
+Started game 249 of 300 (A vs B)
+Finished game 247 (A vs B): 0-1 {Black mates}
+Started game 250 of 300 (B vs A)
+Finished game 248 (B vs A): 1-0 {White mates}
+Started game 251 of 300 (A vs B)
+Finished game 250 (B vs A): 1-0 {White mates}
+Started game 252 of 300 (B vs A)
+Finished game 249 (A vs B): 0-1 {Black mates}
+Started game 253 of 300 (A vs B)
+Finished game 252 (B vs A): 1-0 {White mates}
+Started game 254 of 300 (B vs A)
+Finished game 253 (A vs B): 0-1 {Black mates}
+Started game 255 of 300 (A vs B)
+Finished game 239 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -392.06 +/- 51.17, nElo: -708.41 +/- 43.24
+LOS: 0.00 %, DrawRatio: 1.61 %, PairsRatio: 0.01
+Games: 248, Wins: 2, Losses: 203, Draws: 43, Points: 23.5 (9.48 %)
+Ptnml(0-2): [81, 40, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 256 of 300 (B vs A)
+Finished game 246 (B vs A): 1-0 {White mates}
+Started game 257 of 300 (A vs B)
+Finished game 255 (A vs B): 0-1 {Black mates}
+Started game 258 of 300 (B vs A)
+Finished game 258 (B vs A): 1-0 {White mates}
+Started game 259 of 300 (A vs B)
+Finished game 251 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 260 of 300 (B vs A)
+Finished game 259 (A vs B): 0-1 {Black mates}
+Started game 261 of 300 (A vs B)
+Finished game 257 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 262 of 300 (B vs A)
+Finished game 254 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 263 of 300 (A vs B)
+Finished game 256 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 264 of 300 (B vs A)
+Finished game 260 (B vs A): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -381.70 +/- 47.55, nElo: -698.24 +/- 42.23
+LOS: 0.00 %, DrawRatio: 1.54 %, PairsRatio: 0.01
+Games: 260, Wins: 2, Losses: 210, Draws: 48, Points: 26.0 (10.00 %)
+Ptnml(0-2): [82, 45, 2, 1, 0], WL/DD Ratio: 1.00
+--------------------------------------------------
+Started game 265 of 300 (A vs B)
+Finished game 263 (A vs B): 0-1 {Black mates}
+Started game 266 of 300 (B vs A)
+Finished game 261 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 267 of 300 (A vs B)
+Finished game 266 (B vs A): 1-0 {White mates}
+Started game 268 of 300 (B vs A)
+Finished game 262 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 269 of 300 (A vs B)
+Finished game 265 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 270 of 300 (B vs A)
+Finished game 268 (B vs A): 1-0 {White mates}
+Started game 271 of 300 (A vs B)
+Finished game 271 (A vs B): 0-1 {Black mates}
+Started game 272 of 300 (B vs A)
+Finished game 269 (A vs B): 0-1 {Black mates}
+Started game 273 of 300 (A vs B)
+Finished game 264 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 274 of 300 (B vs A)
+Finished game 270 (B vs A): 1-0 {White mates}
+Started game 275 of 300 (A vs B)
+Finished game 273 (A vs B): 0-1 {Black mates}
+Started game 276 of 300 (B vs A)
+Finished game 272 (B vs A): 1-0 {White mates}
+Started game 277 of 300 (A vs B)
+Finished game 274 (B vs A): 1-0 {White mates}
+Started game 278 of 300 (B vs A)
+Finished game 267 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 279 of 300 (A vs B)
+Finished game 275 (A vs B): 0-1 {Black mates}
+Started game 280 of 300 (B vs A)
+Finished game 278 (B vs A): 1-0 {White mates}
+Started game 281 of 300 (A vs B)
+Finished game 280 (B vs A): 1-0 {White mates}
+Started game 282 of 300 (B vs A)
+Finished game 282 (B vs A): 1-0 {White mates}
+Started game 283 of 300 (A vs B)
+Finished game 277 (A vs B): 0-1 {Black mates}
+Started game 284 of 300 (B vs A)
+Finished game 276 (B vs A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 285 of 300 (A vs B)
+Finished game 281 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 286 of 300 (B vs A)
+Finished game 283 (A vs B): 0-1 {Black mates}
+Started game 287 of 300 (A vs B)
+Finished game 279 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -369.71 +/- 43.95, nElo: -673.79 +/- 40.55
+LOS: 0.00 %, DrawRatio: 2.13 %, PairsRatio: 0.01
+Games: 282, Wins: 2, Losses: 224, Draws: 56, Points: 30.0 (10.64 %)
+Ptnml(0-2): [86, 51, 3, 1, 0], WL/DD Ratio: 0.50
+--------------------------------------------------
+Started game 288 of 300 (B vs A)
+Finished game 284 (B vs A): 1-0 {White mates}
+Started game 289 of 300 (A vs B)
+Finished game 287 (A vs B): 0-1 {Black mates}
+Started game 290 of 300 (B vs A)
+Finished game 288 (B vs A): 1-0 {White mates}
+Started game 291 of 300 (A vs B)
+Finished game 290 (B vs A): 1-0 {White mates}
+Started game 292 of 300 (B vs A)
+Finished game 286 (B vs A): 1-0 {White mates}
+Started game 293 of 300 (A vs B)
+Finished game 292 (B vs A): 1-0 {White mates}
+Started game 294 of 300 (B vs A)
+Finished game 291 (A vs B): 0-1 {Black mates}
+Started game 295 of 300 (A vs B)
+Finished game 289 (A vs B): 0-1 {Black mates}
+Started game 296 of 300 (B vs A)
+Finished game 294 (B vs A): 1-0 {White mates}
+Started game 297 of 300 (A vs B)
+Finished game 285 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 298 of 300 (B vs A)
+Finished game 293 (A vs B): 0-1 {Black mates}
+Started game 299 of 300 (A vs B)
+Finished game 297 (A vs B): 0-1 {Black mates}
+Started game 300 of 300 (B vs A)
+Finished game 300 (B vs A): 1-0 {White mates}
+Finished game 298 (B vs A): 1-0 {White mates}
+Finished game 295 (A vs B): 1/2-1/2 {Draw by stalemate}
+Finished game 299 (A vs B): 0-1 {Black mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -377.21 +/- 43.75, nElo: -688.29 +/- 39.45
+LOS: 0.00 %, DrawRatio: 2.01 %, PairsRatio: 0.01
+Games: 298, Wins: 2, Losses: 239, Draws: 57, Points: 30.5 (10.23 %)
+Ptnml(0-2): [93, 52, 3, 1, 0], WL/DD Ratio: 0.50
+--------------------------------------------------
+Finished game 296 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -375.36 +/- 43.23, nElo: -686.42 +/- 39.32
+LOS: 0.00 %, DrawRatio: 2.00 %, PairsRatio: 0.01
+Games: 300, Wins: 2, Losses: 240, Draws: 58, Points: 31.0 (10.33 %)
+Ptnml(0-2): [93, 53, 3, 1, 0], WL/DD Ratio: 0.50
+--------------------------------------------------
+Finished match
+Total Time: 00:17:17 (hours:minutes:seconds)
+

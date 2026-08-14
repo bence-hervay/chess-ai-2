@@ -1,0 +1,3 @@
+name=smoke-champ-vs-random e1=ckpt:runs/20260814-120150-selfplay-chess-w64-g200-e10-s1-2327384/checkpoint e2=random:9 pairs=5 limit=st=0.1 seed=42
+openings=9622341e6a9287d2cab2f247c566c18badeb05f2b39b557af00ab9488b0095fc  tools/openings_4ply.epd
+uci=74ccc199f55538785e2344bfab05ebfc325dfcc1a5b8b3b9afbd8a66d3a74f64 stockfish=Stockfish 17.1 by the Stockfish developers (see AUTHORS file)

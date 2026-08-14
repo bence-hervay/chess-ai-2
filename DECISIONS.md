@@ -210,3 +210,15 @@ per ply; labels = Stockfish 17 at fixed depth 8 (cp and bestmove); WDL
 rule: win > +100 cp, loss < -100 cp, else draw; policy target = the
 teacher's best move; recipe v1 training; 90/10 held-out split. The
 checkpoint is never used as the tabula-rasa champion.
+
+## 2026-08-14 — D027: Match-protocol lessons (Phase 7)
+
+Initial SF-anchor calibrations were invalid: Stockfish overshoots
+fastchess `st=` movetime by 1-2 ms and forfeited every game, making a
+w64 MLP engine appear to beat UCI_Elo 3190. All matches now run with
+`timemargin=100`; anchor results are only reported from post-margin
+matches, and every reported match records termination causes. Honest
+bracket at st=0.3: ~3% vs SF UCI_Elo 1320, ~6-19% vs full SF at 5-20
+nodes (NNUE evaluation is that strong per node). Elo language follows
+§27: scores and Fastchess logistic differences under this exact
+protocol only.

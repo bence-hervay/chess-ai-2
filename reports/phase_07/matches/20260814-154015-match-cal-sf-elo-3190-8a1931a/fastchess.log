@@ -1,0 +1,140 @@
+Indexing opening suite...
+Started game 1 of 12 (A vs B)
+Started game 4 of 12 (B vs A)
+Started game 2 of 12 (B vs A)
+Started game 3 of 12 (A vs B)
+Started game 5 of 12 (A vs B)
+Warning; Bestmove does not match beginning of last PV - move e2e4 from B
+Info; info depth 12 seldepth 21 multipv 1 score cp 23 nodes 87285 nps 289983 hashfull 23 tbhits 0 time 301 pv d2d4 d7d5 c2c4 g8f6 c4d5 c6d5 c1f4 e7e6 e2e3
+Position; fen rnbqkbnr/pp1pppp1/2p4p/8/7P/5N2/PPPPPPP1/RNBQKB1R w KQkq - 0 3
+Moves; 
+Warning; Bestmove does not match beginning of last PV - move g1f3 from B
+Info; info depth 13 seldepth 17 multipv 1 score cp 68 nodes 81926 nps 270382 hashfull 23 tbhits 0 time 303 pv e2e4 e7e6 e4f5 e6f5 d1e2 f8e7 c1f4 g8f6 a3b5 d7d6 e2f3 c7c6
+Position; fen rnbqkbnr/p1ppp1pp/1p6/5p2/8/N2P4/PPP1PPPP/R1BQKBNR w KQkq - 0 3
+Moves; 
+Finished game 4 (B vs A): 0-1 {White loses on time (2ms overrun)}
+Started game 6 of 12 (B vs A)
+Finished game 1 (A vs B): 1-0 {Black loses on time (1ms overrun)}
+Started game 7 of 12 (A vs B)
+Finished game 3 (A vs B): 1-0 {Black loses on time (2ms overrun)}
+Started game 8 of 12 (B vs A)
+Finished game 5 (A vs B): 1-0 {Black loses on time (2ms overrun)}
+Started game 9 of 12 (A vs B)
+Warning; Bestmove does not match beginning of last PV - move b2b3 from B
+Info; info depth 11 seldepth 16 multipv 1 score cp 37 nodes 80143 nps 265374 hashfull 19 tbhits 0 time 302 pv h3f2 e7e6 b2b3 d8f6 d2d4 d7d5 e2e4 d5e4 f2e4
+Position; fen r1bqkbnr/ppppppp1/n6p/8/5P2/7N/PPPPP1PP/RNBQKB1R w KQkq - 1 3
+Moves; 
+Finished game 8 (B vs A): 0-1 {White loses on time (1ms overrun)}
+Started game 10 of 12 (B vs A)
+Finished game 7 (A vs B): 1-0 {Black loses on time (2ms overrun)}
+Started game 11 of 12 (A vs B)
+Finished game 9 (A vs B): 1-0 {Black loses on time (2ms overrun)}
+Started game 12 of 12 (B vs A)
+Warning; Bestmove does not match beginning of last PV - move e2e4 from B
+Info; info depth 12 seldepth 18 multipv 1 score cp 141 nodes 78570 nps 261900 hashfull 25 tbhits 0 time 300 pv c3d5 f6d8 d4e5 c7c6 d5c3 d7d6 e5d6 f8d6 e2e4 g8f6 c1e3 e8g8
+Position; fen rnbqkbnr/1ppp1ppp/8/p3p3/8/2N2P2/PPPPP1PP/R1BQKBNR w KQkq - 0 3
+Moves; d2d4 d8f6
+Warning; Bestmove does not match beginning of last PV - move c2c3 from B
+Info; info depth 12 seldepth 18 multipv 1 score cp 16 nodes 77795 nps 258455 hashfull 26 tbhits 0 time 301 pv b1c3 c7c5 g1f3 g7g6 d2d4 c5d4 f3d4 f8g7 e1g1 e8g8 d4b3 b8c6 h2h3
+Position; fen rnbqkb1r/ppp1pppp/3p1n2/8/4P3/8/PPPPBPPP/RNBQK1NR w KQkq - 0 3
+Moves; 
+Finished game 12 (B vs A): 0-1 {White loses on time (1ms overrun)}
+Warning; Bestmove does not match beginning of last PV - move b8c6 from B
+Info; info depth 12 seldepth 16 multipv 1 score cp 102 nodes 53545 nps 177301 hashfull 18 tbhits 0 time 302 pv f6e4 d2d4 e4f6 c1e3 d6d5 b1d2 e7e6 c2c3 f8e7 a2a3
+Position; fen rnbqkb1r/ppp1pppp/3p1n2/8/4P3/8/PPPPBPPP/RNBQK1NR w KQkq - 0 3
+Moves; h2h4
+Finished game 11 (A vs B): 1-0 {Black loses on time (2ms overrun)}
+Warning; Bestmove does not match beginning of last PV - move c1b2 from B
+Info; info depth 15 seldepth 20 multipv 1 score cp 543 nodes 84185 nps 279684 hashfull 29 tbhits 0 time 301 pv e2e3 d7d6 g1f3 g8f6 f1e2 b8c6 b4b5 c6d4 e3d4 e5e4
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6
+Warning; Bestmove does not match beginning of last PV - move a4a5 from B
+Info; info depth 13 seldepth 20 multipv 1 score cp 138 nodes 79480 nps 263178 hashfull 27 tbhits 0 time 302 pv d2d4 d7d6 a4a5 b6c7 f1e2 b8d7 c1f4 f8g7 e1g1 g8f6 e4e5 d6e5 f3e5 d7e5 f4e5 c7d8
+Position; fen rnbqkbnr/pp1pppp1/2p4p/8/7P/5N2/PPPPPPP1/RNBQKB1R w KQkq - 0 3
+Moves; e2e4 d8b6 b1c3 g7g6 a2a4 a7a6
+Finished game 2 (B vs A): 0-1 {White loses on time (1ms overrun)}
+Warning; Bestmove does not match beginning of last PV - move h8d4 from B
+Info; info depth 17 seldepth 27 multipv 1 score cp 712 nodes 331158 nps 1103860 hashfull 127 tbhits 0 time 300 pv h8b2 c8f5 e2e3 b8d7 g1f3 d8e7 b2a3 e7f6 b1c3 e8c8 h2h4 d7e5 f3e5 f6e5 f1e2
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6
+Warning; Bestmove does not match beginning of last PV - move f2f3 from B
+Info; info depth 17 seldepth 20 multipv 1 score cp 727 nodes 336172 nps 1120573 hashfull 142 tbhits 0 time 300 pv h2h3 g4f5 e2e3 b8d7 g1e2 a6a5 b4a5 a8a5 a1a5 d8a5 e2c3
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4
+Warning; Bestmove does not match beginning of last PV - move b6c8 from B
+Info; info depth 18 seldepth 21 multipv 1 score cp 979 nodes 358068 nps 1193560 hashfull 144 tbhits 0 time 300 pv c1a3 b8c6 b6d5 b7b6 d1b1 f6e5 f1b5 g8e7 d5e7 c6e7 a3e7 c8a6
+Position; fen rnbqkbnr/1ppp1ppp/8/p3p3/8/2N2P2/PPPPP1PP/R1BQKBNR w KQkq - 0 3
+Moves; d2d4 d8f6 e2e4 h7h6 d4e5 f6b6 c3d5 a8a7 d5b6 f8b4 c2c3 b4c3 b2c3 f7f6
+Warning; Bestmove does not match beginning of last PV - move e2e3 from B
+Info; info depth 17 seldepth 26 multipv 1 score cp 907 nodes 369695 nps 1232316 hashfull 145 tbhits 0 time 300 pv d4f6 d8f6 a8b8 e8d7 g1f3 d7c7 e2e3 g6g5 b8g8 h7h5 g4h5 g5g4 g8g4 f6f5 e1f2 f5g4
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6
+Warning; Bestmove does not match beginning of last PV - move e6d7 from B
+Info; info depth 18 seldepth 25 multipv 1 score cp 1261 nodes 398092 nps 1326973 hashfull 166 tbhits 0 time 300 pv d1d4 d7e6 d4a7 f6f5 a7b8 g8f6 c8d6 e8e7 b8h8 f5e4 h8g7 e7d6 c1a3 c7c5 g7b7 e4f3 g2f3
+Position; fen rnbqkbnr/1ppp1ppp/8/p3p3/8/2N2P2/PPPPP1PP/R1BQKBNR w KQkq - 0 3
+Moves; d2d4 d8f6 e2e4 h7h6 d4e5 f6b6 c3d5 a8a7 d5b6 f8b4 c2c3 b4c3 b2c3 f7f6 b6c8 b8c6 e5e6 c6d4
+Warning; Bestmove does not match beginning of last PV - move f1c4 from B
+Info; info depth 20 seldepth 14 multipv 1 score mate 7 nodes 371969 nps 1239896 hashfull 143 tbhits 0 time 300 pv d1d4 e6f7 d4d5 f7g6 d5f5 g6f7 f1c4 f7f8 c1a3 c7c5 f5c8 f8e7 a3c5
+Position; fen rnbqkbnr/1ppp1ppp/8/p3p3/8/2N2P2/PPPPP1PP/R1BQKBNR w KQkq - 0 3
+Moves; d2d4 d8f6 e2e4 h7h6 d4e5 f6b6 c3d5 a8a7 d5b6 f8b4 c2c3 b4c3 b2c3 f7f6 b6c8 b8c6 e5e6 c6d4 e6d7 e8d7 c8b6 d7e6
+Warning; Bestmove does not match beginning of last PV - move c1a3 from B
+Info; info depth 245 seldepth 4 multipv 1 score mate 2 nodes 96061 nps 3694653 hashfull 0 tbhits 0 time 26 pv d4d5 c6b6 d5b5
+Position; fen rnbqkbnr/1ppp1ppp/8/p3p3/8/2N2P2/PPPPP1PP/R1BQKBNR w KQkq - 0 3
+Moves; d2d4 d8f6 e2e4 h7h6 d4e5 f6b6 c3d5 a8a7 d5b6 f8b4 c2c3 b4c3 b2c3 f7f6 b6c8 b8c6 e5e6 c6d4 e6d7 e8d7 c8b6 d7e6 f1c4 e6d6 d1d4 d6c6
+Finished game 6 (B vs A): 1-0 {White mates}
+Warning; Bestmove does not match beginning of last PV - move d2d4 from B
+Info; info depth 18 seldepth 26 multipv 1 score cp 1076 nodes 422767 nps 1409223 hashfull 156 tbhits 0 time 300 pv f1e2 e8e4 e1g1 g6g5 d2d4 e4g6 b1d2 g6h5 d1e1 h5h4 f6e5 c7d8 e1h4 g5h4 e5f6 d8c8
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8
+Warning; Bestmove does not match beginning of last PV - move f3g3 from B
+Info; info depth 17 seldepth 23 multipv 1 score cp 1191 nodes 407580 nps 1358600 hashfull 147 tbhits 0 time 300 pv d2b3 e8e6 e1g1 e6d7 f3g3 d7d6 g3d6 c7d6
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7
+Warning; Bestmove does not match beginning of last PV - move f6g5 from B
+Info; info depth 18 seldepth 24 multipv 1 score cp 1212 nodes 403552 nps 1345173 hashfull 153 tbhits 0 time 300 pv e1g1 b6a6 f6g5 f7f6 g5f6 e8f8 f6g5 a6b7 g4e5 f8e8
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6
+Warning; Bestmove does not match beginning of last PV - move d3f5 from B
+Info; info depth 20 seldepth 10 multipv 1 score mate 5 nodes 412739 nps 1375796 hashfull 147 tbhits 0 time 300 pv e5d7 f5f4 g3f4 c7d7 b3c5 d7c8 d3f5 e8e6 f5e6
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7
+Warning; Bestmove does not match beginning of last PV - move e5d7 from B
+Info; info depth 29 seldepth 12 multipv 1 score mate 6 nodes 385641 nps 1285470 hashfull 128 tbhits 0 time 300 pv b3c5 b7b6 e5d7 e8d7 f5d7 b6a5 g3c7 a5b4 c5d3 b4c3 c7c6
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7 d3f5 c7b7
+Warning; Bestmove does not match beginning of last PV - move e1g1 from B
+Info; info depth 59 seldepth 4 multipv 1 score mate 2 nodes 1110984 nps 3703280 hashfull 35 tbhits 0 time 300 pv d7b6 a8a7 g3c7
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7 d3f5 c7b7 e5d7 b5b4 b3c5 b7a8
+Warning; Bestmove does not match beginning of last PV - move f1a1 from B
+Info; info depth 65 seldepth 6 multipv 1 score mate 3 nodes 1106077 nps 3686923 hashfull 40 tbhits 0 time 300 pv c5d7 a8b7 g3b8 b7a6 f1a1
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7 d3f5 c7b7 e5d7 b5b4 b3c5 b7a8 e1g1 e8d7
+Warning; Bestmove does not match beginning of last PV - move g3e1 from B
+Info; info depth 95 seldepth 6 multipv 1 score mate 3 nodes 1351108 nps 4503693 hashfull 21 tbhits 0 time 300 pv a1a7 a8a7 g3c7 a7a8 c7b7
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7 d3f5 c7b7 e5d7 b5b4 b3c5 b7a8 e1g1 e8d7 f1a1 d7a7
+Warning; Bestmove does not match beginning of last PV - move e1b1 from B
+Info; info depth 245 seldepth 4 multipv 1 score mate 2 nodes 81957 nps 4313526 hashfull 0 tbhits 0 time 19 pv e1a5 a8b8 g5f4
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7 d3f5 c7b7 e5d7 b5b4 b3c5 b7a8 e1g1 e8d7 f1a1 d7a7 g3e1 a7a3 a1a3 b4a3
+Warning; Bestmove does not match beginning of last PV - move b1e1 from B
+Info; info depth 245 seldepth 2 multipv 1 score mate 1 nodes 217150 nps 4720652 hashfull 0 tbhits 0 time 46 pv b1b7
+Position; fen rnbqk1nr/pppp1ppp/8/4p3/1b6/P7/2PPPPPP/RNBQKBNR w KQkq - 0 3
+Moves; a3b4 g7g6 c1b2 c7c6 b2e5 d7d5 e5h8 a7a6 h8d4 c8g4 f2f3 a6a5 f3g4 a5b4 a1a8 g8f6 e2e3 e8d7 a8b8 d8b8 d4f6 h7h5 g1f3 h5g4 f3e5 d7c7 e5g4 b8e8 d2d4 b7b5 f1d3 g6g5 b1d2 c7d6 d1f3 d6c7 f3g3 c7b6 f6g5 f7f5 g4e5 b4b3 d2b3 b6c7 d3f5 c7b7 e5d7 b5b4 b3c5 b7a8 e1g1 e8d7 f1a1 d7a7 g3e1 a7a3 a1a3 b4a3 e1b1 a3a2
+Finished game 10 (B vs A): 1-0 {White mates}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: 279.59 +/- -nan, nElo: 347.44 +/- 196.58
+LOS: 99.97 %, DrawRatio: 33.33 %, PairsRatio: inf
+Games: 12, Wins: 10, Losses: 2, Draws: 0, Points: 10.0 (83.33 %)
+Ptnml(0-2): [0, 0, 2, 0, 4], WL/DD Ratio: inf
+--------------------------------------------------
+
+Player: B
+  Timeouts: 10
+  Crashed: 0
+
+Finished match
+Total Time: 00:00:19 (hours:minutes:seconds)
+

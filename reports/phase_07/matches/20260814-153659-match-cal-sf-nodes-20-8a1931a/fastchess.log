@@ -1,0 +1,35 @@
+Indexing opening suite...
+Started game 1 of 12 (A vs B)
+Started game 5 of 12 (A vs B)
+Started game 2 of 12 (B vs A)
+Started game 3 of 12 (A vs B)
+Started game 4 of 12 (B vs A)
+Finished game 4 (B vs A): 1-0 {White mates}
+Started game 6 of 12 (B vs A)
+Finished game 2 (B vs A): 1-0 {White mates}
+Started game 7 of 12 (A vs B)
+Finished game 1 (A vs B): 0-1 {Black mates}
+Started game 8 of 12 (B vs A)
+Finished game 5 (A vs B): 0-1 {Black mates}
+Started game 9 of 12 (A vs B)
+Finished game 9 (A vs B): 0-1 {Black mates}
+Started game 10 of 12 (B vs A)
+Finished game 10 (B vs A): 1-0 {White mates}
+Started game 11 of 12 (A vs B)
+Finished game 6 (B vs A): 1-0 {White mates}
+Started game 12 of 12 (B vs A)
+Finished game 12 (B vs A): 1-0 {White mates}
+Finished game 8 (B vs A): 1-0 {White mates}
+Finished game 11 (A vs B): 0-1 {Black mates}
+Finished game 3 (A vs B): 0-1 {Black mates}
+Finished game 7 (A vs B): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -544.69 +/- -nan, nElo: -1208.56 +/- 196.58
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 12, Wins: 0, Losses: 11, Draws: 1, Points: 0.5 (4.17 %)
+Ptnml(0-2): [5, 1, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Finished match
+Total Time: 00:00:58 (hours:minutes:seconds)
+

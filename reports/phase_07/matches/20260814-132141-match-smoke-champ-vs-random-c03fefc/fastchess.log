@@ -1,0 +1,2 @@
+Error while reading option "-engine" with value "name=B"
+Reason: Option "-engine" expects key=value pairs, got "9".

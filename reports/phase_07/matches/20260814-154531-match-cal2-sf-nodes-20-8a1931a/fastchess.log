@@ -1,0 +1,43 @@
+Indexing opening suite...
+Started game 1 of 16 (A vs B)
+Started game 4 of 16 (B vs A)
+Started game 3 of 16 (A vs B)
+Started game 2 of 16 (B vs A)
+Started game 5 of 16 (A vs B)
+Finished game 4 (B vs A): 1-0 {White mates}
+Started game 6 of 16 (B vs A)
+Finished game 6 (B vs A): 1-0 {White mates}
+Started game 7 of 16 (A vs B)
+Finished game 2 (B vs A): 1-0 {White mates}
+Started game 8 of 16 (B vs A)
+Finished game 7 (A vs B): 0-1 {Black mates}
+Started game 9 of 16 (A vs B)
+Finished game 1 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 10 of 16 (B vs A)
+Finished game 8 (B vs A): 1-0 {White mates}
+Started game 11 of 16 (A vs B)
+Finished game 3 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 12 of 16 (B vs A)
+Finished game 10 (B vs A): 1-0 {White mates}
+Started game 13 of 16 (A vs B)
+Finished game 11 (A vs B): 0-1 {Black mates}
+Started game 14 of 16 (B vs A)
+Finished game 12 (B vs A): 1-0 {White mates}
+Started game 15 of 16 (A vs B)
+Finished game 5 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Started game 16 of 16 (B vs A)
+Finished game 14 (B vs A): 1-0 {White mates}
+Finished game 16 (B vs A): 1-0 {White mates}
+Finished game 9 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Finished game 13 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+Finished game 15 (A vs B): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of A vs B (0.3/move, NULL - 1t, NULL - 16MB, openings_4ply.epd):
+Elo: -254.73 +/- 89.70, nElo: -709.20 +/- 170.24
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 16, Wins: 0, Losses: 10, Draws: 6, Points: 3.0 (18.75 %)
+Ptnml(0-2): [2, 6, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Finished match
+Total Time: 00:01:32 (hours:minutes:seconds)
+

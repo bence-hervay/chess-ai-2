@@ -40,11 +40,27 @@ environment manifest, metrics, and game records.
 | 4 — Breakthrough curriculum | **PASS** | [reports/phase_04.md](reports/phase_04.md) |
 | 5 — Othello benchmark | **PASS** | [reports/phase_05.md](reports/phase_05.md) |
 | 6 — Standard chess integration | **PASS** | [reports/phase_06.md](reports/phase_06.md) |
-| 7 — Measurable chess strength | not started | — |
+| 7 — Measurable chess strength | **PASS** | [reports/phase_07.md](reports/phase_07.md) |
+| 8 — Forward Chess rules | not started | — |
 
 ### Current state (2026-08-14)
 
-Phases 0–6 complete and promoted. **Chess is integrated end-to-end**:
+Phases 0–7 complete and promoted. **First honest chess strength
+measurement** (all Elo protocol-relative, never human/FIDE):
+
+- Headline anchor: **10.33% over 300 games vs full Stockfish 17.1
+  limited to 20 nodes/move** (−375 ± 43 logistic Elo under this
+  protocol); 3.5% vs the UCI_Elo-1320 anchor; 99% vs random.
+- Search scaling monotone across four budgets (0.07 → 0.935 vs the
+  400-node control); data scaling strong early (+200 Elo gen 3→7) then
+  an honestly-reported plateau; **w32 is the width optimum** at this
+  compute scale, with the classic fixed-node → fixed-time inversion
+  measured (w128 collapses at fixed time).
+- Lazy-head inference split tripled self-play throughput; the first
+  Stockfish anchor round was invalidated by 1–2 ms time-forfeits and
+  re-run with a time margin — termination tags are now always checked.
+
+Phase 6 integrated chess + UCI + the quarantined teacher diagnostic. **Chess is integrated end-to-end**:
 
 - cozy-chess rules behind the unchanged Game trait (perft-exact,
   differential-tested, threefold + fifty-move draws), UCI engine that
@@ -120,6 +136,6 @@ is mathematically correct before any learning exists:
 - Phase 0 foundation: byte-identical game records across 1/2/4/8 worker
   threads; 1.13M random games/s at 8 workers.
 
-Next: Phase 7 — measurable standard-chess strength: scaled self-play,
-statistically meaningful fixed-node and fixed-time match protocols
-against reference opponents, inference optimization.
+Next: Phase 8 — Forward Chess rules and reduced exact games: the novel
+target game's rules module and exactness ladder under the same
+curriculum machinery.

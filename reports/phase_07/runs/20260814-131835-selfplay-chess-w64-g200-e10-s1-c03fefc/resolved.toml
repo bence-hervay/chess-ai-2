@@ -1,0 +1,16 @@
+seed = 1
+model_width = 64
+generations = 16
+games_per_generation = 200
+steps_per_generation = 2000
+epsilon = 0.1
+gen_node_budget = 400
+eval_node_budget = 400
+replay_generations = 4
+promotion = "match"
+promotion_pairs = 30
+opening_plies = 4
+threads = 7
+
+[game]
+kind = "chess"
