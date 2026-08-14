@@ -156,8 +156,13 @@ while [ "$(done_chunks)" -lt "$CHUNKS" ]; do
     echo "opening_plies = $OPENING"
     echo "threads = $THREADS"
     if [ "$C" -gt 1 ]; then
-      PREV=$(printf '%s/chunk_%03d/checkpoint' "$DIR" "$((C - 1))")
-      echo "init_checkpoint = \"$PREV\""
+      PREV=$(printf '%s/chunk_%03d' "$DIR" "$((C - 1))")
+      echo "init_checkpoint = \"$PREV/checkpoint\""
+      # Persisted FIFO replay window: without it the first generations
+      # of a chunk train on one generation of data and regress.
+      if [ -f "$PREV/replay.jsonl" ]; then
+        echo "init_replay = \"$PREV/replay.jsonl\""
+      fi
     fi
     echo ""
     echo "[game]"
@@ -172,6 +177,7 @@ while [ "$(done_chunks)" -lt "$CHUNKS" ]; do
   echo "$RUN" > "$CDIR/run_dir.txt"
   cp -r "$RUN/checkpoint" "$CDIR/checkpoint"
   cp "$RUN/summary.json" "$RUN/metrics.jsonl" "$RUN/resolved.toml" "$CDIR/" 2>/dev/null || true
+  cp "$RUN/replay.jsonl" "$CDIR/" 2>/dev/null || true
   if [ "$C" = 1 ]; then
     # Elo anchor: the campaign's untrained random-init net.
     mkdir -p "$DIR/baseline_gen0"
@@ -186,6 +192,12 @@ while [ "$(done_chunks)" -lt "$CHUNKS" ]; do
   FINAL=$(python3 -c "import json;s=json.load(open('$CDIR/summary.json'));f=s.get('final_vs_gen0') or {};print(f\"score {f.get('score','?')} lcb {f.get('score_lcb95','?')} over {f.get('games','?')} games, mean plies {f.get('mean_plies','?')}\")" 2>/dev/null || echo "summary unavailable")
   echo "chunk $C/$CHUNKS: done — vs chunk-start champion: $FINAL" | tee -a "$DIR/log.txt"
   touch "$CDIR/DONE"
+  if grep -q '^halting:' "$CDIR/lab_output.txt"; then
+    echo "chunk $C halted (two consecutive regressions, plan §12.6)." | tee -a "$DIR/log.txt"
+    echo "Campaign paused for diagnosis — inspect $CDIR/lab_output.txt and" | tee -a "$DIR/log.txt"
+    echo "the rating curve; resume deliberately with: tools/fc_train.sh $NAME" | tee -a "$DIR/log.txt"
+    exit 3
+  fi
 done
 
 echo "campaign $NAME complete: $(done_chunks)/$CHUNKS chunks. Champion: $DIR/champion"

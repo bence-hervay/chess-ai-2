@@ -51,8 +51,9 @@ impl Example {
 /// One training row: the policy target is uniform over
 /// `policy_actions` and the value target is `wdl` (both side-to-move).
 /// Oracle rows target the optimal-action set; self-play rows target the
-/// single expert-search action (plan §12.2).
-#[derive(Clone, Debug)]
+/// single expert-search action (plan §12.2). Serializable so the FIFO
+/// replay window can persist across campaign chunks (`replay.jsonl`).
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TrainRow {
     pub features: Vec<u32>,
     pub legal: Vec<u32>,

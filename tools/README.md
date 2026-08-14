@@ -47,15 +47,22 @@ campaigns/<name>/
   champion/           latest champion (use for play/matches)
 ```
 
-Known, documented approximations: the FIFO replay buffer restarts
-empty at chunk boundaries, and each chunk's `vs gen0` progression line
-is against the *chunk's own* starting champion (cross-chunk progress is
-what `fc_rating.py` measures properly).
+The FIFO replay window persists across chunks (`replay.jsonl` +
+`init_replay`), so a chunked campaign trains like one long run —
+without this, the first generations of a continuation chunk train on a
+single generation of data and regress against the replay-trained
+champion (observed on fc-full before the fix). The remaining per-chunk
+approximation: each chunk's `vs gen0` progression line is against the
+*chunk's own* starting champion; cross-chunk progress is what
+`fc_rating.py` measures properly.
 
-Watch for during a run: `promoted` vs `REJECTED` per generation (two
-consecutive rejections halt the run by design — plan §12.6), match
-scores, mean plies (shortening decisive games are a good sign), and
-generation wall-times (7 workers should keep CPU ≈ 700%).
+Watch for during a run: `promoted` vs `REJECTED` per generation, match
+scores, mean plies, and generation wall-times (≈700% CPU during
+self-play, 100% during the deterministic single-threaded training
+segments). Two consecutive *regressions* (candidate score < 0.5) halt
+the run by design (plan §12.6) — the driver then pauses the whole
+campaign with a diagnosis pointer instead of blindly relaunching;
+resuming is an explicit decision.
 
 ## Rating curve (approximate internal Elo)
 

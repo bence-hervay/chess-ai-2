@@ -1313,11 +1313,17 @@ struct SelfPlayConfig {
     threads: usize,
     /// Optional checkpoint directory to initialize the generation-0
     /// champion from, for chunked resumable campaigns (tools/fc_train.sh).
-    /// Dims must match `model_width` and `game`. The replay buffer
-    /// restarts empty each chunk (documented discontinuity); progression
-    /// baselines are per-chunk.
+    /// Dims must match `model_width` and `game`. Progression baselines
+    /// are per-chunk.
     #[serde(default)]
     init_checkpoint: Option<PathBuf>,
+    /// Optional `replay.jsonl` from a previous run to pre-fill the FIFO
+    /// replay window (every self-play run writes one). Without it, the
+    /// first generations of a continuation chunk train on a single
+    /// generation of data and regress against a replay-trained champion
+    /// (observed on fc-full: two strikes and a spurious §12.6 halt).
+    #[serde(default)]
+    init_replay: Option<PathBuf>,
     game: GameSpec,
 }
 
@@ -1475,6 +1481,37 @@ fn run_selfplay<G: Game>(
     let mut consecutive_rejections = 0u32;
     let mut max_features_seen = 1usize;
     let mut replay: std::collections::VecDeque<Vec<TrainRow>> = std::collections::VecDeque::new();
+    if let Some(path) = &config.init_replay {
+        let text = std::fs::read_to_string(path)
+            .map_err(|e| format!("reading init_replay {}: {e}", path.display()))?;
+        let mut loaded: Vec<(u64, Vec<TrainRow>)> = Vec::new();
+        for (index, line) in text.lines().enumerate() {
+            let value: serde_json::Value = serde_json::from_str(line)
+                .map_err(|e| format!("init_replay line {}: {e}", index + 1))?;
+            let generation = value["generation"]
+                .as_u64()
+                .ok_or("init_replay: missing generation tag")?;
+            let rows: Vec<TrainRow> = serde_json::from_value(value["rows"].clone())
+                .map_err(|e| format!("init_replay line {} rows: {e}", index + 1))?;
+            loaded.push((generation, rows));
+        }
+        loaded.sort_by_key(|(generation, _)| *generation);
+        let skip = loaded
+            .len()
+            .saturating_sub(config.replay_generations as usize);
+        for (_, rows) in loaded.into_iter().skip(skip) {
+            replay.push_back(rows);
+        }
+        say(
+            format!(
+                "replay window pre-filled from {}: {} generations, {} rows",
+                path.display(),
+                replay.len(),
+                replay.iter().map(Vec::len).sum::<usize>()
+            ),
+            log,
+        );
+    }
 
     for generation in 0..config.generations {
         let gen_started = Instant::now();
@@ -1720,6 +1757,24 @@ fn run_selfplay<G: Game>(
             );
             break;
         }
+    }
+
+    // Persist the FIFO replay window (also on halt) so a follow-on
+    // campaign chunk can continue training seamlessly via init_replay.
+    {
+        let file = std::fs::File::create(run_dir.path().join("replay.jsonl"))
+            .map_err(|e| format!("creating replay.jsonl: {e}"))?;
+        let mut writer = std::io::BufWriter::new(file);
+        for (index, generation_rows) in replay.iter().enumerate() {
+            let line = serde_json::json!({"generation": index, "rows": generation_rows});
+            writer
+                .write_all(line.to_string().as_bytes())
+                .and_then(|()| writer.write_all(b"\n"))
+                .map_err(|e| format!("writing replay.jsonl: {e}"))?;
+        }
+        writer
+            .flush()
+            .map_err(|e| format!("flushing replay.jsonl: {e}"))?;
     }
 
     // Final champion: probe-compatible checkpoint plus full held-out
