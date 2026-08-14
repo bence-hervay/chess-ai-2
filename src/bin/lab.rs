@@ -125,6 +125,26 @@ enum LabCommand {
         /// Path to a sweep manifest (JSONL: {"command","config","cores"}).
         manifest: PathBuf,
     },
+    /// Play Forward Chess interactively against a checkpoint (or the
+    /// zero-evaluator search when no checkpoint is given). Moves are
+    /// typed as coordinates, e.g. `a2a3` or `a7a8=Q`; other commands:
+    /// `?` (list legal moves), `hint`, `undo`, `quit`. Standard chess
+    /// is played through the separate `uci` binary in any UCI GUI.
+    Play {
+        /// Ruleset: fc-tiny | fc-small | fc-medium | fc-full.
+        #[arg(long, default_value = "fc-full")]
+        game: String,
+        /// Checkpoint directory (`model.bin` + `model.json`); omit to
+        /// play against unlearned search.
+        #[arg(long)]
+        checkpoint: Option<PathBuf>,
+        /// Engine node budget per move.
+        #[arg(long, default_value_t = 600)]
+        nodes: u64,
+        /// Your colour: white | black | none (none = engine vs engine).
+        #[arg(long, default_value = "white")]
+        side: String,
+    },
 }
 
 /// Fully explicit configuration for `lab evaluate`, dispatched on `kind`.
@@ -251,6 +271,12 @@ fn main() {
         LabCommand::Selfplay { config } => selfplay(&config),
         LabCommand::Teacher { config } => teacher(&config),
         LabCommand::Sweep { manifest } => sweep(&manifest),
+        LabCommand::Play {
+            game,
+            checkpoint,
+            nodes,
+            side,
+        } => play(&game, checkpoint.as_deref(), nodes, &side),
     };
     if let Err(message) = result {
         eprintln!("error: {message}");
@@ -1285,6 +1311,13 @@ struct SelfPlayConfig {
     /// oracle mode.
     opening_plies: u32,
     threads: usize,
+    /// Optional checkpoint directory to initialize the generation-0
+    /// champion from, for chunked resumable campaigns (tools/fc_train.sh).
+    /// Dims must match `model_width` and `game`. The replay buffer
+    /// restarts empty each chunk (documented discontinuity); progression
+    /// baselines are per-chunk.
+    #[serde(default)]
+    init_checkpoint: Option<PathBuf>,
     game: GameSpec,
 }
 
@@ -1415,9 +1448,23 @@ fn run_selfplay<G: Game>(
         .create_subdir("checkpoints")
         .map_err(|e| e.to_string())?;
 
-    // Generation 0 champion: random initialization from the run seed.
+    // Generation 0 champion: random initialization from the run seed,
+    // or a prior campaign checkpoint when resuming in chunks.
     TrainBackend::seed(&device, config.seed);
     let mut champion = PolicyValueNet::<TrainBackend>::new(dims, &device);
+    if let Some(init) = &config.init_checkpoint {
+        let (_, init_dims, _) = load_checkpoint(init)?;
+        if init_dims != dims {
+            return Err(format!(
+                "init_checkpoint dims {init_dims:?} do not match configured {dims:?}"
+            ));
+        }
+        let recorder = BinFileRecorder::<FullPrecisionSettings>::new();
+        champion = champion
+            .load_file(init.join("model"), &recorder, &device)
+            .map_err(|e| format!("loading init_checkpoint: {e}"))?;
+        say(format!("champion initialized from {}", init.display()), log);
+    }
     manifest.model_parameter_count = champion.num_params() as u64;
     let mut champion_val = dataset
         .as_ref()
@@ -1726,7 +1773,12 @@ fn run_selfplay<G: Game>(
             ),
         };
         let exploit_final = (!loopy).then(|| {
-            exploitability_vs_perfect(game, &final_compiled, config.eval_node_budget, config.threads)
+            exploitability_vs_perfect(
+                game,
+                &final_compiled,
+                config.eval_node_budget,
+                config.threads,
+            )
         });
         let exploit_part = match &exploit_final {
             Some(e) => format!("exploit drops {}/{}", e.avoidable_drops, e.games),
@@ -1790,6 +1842,165 @@ fn run_selfplay<G: Game>(
 // ---------------------------------------------------------------------------
 // lab evaluate: oracle probe
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// lab play (interactive forward chess)
+// ---------------------------------------------------------------------------
+
+fn describe_outcome(outcome: selfplay_lab::game::Outcome) -> &'static str {
+    use selfplay_lab::game::{Outcome, Player};
+    match outcome {
+        Outcome::Draw => "Draw.",
+        Outcome::Win(Player::One) => "White wins.",
+        Outcome::Win(Player::Two) => "Black wins.",
+    }
+}
+
+fn fc_engine_move(
+    game: &ForwardChess,
+    net: Option<&CompiledNet>,
+    state: &mut selfplay_lab::games::forward_chess::FcState,
+    nodes: u64,
+) -> Result<selfplay_lab::games::forward_chess::FcMove, String> {
+    let mut searcher: Searcher<ForwardChess> = Searcher::new(
+        Some(selfplay_lab::training::SELFPLAY_TT_LOG2),
+        MoveOrdering::Natural,
+    );
+    let result = match net {
+        Some(net) => {
+            let mut evaluator = selfplay_lab::model::ModelEvaluator::new(net);
+            searcher.search(game, state, 512, nodes, &mut evaluator)
+        }
+        None => searcher.search(game, state, 512, nodes, &mut ZeroEvaluator),
+    };
+    result
+        .best_move
+        .ok_or_else(|| "search returned no move".to_string())
+}
+
+fn play(game_label: &str, checkpoint: Option<&Path>, nodes: u64, side: &str) -> Result<(), String> {
+    use selfplay_lab::game::Player;
+    use selfplay_lab::games::forward_chess::Ruleset;
+
+    let ruleset = match game_label {
+        "fc-tiny" => Ruleset::Tiny,
+        "fc-small" => Ruleset::Small,
+        "fc-medium" => Ruleset::Medium,
+        "fc-full" => Ruleset::Full,
+        other => {
+            return Err(format!(
+                "unknown game {other}; use fc-tiny|fc-small|fc-medium|fc-full \
+                 (standard chess: use the `uci` binary in a UCI GUI)"
+            ))
+        }
+    };
+    let game = ForwardChess::new(ruleset);
+    let human = match side {
+        "white" => Some(Player::One),
+        "black" => Some(Player::Two),
+        "none" => None,
+        other => return Err(format!("unknown side {other}; use white|black|none")),
+    };
+    let net = match checkpoint {
+        Some(dir) => {
+            let (net, dims, _) = load_checkpoint(dir)?;
+            if dims.feature_count != game.feature_count()
+                || dims.action_count != game.action_count()
+            {
+                return Err(format!(
+                    "checkpoint dims {dims:?} do not fit {game_label} \
+                     ({} features / {} actions)",
+                    game.feature_count(),
+                    game.action_count()
+                ));
+            }
+            Some(CompiledNet::from_net(&net, dims))
+        }
+        None => None,
+    };
+    println!(
+        "Forward Chess {game_label} — engine: {} at {nodes} nodes/move.",
+        if net.is_some() {
+            "checkpoint"
+        } else {
+            "unlearned search (zero evaluator)"
+        }
+    );
+    println!("Moves: coordinates like a2a3 or a7a8=Q. Commands: ? hint undo quit.");
+
+    let mut state = game.initial_state();
+    let mut history = vec![state.clone()];
+    let mut moves = Vec::new();
+    let stdin = std::io::stdin();
+    loop {
+        println!("\n{}", game.render_ascii(&state));
+        if let Some(outcome) = game.outcome(&state) {
+            println!("Game over: {}", describe_outcome(outcome));
+            break;
+        }
+        let human_turn = human == Some(game.side_to_move(&state));
+        game.legal_moves(&state, &mut moves);
+        if !human_turn {
+            let mv = fc_engine_move(&game, net.as_ref(), &mut state, nodes)?;
+            println!("engine plays {}", game.format_move(mv));
+            game.make_move(&mut state, mv);
+            history.push(state.clone());
+            continue;
+        }
+        print!("> ");
+        std::io::stdout().flush().map_err(|e| e.to_string())?;
+        let mut line = String::new();
+        if stdin
+            .read_line(&mut line)
+            .map_err(|e| format!("reading input: {e}"))?
+            == 0
+        {
+            println!();
+            break; // EOF
+        }
+        let input = line.trim();
+        match input {
+            "" => {}
+            "quit" | "exit" | "q" => break,
+            "?" => {
+                let listed: Vec<String> = moves.iter().map(|&m| game.format_move(m)).collect();
+                println!("legal: {}", listed.join(" "));
+            }
+            "hint" => {
+                let mv = fc_engine_move(&game, net.as_ref(), &mut state, nodes)?;
+                println!("hint: {}", game.format_move(mv));
+            }
+            "undo" => {
+                let take_back = if history.len() > 2 {
+                    2
+                } else {
+                    history.len() - 1
+                };
+                if take_back == 0 {
+                    println!("nothing to undo");
+                } else {
+                    history.truncate(history.len() - take_back);
+                    state = history.last().expect("initial state remains").clone();
+                }
+            }
+            text => {
+                let wanted = text.to_ascii_lowercase().replace('=', "");
+                let found = moves
+                    .iter()
+                    .copied()
+                    .find(|&m| game.format_move(m).to_ascii_lowercase().replace('=', "") == wanted);
+                match found {
+                    Some(mv) => {
+                        game.make_move(&mut state, mv);
+                        history.push(state.clone());
+                    }
+                    None => println!("not a legal move here; type ? to list legal moves"),
+                }
+            }
+        }
+    }
+    Ok(())
+}
 
 /// Load a checkpoint directory (`model.bin` + `model.json`) into an
 /// inference network.

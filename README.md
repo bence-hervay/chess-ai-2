@@ -21,13 +21,27 @@ cargo test --release
 
 ## Usage
 
+**Full user guide: [tools/README.md](tools/README.md).** The
+highlights:
+
 ```bash
-lab evaluate <config.toml>   # paired evaluation arena
+tools/fc_train.sh my_campaign            # chunked, resumable Forward Chess training
+tools/fc_train.sh my_campaign --status   # progress; Ctrl-C safe, rerun to resume
+tools/fc_rating.py --campaign campaigns/my_campaign   # approximate internal Elo curve
+lab play --checkpoint campaigns/my_campaign/champion  # play the champion interactively
+tools/run_match.sh anchor ckpt:<dir> sf-nodes:20 150 st=0.3  # chess vs Stockfish (§27)
+lab solve configs/phase_08/solve_small.toml           # exact solving + tablebase backup
+tools/check.sh                           # fmt + clippy + full test suite
+lab evaluate/train/selfplay/teacher/sweep <config.toml>  # raw lab commands
 ```
 
+Every `lab` subcommand has `--help`; every script has `-h`.
 Configurations live in `configs/`. Every run creates a self-contained
 directory under `runs/` with the fully resolved configuration, an
-environment manifest, metrics, and game records.
+environment manifest, metrics, and game records; training campaigns
+keep resumable snapshots under `campaigns/`. All of it is
+deterministic given the config — thread count only changes wall-clock
+time.
 
 ## Status
 

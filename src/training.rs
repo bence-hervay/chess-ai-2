@@ -157,8 +157,7 @@ pub fn build_retrograde_dataset<G: Game>(
             _ => {}
         }
     }
-    let denominators =
-        bucket_sizes.map(|n| n.div_ceil(eval_cap.max(1) as u64).max(1));
+    let denominators = bucket_sizes.map(|n| n.div_ceil(eval_cap.max(1) as u64).max(1));
     let mut features = Vec::new();
     let mut legal = Vec::new();
     for (index, state) in solution.states.iter().enumerate() {

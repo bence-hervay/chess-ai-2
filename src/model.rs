@@ -31,7 +31,7 @@ pub struct PolicyValueNet<B: Backend> {
     actions: Linear<B>,
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ModelDims {
     pub feature_count: usize,
     pub action_count: usize,

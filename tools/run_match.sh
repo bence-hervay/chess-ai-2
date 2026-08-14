@@ -18,7 +18,14 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 NAME=$1; E1=$2; E2=$3; PAIRS=$4; LIMIT=$5; SEED=${6:-42}
-FASTCHESS=${FASTCHESS:-/tmp/claude-374940779/-home-hervay-bence-gmail-com-chess-ai-2/d51348f6-73c6-49e0-873b-19d0acb184ac/scratchpad/fastchess-linux-x86-64/fastchess}
+FASTCHESS=${FASTCHESS:-$HOME/tools/fastchess/fastchess}
+if [ ! -x "$FASTCHESS" ]; then
+  echo "fastchess not found at $FASTCHESS — install it with:" >&2
+  echo "  mkdir -p ~/tools/fastchess && cd ~/tools/fastchess && \\" >&2
+  echo "  curl -sL https://github.com/Disservin/fastchess/releases/download/v1.8.2-alpha/fastchess-linux-x86-64.tar -o fc.tar && \\" >&2
+  echo "  tar xf fc.tar && chmod +x fastchess-linux-x86-64/fastchess && ln -sf fastchess-linux-x86-64/fastchess fastchess" >&2
+  exit 1
+fi
 UCI=./target/release/uci
 SF=/usr/games/stockfish
 OPENINGS=tools/openings_4ply.epd

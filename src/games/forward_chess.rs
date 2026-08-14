@@ -31,6 +31,17 @@ pub enum Piece {
 
 const PROMOTION_CHOICES: [Piece; 4] = [Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen];
 
+fn piece_letter(piece: Piece) -> char {
+    match piece {
+        Piece::Pawn => 'P',
+        Piece::Knight => 'N',
+        Piece::Bishop => 'B',
+        Piece::Rook => 'R',
+        Piece::Queen => 'Q',
+        Piece::King => 'K',
+    }
+}
+
 /// Packed cell code: 0 empty, else `1 + piece + 6·owner + 12·reversed`.
 const EMPTY: u8 = 0;
 
@@ -622,6 +633,82 @@ impl ForwardChess {
             core,
             history: Vec::new(),
         }
+    }
+
+    fn square_name(&self, cell: u16) -> String {
+        format!(
+            "{}{}",
+            (b'a' + (cell % self.width) as u8) as char,
+            cell / self.width + 1
+        )
+    }
+
+    /// "a2b3" / "a2b3=Q" text for a move (promotion letter upper-case).
+    pub fn format_move(&self, mv: FcMove) -> String {
+        let mut text = format!("{}{}", self.square_name(mv.from), self.square_name(mv.to));
+        if let Some(piece) = mv.promotion {
+            text.push('=');
+            text.push(piece_letter(piece));
+        }
+        text
+    }
+
+    /// ASCII board for interactive play: ranks top-down, upper-case
+    /// White, lower-case Black, `~` marking reversed orientation, with
+    /// side-to-move / castling / en-passant / halfmove annotations.
+    pub fn render_ascii(&self, state: &FcState) -> String {
+        let core = &state.core;
+        let mut out = String::new();
+        for rank in (0..self.height).rev() {
+            out.push_str(&format!("{:>2} ", rank + 1));
+            for file in 0..self.width {
+                let code = core.cells[usize::from(self.cell(file, rank))];
+                if code == EMPTY {
+                    out.push_str(" . ");
+                } else {
+                    let (owner, piece, reversed) = unpack(code);
+                    let mut letter = piece_letter(piece);
+                    if owner == Player::Two {
+                        letter = letter.to_ascii_lowercase();
+                    }
+                    out.push(' ');
+                    out.push(letter);
+                    out.push(if reversed { '~' } else { ' ' });
+                }
+            }
+            out.push('\n');
+        }
+        out.push_str("   ");
+        for file in 0..self.width {
+            out.push(' ');
+            out.push((b'a' + file as u8) as char);
+            out.push(' ');
+        }
+        out.push('\n');
+        let castling: String = core
+            .castling
+            .iter()
+            .zip(['K', 'Q', 'k', 'q'])
+            .filter(|(&right, _)| right)
+            .map(|(_, letter)| letter)
+            .collect();
+        out.push_str(&format!(
+            "{} to move | castling {} | ep {} | halfmove {}\n",
+            if core.to_move == Player::One {
+                "White"
+            } else {
+                "Black"
+            },
+            if castling.is_empty() {
+                "-".into()
+            } else {
+                castling
+            },
+            core.ep
+                .map_or("-".to_string(), |cell| self.square_name(cell)),
+            core.halfmove,
+        ));
+        out
     }
 
     /// Perspective cell: the board rotated 180 degrees for Black, so
@@ -1854,7 +1941,10 @@ mod tests {
         let values: Vec<Wdl> = (0..states.len()).map(wdl_cycle).collect();
         let mut file = Vec::new();
         write_tablebase(&g, &states, &values, &mut file).unwrap();
-        assert_eq!(read_tablebase(&g, &mut file.as_slice()).unwrap().len(), states.len());
+        assert_eq!(
+            read_tablebase(&g, &mut file.as_slice()).unwrap().len(),
+            states.len()
+        );
         // Every strict prefix must error.
         for len in 0..file.len() {
             assert!(
