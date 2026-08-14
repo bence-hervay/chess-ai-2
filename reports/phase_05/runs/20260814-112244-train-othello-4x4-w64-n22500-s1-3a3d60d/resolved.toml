@@ -1,0 +1,9 @@
+seed = 1
+model_width = 64
+train_positions = 22500
+training_steps = 10000
+
+[game]
+kind = "othello"
+width = 4
+height = 4

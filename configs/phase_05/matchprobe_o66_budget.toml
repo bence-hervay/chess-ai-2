@@ -1,0 +1,14 @@
+kind = "match_probe"
+checkpoint = "runs/20260814-113116-selfplay-othello-6x6-w64-g400-e10-s2-3a3d60d/checkpoint"
+opponent_checkpoint = "runs/20260814-113116-selfplay-othello-6x6-w64-g400-e10-s2-3a3d60d/checkpoint"
+node_budgets = [60, 200, 600, 2400]
+baseline_nodes = 600
+pairs = 80
+opening_plies = 2
+seed = 7
+threads = 7
+
+[game]
+kind = "othello"
+width = 6
+height = 6

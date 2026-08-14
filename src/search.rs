@@ -975,6 +975,26 @@ mod tests {
     }
 
     #[test]
+    fn othello_4x4_solves_consistently() {
+        use crate::games::othello::Othello;
+        let game = Othello::new(4, 4).unwrap();
+        let mut state = game.initial_state();
+        let mut solver = ExactSolver::new();
+        let exact = solver.solve(&game, &mut state);
+        let mut nodes = 0u64;
+        let exhaustive =
+            Wdl::from_solved_score(exhaustive_negamax(&game, &mut state, 0, &mut nodes));
+        assert_eq!(exact, exhaustive, "4x4 othello root value");
+        let mut searcher: Searcher<Othello> = Searcher::new(Some(14), MoveOrdering::Natural);
+        let result = searcher.search(&game, &mut state, 64, u64::MAX, &mut ZeroEvaluator);
+        assert_eq!(Wdl::from_solved_score(result.value), exact);
+        println!(
+            "4x4 othello root: {exact:?} ({} solved states)",
+            solver.solved_states()
+        );
+    }
+
+    #[test]
     fn enumeration_matches_state_based_reference_on_tic_tac_toe() {
         let game = ConnectK::new(3, 3, 3, false).unwrap();
 

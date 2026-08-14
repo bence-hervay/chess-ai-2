@@ -1,0 +1,86 @@
+{
+  "budgets": [
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 111,
+        "candidate_points": 46.0,
+        "candidate_wins": 43,
+        "draws": 6,
+        "games": 160,
+        "mean_plies": 30.4625,
+        "pairs": 80,
+        "score": 0.2875,
+        "score_lcb95": 0.2354555178236924
+      },
+      "node_budget": 60
+    },
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 127,
+        "candidate_points": 27.0,
+        "candidate_wins": 21,
+        "draws": 12,
+        "games": 160,
+        "mean_plies": 30.25,
+        "pairs": 80,
+        "score": 0.16875,
+        "score_lcb95": 0.11551180441872587
+      },
+      "node_budget": 200
+    },
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 78,
+        "candidate_points": 80.0,
+        "candidate_wins": 78,
+        "draws": 4,
+        "games": 160,
+        "mean_plies": 30.075,
+        "pairs": 80,
+        "score": 0.5,
+        "score_lcb95": 0.5
+      },
+      "node_budget": 600
+    },
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 23,
+        "candidate_points": 137.0,
+        "candidate_wins": 137,
+        "draws": 0,
+        "games": 160,
+        "mean_plies": 29.90625,
+        "pairs": 80,
+        "score": 0.85625,
+        "score_lcb95": 0.8066601903739286
+      },
+      "node_budget": 2400
+    }
+  ],
+  "config": {
+    "baseline_nodes": 600,
+    "checkpoint": "runs/20260814-113116-selfplay-othello-6x6-w64-g400-e10-s2-3a3d60d/checkpoint",
+    "game": {
+      "height": 6,
+      "kind": "othello",
+      "width": 6
+    },
+    "node_budgets": [
+      60,
+      200,
+      600,
+      2400
+    ],
+    "opening_plies": 2,
+    "opponent_checkpoint": "runs/20260814-113116-selfplay-othello-6x6-w64-g400-e10-s2-3a3d60d/checkpoint",
+    "pairs": 80,
+    "seed": 7,
+    "threads": 7
+  },
+  "parameter_count": 15592,
+  "wall_seconds": 8.244349341
+}

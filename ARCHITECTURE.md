@@ -4,13 +4,14 @@ One Cargo package. The five conceptual subsystems allowed by the governing
 plan (`Game`, `Search`, `Model`, `Training`, `Evaluation`) all exist as of
 Phase 2; each appeared in the phase that required it.
 
-## Current modules (Phase 4)
+## Current modules (Phase 5)
 
 | Module | Role |
 |---|---|
 | `src/game.rs` | Core `Game` trait: rule-level facts only (moves, transitions, outcomes, hashing, raw features, stable action IDs). |
 | `src/games/connect_k.rs` | Parameterized Connect-k (width, height, k, gravity), Zobrist hashing, incremental terminal detection, feature/action ID spaces. |
 | `src/games/breakthrough.rs` | Parameterized Breakthrough (width, height, initial pawn rows); no draws; perspective-mirrored feature/action encoding. |
+| `src/games/othello.rs` | Parameterized Othello (even boards ≥ 4); explicit pass moves keep negamax alternation valid; occupancy-only features. |
 | `src/search.rs` | Exact memoized WDL solver + reachable-state enumeration (research/test oracle); production alpha–beta with iterative deepening, transposition table, deterministic node budgets, and `Evaluator`-supplied leaf values + policy move ordering. |
 | `src/model.rs` | Sparse policy/value network in Burn (NdArray CPU backend): embedding-sum → 2×ReLU → WDL head + action-logit head. One capacity knob (`model_width`). `CompiledNet`: validated plain-array inference path (6.4 µs batch-1) used by search and self-play. |
 | `src/training.rs` | Exact-corpus dataset (hash-stratified 80/10/10 splits), fixed training recipe v1 (Adam, batch 256, lr 1e-3, `L = L_wdl + L_policy`), deterministic warm-startable training loop, and deterministic self-play generation (frozen champion, ε-greedy exploration, §12.2 records). |
@@ -20,7 +21,8 @@ Phase 2; each appeared in the phase that required it.
 
 ## Not yet present (deferred to their phases)
 
-Other games (Othello, chess), UCI binary, time-based search budgets.
+Chess (cozy-chess backend), UCI binary, time-based search budgets,
+repetition handling (no current game can repeat).
 
 ## Determinism policy
 

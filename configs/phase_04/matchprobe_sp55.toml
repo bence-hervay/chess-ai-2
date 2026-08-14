@@ -1,5 +1,6 @@
 kind = "match_probe"
 checkpoint = "runs/20260814-101500-selfplay-breakthrough-5x5r2-w64-g400-e10-s2-bd70662/checkpoint"
+opponent_checkpoint = "runs/20260814-101500-selfplay-breakthrough-5x5r2-w64-g400-e10-s2-bd70662/checkpoint"
 node_budgets = [60, 200, 600, 2400]
 baseline_nodes = 600
 pairs = 80

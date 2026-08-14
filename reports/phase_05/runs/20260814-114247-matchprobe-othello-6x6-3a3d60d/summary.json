@@ -1,0 +1,38 @@
+{
+  "budgets": [
+    {
+      "baseline_nodes": 600,
+      "match": {
+        "candidate_losses": 48,
+        "candidate_points": 150.0,
+        "candidate_wins": 148,
+        "draws": 4,
+        "games": 200,
+        "mean_plies": 29.735,
+        "pairs": 100,
+        "score": 0.75,
+        "score_lcb95": 0.6880193578606998
+      },
+      "node_budget": 600
+    }
+  ],
+  "config": {
+    "baseline_nodes": 600,
+    "checkpoint": "runs/20260814-112829-selfplay-othello-6x6-w64-g400-e10-s1-3a3d60d/checkpoint",
+    "game": {
+      "height": 6,
+      "kind": "othello",
+      "width": 6
+    },
+    "node_budgets": [
+      600
+    ],
+    "opening_plies": 2,
+    "opponent_checkpoint": "runs/20260814-113648-selfplay-othello-6x6-w64-g100-e10-s1-3a3d60d/checkpoint",
+    "pairs": 100,
+    "seed": 11,
+    "threads": 7
+  },
+  "parameter_count": 15592,
+  "wall_seconds": 2.267202009
+}

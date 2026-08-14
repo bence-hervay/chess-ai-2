@@ -1,0 +1,15 @@
+checkpoint = "runs/20260814-112334-selfplay-othello-4x4-w64-g400-e10-s1-3a3d60d/checkpoint"
+node_budgets = [
+    1,
+    10,
+    100,
+    600,
+    5000,
+]
+searched_sample = 2000
+threads = 7
+
+[game]
+kind = "othello"
+width = 4
+height = 4

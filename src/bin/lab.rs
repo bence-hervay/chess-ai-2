@@ -25,6 +25,7 @@ use selfplay_lab::experiment::{
 use selfplay_lab::game::Game;
 use selfplay_lab::games::breakthrough::Breakthrough;
 use selfplay_lab::games::connect_k::ConnectK;
+use selfplay_lab::games::othello::Othello;
 use selfplay_lab::games::GameSpec;
 use selfplay_lab::model::{CompiledNet, InferBackend, ModelDims, PolicyValueNet, TrainBackend};
 use selfplay_lab::search::{
@@ -60,6 +61,10 @@ macro_rules! dispatch_game {
                 rows,
             } => {
                 let $game = Breakthrough::new(*width, *height, *rows)?;
+                $body
+            }
+            GameSpec::Othello { width, height } => {
+                let $game = Othello::new(*width, *height)?;
                 $body
             }
         }
@@ -127,6 +132,10 @@ enum EvaluateConfig {
 struct MatchProbeConfig {
     /// Checkpoint directory containing `model.bin` and `model.json`.
     checkpoint: PathBuf,
+    /// Opponent checkpoint; pass the same path to probe search scaling
+    /// of a single model, or a different champion for cross-run
+    /// comparisons (e.g. the data-scaling axis).
+    opponent_checkpoint: PathBuf,
     /// Node budgets to probe against the baseline.
     node_budgets: Vec<u64>,
     baseline_nodes: u64,
@@ -308,9 +317,11 @@ fn match_probe(config: MatchProbeConfig) -> Result<(), String> {
         &mut log,
     );
     let (net, dims, _max_features) = load_checkpoint(&config.checkpoint)?;
+    let (opponent_net, opponent_dims, _) = load_checkpoint(&config.opponent_checkpoint)?;
     let mut manifest = manifest;
     manifest.model_parameter_count = net.num_params() as u64;
     let compiled = CompiledNet::from_net(&net, dims);
+    let opponent = CompiledNet::from_net(&opponent_net, opponent_dims);
     let started = Instant::now();
     let mut reports = Vec::new();
     dispatch_game!(&config.game, game, {
@@ -318,7 +329,7 @@ fn match_probe(config: MatchProbeConfig) -> Result<(), String> {
             let result = play_paired_match(
                 &game,
                 &compiled,
-                &compiled,
+                &opponent,
                 config.pairs,
                 config.opening_plies,
                 budget,

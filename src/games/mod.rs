@@ -3,6 +3,7 @@
 
 pub mod breakthrough;
 pub mod connect_k;
+pub mod othello;
 
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +23,8 @@ pub enum GameSpec {
     },
     #[serde(rename = "breakthrough")]
     Breakthrough { width: u16, height: u16, rows: u16 },
+    #[serde(rename = "othello")]
+    Othello { width: u16, height: u16 },
 }
 
 impl GameSpec {
@@ -43,6 +46,9 @@ impl GameSpec {
                 rows,
             } => {
                 format!("breakthrough-{width}x{height}r{rows}")
+            }
+            GameSpec::Othello { width, height } => {
+                format!("othello-{width}x{height}")
             }
         }
     }

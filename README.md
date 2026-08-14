@@ -38,11 +38,24 @@ environment manifest, metrics, and game records.
 | 2 — Supervised oracle ceiling | **PASS** | [reports/phase_02.md](reports/phase_02.md) |
 | 3 — Self-play recovery of exact strategy | **PASS** | [reports/phase_03.md](reports/phase_03.md) |
 | 4 — Breakthrough curriculum | **PASS** | [reports/phase_04.md](reports/phase_04.md) |
-| 5 — Othello benchmark | not started | — |
+| 5 — Othello benchmark | **PASS** | [reports/phase_05.md](reports/phase_05.md) |
+| 6 — Standard chess | not started | — |
 
 ### Current state (2026-08-14)
 
-Phases 0–4 complete and promoted. **The frozen stack transfers to a new
+Phases 0–5 complete and promoted. **Two independent styles of
+positional learning demonstrated with one unchanged learner**:
+
+- Othello (occupancy features only, pass moves, material reversals):
+  4x4 searched self-play play is perfect (100% optimal, 0
+  exploitability, all seeds) while occupancy-only value prediction is
+  measurably hard (85% WDL acc vs 99%+ elsewhere — the intended
+  stress). 6x6 champions reach 160-0 vs generation 0; 4x search wins
+  0.856; the 4x-data champion wins 0.750 head-to-head at equal search.
+- 4x4 Othello solved: first-player loss (56,621 states), matching
+  literature.
+
+Phase 4 (Breakthrough) established transfer with rule code only. **The frozen stack transfers to a new
 game with rule code only** (Breakthrough, §24 integrity gate intact):
 
 - Exact sizes: supervised ceiling 99.97% WDL accuracy; self-play
@@ -94,7 +107,6 @@ is mathematically correct before any learning exists:
 - Phase 0 foundation: byte-identical game records across 1/2/4/8 worker
   threads; 1.13M random games/s at 8 workers.
 
-Next: Phase 5 — Othello as an independent positional benchmark (flip
-mechanics, pass moves, unstable material), same curriculum: rule tests,
-exact small boards, supervised ceiling, self-play recovery, match-based
-machinery at full size.
+Next: Phase 6 — standard chess: cozy-chess rules backend behind the
+same Game trait, repetition handling, UCI binary, fixed-node and
+fixed-time strength measurement, self-play at chess scale.

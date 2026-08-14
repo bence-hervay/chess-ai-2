@@ -1,0 +1,7 @@
+{"command": "train", "config": "configs/phase_05/train_4x4_w64_t10000_n45000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_05/train_4x4_w128_t40000_n45000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_05/train_4x4_w64_t10000_n11000.toml", "cores": 1}
+{"command": "train", "config": "configs/phase_05/train_4x4_w64_t10000_n22500.toml", "cores": 1}
+{"command": "selfplay", "config": "configs/phase_05/sp_o44_s1.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_05/sp_o44_s2.toml", "cores": 7}
+{"command": "selfplay", "config": "configs/phase_05/sp_o44_s3.toml", "cores": 7}

@@ -168,3 +168,15 @@ Measured: 3x5r1 = 30k states (0.07s), 4x4r1 = 164k (0.5s), 4x5r1 = 1.8M
 aborted and deleted. Strategic (non-exact) size: 5x5 rows=2.
 exploitability_vs_perfect now pre-solves once and clones the memo per
 game (ExactSolver is Clone) so large exact instances stay probe-able.
+
+## 2026-08-14 — D023: Othello ruleset and explicit pass moves
+
+Selected rules: bracket-and-flip placements in 8 directions; a player
+with no placement passes; the game ends when neither player can place
+(disc majority wins, equality draws). The pass is an explicit move in
+`legal_moves` — an auto-pass inside `make_move` would break negamax's
+strict-alternation perspective flip. Passes cannot repeat positions
+(two consecutive passes is terminal). Features are board occupancy
+only, per §25 restrictions. `match_probe` gained a required
+`opponent_checkpoint` field for cross-run champion comparisons (the
+data-scaling axis on non-exact sizes).
