@@ -1,0 +1,13 @@
+kind = "match_probe"
+checkpoint = "campaigns/fc_full_w64/champion"
+opponent_checkpoint = "campaigns/fc_full_w64/champion"
+node_budgets = [400, 1600, 6400, 25600]
+baseline_nodes = 400
+pairs = 20
+opening_plies = 2
+seed = 4242
+threads = 7
+
+[game]
+kind = "forward_chess"
+ruleset = "full"
