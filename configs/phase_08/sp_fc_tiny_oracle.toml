@@ -1,0 +1,17 @@
+seed = 1
+model_width = 64
+generations = 12
+games_per_generation = 400
+steps_per_generation = 2000
+epsilon = 0.1
+gen_node_budget = 600
+eval_node_budget = 600
+replay_generations = 4
+promotion = "oracle"
+promotion_pairs = 0
+opening_plies = 0
+threads = 6
+
+[game]
+kind = "forward_chess"
+ruleset = "tiny"

@@ -1,0 +1,6 @@
+method = "retrograde"
+ordering = "natural"
+
+[game]
+kind = "forward_chess"
+ruleset = "small"

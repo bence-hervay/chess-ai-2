@@ -1,0 +1,17 @@
+seed = 1
+model_width = 32
+generations = 3
+games_per_generation = 100
+steps_per_generation = 500
+epsilon = 0.1
+gen_node_budget = 300
+eval_node_budget = 300
+replay_generations = 4
+promotion = "match"
+promotion_pairs = 20
+opening_plies = 2
+threads = 6
+
+[game]
+kind = "forward_chess"
+ruleset = "tiny"

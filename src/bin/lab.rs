@@ -26,15 +26,17 @@ use selfplay_lab::game::Game;
 use selfplay_lab::games::breakthrough::Breakthrough;
 use selfplay_lab::games::chess::Chess;
 use selfplay_lab::games::connect_k::ConnectK;
+use selfplay_lab::games::forward_chess::{read_tablebase_with, write_tablebase, ForwardChess};
 use selfplay_lab::games::othello::Othello;
 use selfplay_lab::games::GameSpec;
 use selfplay_lab::model::{CompiledNet, InferBackend, ModelDims, PolicyValueNet, TrainBackend};
 use selfplay_lab::search::{
-    enumerate_solved, exhaustive_negamax, ExactSolver, MoveOrdering, Searcher, Wdl, ZeroEvaluator,
+    enumerate_solved, exhaustive_negamax, solve_retrograde, ExactSolver, MoveOrdering, Searcher,
+    Wdl, ZeroEvaluator,
 };
 use selfplay_lab::training::{
-    build_exact_dataset, generate_selfplay, make_batch, train_steps, train_supervised, TrainRow,
-    BATCH_SIZE, EVAL_EVERY,
+    build_exact_dataset, build_retrograde_dataset, generate_selfplay, make_batch, splitmix64,
+    train_steps, train_supervised, TrainRow, BATCH_SIZE, EVAL_EVERY,
 };
 use serde::{Deserialize, Serialize};
 use std::io::Write as _;
@@ -70,6 +72,10 @@ macro_rules! dispatch_game {
             }
             GameSpec::Chess {} => {
                 let $game = Chess::new();
+                $body
+            }
+            GameSpec::ForwardChess { ruleset } => {
+                let $game = ForwardChess::new(*ruleset);
                 $body
             }
         }
@@ -197,6 +203,9 @@ enum SolveMethod {
     /// Production iterative-deepening alpha-beta with a transposition
     /// table.
     AlphaBetaTt,
+    /// Reachable-graph retrograde analysis for repetition-capable games
+    /// (repetition-as-draw convention; fifty-move rule not modelled).
+    Retrograde,
 }
 
 impl SolveMethod {
@@ -206,6 +215,7 @@ impl SolveMethod {
             SolveMethod::Exhaustive => "exhaustive",
             SolveMethod::AlphaBeta => "ab",
             SolveMethod::AlphaBetaTt => "abtt",
+            SolveMethod::Retrograde => "retro",
         }
     }
 }
@@ -493,6 +503,13 @@ fn solve(config_path: &Path) -> Result<(), String> {
     if matches!(config.game, GameSpec::Chess {}) {
         return Err("chess cannot be exactly solved or enumerated".into());
     }
+    if matches!(config.game, GameSpec::ForwardChess { .. })
+        && config.method != SolveMethod::Retrograde
+    {
+        return Err(
+            "forward chess positions can repeat; only the retrograde method is sound".into(),
+        );
+    }
     let label = format!("solve-{}-{}", config.method.label(), config.game.label());
     let (run_dir, manifest) = start_run(&label, &config, 0, 1)?;
     let mut log = String::new();
@@ -502,6 +519,15 @@ fn solve(config_path: &Path) -> Result<(), String> {
     );
     say("thread plan: 1 solver thread".to_string(), &mut log);
 
+    if config.method == SolveMethod::Retrograde {
+        // Retrograde is forward-chess-specific: it writes the packed
+        // tablebase backup, whose format is tied to that module.
+        let GameSpec::ForwardChess { ruleset } = &config.game else {
+            return Err("the retrograde method is only for forward_chess".into());
+        };
+        run_solve_retrograde(&ForwardChess::new(*ruleset), &config, &run_dir, &mut log)?;
+        return finish_run(&run_dir, manifest, &log);
+    }
     dispatch_game!(&config.game, game, {
         let max_depth = game.cell_count();
         run_solve(&game, max_depth, &config, &run_dir, &mut log)?;
@@ -606,6 +632,7 @@ fn run_solve<G: Game>(
                 "memo_hits": solver.memo_hits,
             })
         }
+        SolveMethod::Retrograde => unreachable!("dispatched to run_solve_retrograde in solve()"),
         SolveMethod::Exhaustive => {
             let mut nodes = 0u64;
             let value = exhaustive_negamax(game, &mut state, 0, &mut nodes);
@@ -674,6 +701,158 @@ fn run_solve<G: Game>(
         .map_err(|e| e.to_string())
 }
 
+/// Retrograde solve for forward chess: solve the reachable graph, back
+/// up the full solution as a packed `tablebase.bin` (verified by
+/// re-reading every record), and write the JSONL corpus, subsampled
+/// deterministically by position-key hash past `CORPUS_ROW_CAP` rows.
+fn run_solve_retrograde(
+    game: &ForwardChess,
+    config: &SolveConfig,
+    run_dir: &RunDir,
+    log: &mut String,
+) -> Result<(), String> {
+    const CORPUS_ROW_CAP: u64 = 1_000_000;
+    let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+    let started = Instant::now();
+    // Position cap sized for this machine's RAM (~330 bytes per
+    // position across states, hash index, and both edge maps; 60M ~ 20
+    // GB of the 32 GB machine); exceeding it fails gracefully instead
+    // of invoking the OOM killer.
+    let solution =
+        solve_retrograde(game, 60_000_000).map_err(|e| format!("retrograde solve: {e}"))?;
+    let solve_seconds = started.elapsed().as_secs_f64();
+
+    let tb_path = run_dir.path().join("tablebase.bin");
+    let tb_file =
+        std::fs::File::create(&tb_path).map_err(|e| format!("creating tablebase: {e}"))?;
+    let mut tb_writer = std::io::BufWriter::new(tb_file);
+    let tablebase_bytes = write_tablebase(game, &solution.states, &solution.values, &mut tb_writer)
+        .map_err(|e| format!("writing tablebase: {e}"))?;
+    drop(tb_writer);
+    let mut tb_reader =
+        std::fs::File::open(&tb_path).map_err(|e| format!("reopening tablebase: {e}"))?;
+    let verified = read_tablebase_with(game, &mut tb_reader, |index, state, wdl| {
+        match solution.states.get(index).zip(solution.values.get(index)) {
+            Some((expected, &value)) if value == wdl && expected.identical_core(&state) => Ok(()),
+            _ => Err(format!("tablebase verification mismatch at record {index}")),
+        }
+    })
+    .map_err(|e| format!("verifying tablebase: {e}"))?;
+    if verified as usize != solution.states.len() {
+        return Err(format!(
+            "tablebase verification count {verified} != {}",
+            solution.states.len()
+        ));
+    }
+
+    let nonterminal = solution
+        .states
+        .iter()
+        .filter(|s| game.outcome(s).is_none())
+        .count() as u64;
+    let denominator = nonterminal.div_ceil(CORPUS_ROW_CAP).max(1);
+    if denominator > 1 {
+        say(
+            format!(
+                "corpus: keeping 1/{denominator} of {nonterminal} non-terminal positions \
+                 (deterministic by position-key hash)"
+            ),
+            log,
+        );
+    }
+    let corpus_file = std::fs::File::create(run_dir.path().join("corpus.jsonl"))
+        .map_err(|e| format!("creating corpus file: {e}"))?;
+    let mut writer = std::io::BufWriter::new(corpus_file);
+    let mut wdl_counts = [0u64; 3];
+    let mut corpus_states = 0u64;
+    let mut features = Vec::new();
+    let mut legal = Vec::new();
+    for (index, state) in solution.states.iter().enumerate() {
+        if game.outcome(state).is_some() {
+            continue;
+        }
+        let value = solution.values[index];
+        wdl_counts[value as usize] += 1;
+        let key = game.position_key(state);
+        if denominator > 1 && splitmix64(key) % denominator != 0 {
+            continue;
+        }
+        corpus_states += 1;
+        game.encode_features(state, &mut features);
+        game.legal_moves(state, &mut legal);
+        let child_wdl = solution.child_values(index);
+        let row = CorpusRow {
+            key,
+            ply: 0,
+            wdl: value,
+            features: features.clone(),
+            legal: legal.iter().map(|&m| game.action_id(state, m)).collect(),
+            optimal: legal
+                .iter()
+                .zip(&child_wdl)
+                .filter(|(_, &v)| v == value)
+                .map(|(&m, _)| game.action_id(state, m))
+                .collect(),
+            child_wdl,
+        };
+        let line = serde_json::to_string(&row).expect("serializable row");
+        writer
+            .write_all(line.as_bytes())
+            .and_then(|()| writer.write_all(b"\n"))
+            .map_err(|e| format!("writing corpus: {e}"))?;
+    }
+    writer
+        .flush()
+        .map_err(|e| format!("flushing corpus: {e}"))?;
+
+    let root = solution.values[0];
+    say(
+        format!(
+            "retrograde: root {root:?}; {} reachable positions \
+             ({nonterminal} non-terminal: W {} / D {} / L {}); \
+             {corpus_states} corpus rows; tablebase {tablebase_bytes} bytes, verified",
+            solution.states.len(),
+            wdl_counts[Wdl::Win as usize],
+            wdl_counts[Wdl::Draw as usize],
+            wdl_counts[Wdl::Loss as usize],
+        ),
+        log,
+    );
+    let mut summary = serde_json::json!({
+        "method": config.method,
+        "ordering": config.ordering,
+        "root_wdl": root,
+        "positions": solution.states.len(),
+        "nonterminal_states": nonterminal,
+        "corpus_states": corpus_states,
+        "corpus_sample_denominator": denominator,
+        "solve_seconds": solve_seconds,
+        "tablebase_bytes": tablebase_bytes,
+        "tablebase_verified": true,
+        "wdl_counts": {
+            "win": wdl_counts[Wdl::Win as usize],
+            "draw": wdl_counts[Wdl::Draw as usize],
+            "loss": wdl_counts[Wdl::Loss as usize],
+        },
+    });
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    let peak_rss = peak_rss_bytes().unwrap_or(0);
+    say(
+        format!(
+            "wall {wall_seconds:.3}s, cpu {cpu_seconds:.2}s, peak RSS {:.1} MiB",
+            peak_rss as f64 / (1024.0 * 1024.0)
+        ),
+        log,
+    );
+    summary["wall_seconds"] = serde_json::json!(wall_seconds);
+    summary["cpu_seconds"] = serde_json::json!(cpu_seconds);
+    summary["peak_rss_bytes"] = serde_json::json!(peak_rss);
+    run_dir
+        .write_json("summary.json", &summary)
+        .map_err(|e| e.to_string())
+}
+
 // ---------------------------------------------------------------------------
 // lab train
 // ---------------------------------------------------------------------------
@@ -697,6 +876,13 @@ fn train(config_path: &Path) -> Result<(), String> {
     let config: TrainConfig = read_config(config_path)?;
     if matches!(config.game, GameSpec::Chess {}) {
         return Err("supervised oracle training needs an exactly solvable game".into());
+    }
+    if matches!(config.game, GameSpec::ForwardChess { .. }) {
+        return Err(
+            "forward chess is loopy; `lab train` uses the acyclic exact solver and is not \
+             wired to the retrograde oracle"
+                .into(),
+        );
     }
     if config.model_width == 0 || config.train_positions == 0 || config.training_steps == 0 {
         return Err("model_width, train_positions, training_steps must be positive".into());
@@ -1178,7 +1364,14 @@ fn run_selfplay<G: Game>(
     // match-mode games are not exactly solvable, so they use paired
     // matches instead (§12.6).
     let dataset = if config.promotion == "oracle" {
-        let dataset = build_exact_dataset(game);
+        // Forward chess repeats, so its oracle comes from the
+        // retrograde solver (evaluation buckets thinned to stay
+        // bounded); acyclic games keep the exact-solver corpus.
+        let dataset = if matches!(config.game, GameSpec::ForwardChess { .. }) {
+            build_retrograde_dataset(game, 60_000_000, 20_000)?
+        } else {
+            build_exact_dataset(game)
+        };
         say(
             format!(
                 "oracle corpus for evaluation: {} val / {} test states",
@@ -1579,6 +1772,13 @@ fn load_checkpoint(dir: &Path) -> Result<(PolicyValueNet<InferBackend>, ModelDim
 fn probe(config: ProbeConfig) -> Result<(), String> {
     if matches!(config.game, GameSpec::Chess {}) {
         return Err("oracle probes need an exactly solvable game; use match_probe".into());
+    }
+    if matches!(config.game, GameSpec::ForwardChess { .. }) {
+        return Err(
+            "oracle probes use the acyclic exact solver; forward chess is loopy \
+             (use selfplay oracle promotion or match_probe)"
+                .into(),
+        );
     }
     if config.node_budgets.is_empty() {
         return Err("node_budgets must not be empty".into());

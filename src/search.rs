@@ -213,6 +213,145 @@ pub fn enumerate_solved<G: Game>(
     recurse(game, solver, &mut state, 0, &mut seen, &mut visit);
 }
 
+/// Solution of a repetition-capable ("loopy") game by reachable-graph
+/// retrograde analysis. Positions are states deduplicated by
+/// `position_key`; values are game-theoretic WDL from each position's
+/// mover under the convention that unresolvable cycles are draws
+/// (repetition-as-draw) and the fifty-move rule is ignored — the
+/// standard tablebase caveat, documented in DECISIONS.md.
+pub struct RetrogradeSolution<G: Game> {
+    /// Reachable positions in discovery (BFS) order; index 0 is the
+    /// initial position.
+    pub states: Vec<G::State>,
+    /// Value of each position for its side to move.
+    pub values: Vec<Wdl>,
+    /// `position_key` → index.
+    pub index_of: std::collections::HashMap<u64, u32>,
+    /// Successor indices, aligned with `legal_moves` order; empty for
+    /// terminal positions.
+    pub edges: Vec<Vec<u32>>,
+}
+
+impl<G: Game> RetrogradeSolution<G> {
+    /// Exact value of each legal move of position `index` (mover's
+    /// perspective), aligned with `legal_moves` order.
+    pub fn child_values(&self, index: usize) -> Vec<Wdl> {
+        self.edges[index]
+            .iter()
+            .map(|&child| self.values[child as usize].flip())
+            .collect()
+    }
+}
+
+/// Solve a game whose positions may repeat, by forward reachability plus
+/// backward induction. Fails if more than `max_positions` positions are
+/// reachable.
+pub fn solve_retrograde<G: Game>(
+    game: &G,
+    max_positions: usize,
+) -> Result<RetrogradeSolution<G>, String> {
+    use std::collections::HashMap;
+    let mut index_of: HashMap<u64, u32> = HashMap::new();
+    let mut states: Vec<G::State> = Vec::new();
+    let mut edges: Vec<Vec<u32>> = Vec::new();
+
+    let initial = game.initial_state();
+    index_of.insert(game.position_key(&initial), 0);
+    states.push(initial);
+    edges.push(Vec::new());
+
+    // Forward BFS. Expanding always starts from a stored state (whose
+    // repetition history is at most one entry), so spurious threefold
+    // draws cannot fire during enumeration.
+    let mut moves = Vec::new();
+    let mut cursor = 0usize;
+    while cursor < states.len() {
+        if game.outcome(&states[cursor]).is_some() {
+            cursor += 1;
+            continue;
+        }
+        let mut state = states[cursor].clone();
+        game.legal_moves(&state, &mut moves);
+        let move_list = moves.clone();
+        let mut successors = Vec::with_capacity(move_list.len());
+        for &mv in &move_list {
+            let undo = game.make_move(&mut state, mv);
+            let key = game.position_key(&state);
+            let index = match index_of.get(&key) {
+                Some(&index) => index,
+                None => {
+                    let index = states.len() as u32;
+                    if states.len() >= max_positions {
+                        return Err(format!("more than {max_positions} reachable positions"));
+                    }
+                    index_of.insert(key, index);
+                    states.push(state.clone());
+                    edges.push(Vec::new());
+                    index
+                }
+            };
+            successors.push(index);
+            game.unmake_move(&mut state, mv, undo);
+        }
+        edges[cursor] = successors;
+        cursor += 1;
+    }
+
+    // Backward induction. `Win` propagates immediately; `Loss` needs all
+    // successors resolved; leftovers are draw cycles.
+    let n = states.len();
+    let mut reverse: Vec<Vec<u32>> = vec![Vec::new(); n];
+    let mut pending: Vec<u32> = vec![0; n];
+    for (parent, successors) in edges.iter().enumerate() {
+        pending[parent] = successors.len() as u32;
+        for &child in successors {
+            reverse[child as usize].push(parent as u32);
+        }
+    }
+    let mut values: Vec<Option<Wdl>> = vec![None; n];
+    let mut queue = std::collections::VecDeque::new();
+    for (index, state) in states.iter().enumerate() {
+        if let Some(outcome) = game.outcome(state) {
+            values[index] = Some(Wdl::from_outcome(outcome, game.side_to_move(state)));
+            queue.push_back(index as u32);
+        }
+    }
+    let mut best: Vec<Wdl> = vec![Wdl::Loss; n];
+    while let Some(child) = queue.pop_front() {
+        let child_value = values[child as usize].expect("resolved");
+        let gain = child_value.flip();
+        for parent_index in 0..reverse[child as usize].len() {
+            let parent = reverse[child as usize][parent_index];
+            let p = parent as usize;
+            if values[p].is_some() {
+                continue;
+            }
+            if gain > best[p] {
+                best[p] = gain;
+            }
+            pending[p] -= 1;
+            if gain == Wdl::Win {
+                values[p] = Some(Wdl::Win);
+                queue.push_back(parent);
+            } else if pending[p] == 0 {
+                values[p] = Some(best[p]);
+                queue.push_back(parent);
+            }
+        }
+    }
+    let values: Vec<Wdl> = values
+        .into_iter()
+        .map(|value| value.unwrap_or(Wdl::Draw))
+        .collect();
+
+    Ok(RetrogradeSolution {
+        states,
+        values,
+        index_of,
+        edges,
+    })
+}
+
 /// Plain full-depth negamax without memoization or pruning. Test/research
 /// reference only; node counts grow with the full game tree.
 pub fn exhaustive_negamax<G: Game>(
@@ -1096,6 +1235,99 @@ mod tests {
             "the losing side must claim the repetition draw"
         );
         assert_eq!(result.value, 0, "repetition draw scores zero");
+    }
+
+    #[test]
+    fn retrograde_matches_exact_solver_on_acyclic_games() {
+        // Cross-validation on games the memoized negamax solver already
+        // handles: values must agree position by position.
+        let game = ConnectK::new(3, 3, 3, true).unwrap();
+        let solution = solve_retrograde(&game, 100_000).unwrap();
+        let mut solver = ExactSolver::new();
+        for (index, state) in solution.states.iter().enumerate() {
+            if game.outcome(state).is_none() {
+                let mut s = state.clone();
+                assert_eq!(
+                    solver.solve(&game, &mut s),
+                    solution.values[index],
+                    "connect-k position {index}"
+                );
+            }
+        }
+        use crate::games::breakthrough::Breakthrough;
+        let game = Breakthrough::new(3, 4, 1).unwrap();
+        let solution = solve_retrograde(&game, 1_000_000).unwrap();
+        let mut solver = ExactSolver::new();
+        let mut root = game.initial_state();
+        assert_eq!(solver.solve(&game, &mut root), solution.values[0]);
+    }
+
+    #[test]
+    fn retrograde_solves_tiny_forward_chess_stably() {
+        use crate::games::forward_chess::{ForwardChess, Ruleset};
+        let game = ForwardChess::new(Ruleset::Tiny);
+        let a = solve_retrograde(&game, 5_000_000).unwrap();
+        let b = solve_retrograde(&game, 5_000_000).unwrap();
+        assert_eq!(a.values, b.values, "solver must be deterministic");
+        assert_eq!(a.states.len(), b.states.len());
+        // Child values must be consistent: every position's value equals
+        // the max over its children's flipped values (or its terminal
+        // outcome), with draws allowed for cycles.
+        for index in 0..a.states.len() {
+            if game.outcome(&a.states[index]).is_some() {
+                continue;
+            }
+            let child_values = a.child_values(index);
+            let best = child_values.iter().copied().max().unwrap();
+            assert_eq!(
+                a.values[index], best,
+                "position {index}: value must equal best child value"
+            );
+        }
+        println!(
+            "tiny forward chess: {} positions, root {:?}",
+            a.states.len(),
+            a.values[0]
+        );
+    }
+
+    #[test]
+    fn retrograde_optimal_play_realizes_root_value_under_real_rules() {
+        use crate::games::forward_chess::{ForwardChess, Ruleset};
+        let game = ForwardChess::new(Ruleset::Tiny);
+        let solution = solve_retrograde(&game, 5_000_000).unwrap();
+        let root_value = solution.values[0];
+        // Play optimal-vs-optimal with the REAL state (history tracked,
+        // threefold and fifty-move live): the realized outcome category
+        // must match the solved root value; cycles terminate via the
+        // actual repetition rule.
+        let mut state = game.initial_state();
+        let mut moves = Vec::new();
+        let mut plies = 0;
+        let outcome = loop {
+            if let Some(outcome) = game.outcome(&state) {
+                break outcome;
+            }
+            assert!(plies < 500, "optimal play must terminate under real rules");
+            let index = solution.index_of[&game.position_key(&state)] as usize;
+            let value = solution.values[index];
+            game.legal_moves(&state, &mut moves);
+            let child_values = solution.child_values(index);
+            let choice = moves
+                .iter()
+                .zip(&child_values)
+                .find(|(_, &v)| v == value)
+                .map(|(&m, _)| m)
+                .expect("an optimal move exists");
+            game.make_move(&mut state, choice);
+            plies += 1;
+        };
+        let mover_perspective_root = root_value;
+        let realized = Wdl::from_outcome(outcome, crate::game::Player::One);
+        assert_eq!(
+            realized, mover_perspective_root,
+            "optimal play realized {realized:?} but the root is {mover_perspective_root:?}"
+        );
     }
 
     #[test]

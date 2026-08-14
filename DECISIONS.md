@@ -222,3 +222,58 @@ bracket at st=0.3: ~3% vs SF UCI_Elo 1320, ~6-19% vs full SF at 5-20
 nodes (NNUE evaluation is that strong per node). Elo language follows
 §27: scores and Fastchess logistic differences under this exact
 protocol only.
+
+## 2026-08-14 — D028: Forward Chess implementation decisions
+
+- FORWARD_CHESS_RULES.md is authoritative; the module implements it
+  exactly. Reduced rulesets are named (tiny/small/medium/full) with
+  fixed rotationally-mirrored layouts, not free parameters.
+- Pawn double-steps may not land on the promotion rank (uniform rule
+  that keeps reduced boards coherent); double-steps and hence en
+  passant thus exist only where geometry allows (medium/full).
+- Forward Chess repeats, so the acyclic ExactSolver is guarded off;
+  reduced instances are solved by `solve_retrograde`: forward
+  reachability + backward induction, repetition-as-draw for
+  unresolvable cycles, fifty-move rule not modelled in the oracle (the
+  standard tablebase caveat). Cross-validated against ExactSolver on
+  acyclic games and against real-rules optimal play-outs.
+- One production movegen + an independent slow reference generator in
+  tests (all-pairs predicate) satisfies the §28 slow/optimized
+  sequence within the simplicity contract; the differential test runs
+  all four rulesets.
+- Rung sizing history: `small` was 4x5 (K+R+2P), then 4x4 and 3x4 when
+  the 7.7 GB machine could not hold the position graph. Retried at 4x5
+  after the RAM upgrade to 32 GB (cap 60M positions, ~330 B each), but
+  4x5 measures at more than 60M reachable positions, so `small` is
+  finally 4x4 K+R+P (mirrored), as FORWARD_CHESS_RULES.md §12 records.
+
+## 2026-08-14 — D029: Retrograde artifacts (tablebase + sampled corpus)
+
+The first `small` solve runs filled the 30 GB disk with the full JSONL
+corpus, losing an in-flight edit to a swallowed write error (unclosed
+file handle on a full disk). After the disk upgrade to 64 GB:
+
+- Every retrograde solve writes `tablebase.bin`, a compact binary
+  backup of the full solution: 16-byte header (magic/version/ruleset/
+  dimensions/count), one record per position in discovery order (cells
+  at 5 bits each, flags byte, optional en-passant byte, halfmove byte),
+  FNV-1a-64 checksummed footer. Repetition history is path-dependent
+  and never stored; key and outcome are recomputed on load. The reader
+  validates structure (codes, padding, king counts, en-passant
+  geometry) and checksum before trusting records — corrupt or
+  adversarial input errors, never panics (prefix/bit-flip/fuzz tests).
+  Written tablebases are immediately re-read and compared record by
+  record against the in-memory solution.
+- `corpus.jsonl` is capped at ~1M rows, subsampled deterministically by
+  `splitmix64(position_key) % denominator == 0` past the cap; summary
+  records the denominator and full WDL counts over all non-terminal
+  positions.
+- Self-play oracle promotion on forward chess builds its evaluation
+  dataset from the retrograde solver (val/test buckets thinned to
+  ~20k states each); `lab train` and oracle probes stay guarded off
+  for loopy games.
+- Solved instances: `tiny` root Draw, 83,947 reachable positions
+  (0.5 s, 30 MiB). `small` root Draw, 46,549,591 reachable positions
+  (44.8M non-terminal: 11.2M win / 28.4M draw / 5.2M loss; 560 s,
+  15 GB peak, 559 MB tablebase) — under the 60M cap that 4x5
+  exceeded, validating the D028 rung sizing.

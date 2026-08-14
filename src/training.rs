@@ -6,7 +6,7 @@
 
 use crate::game::Game;
 use crate::model::{ModelDims, PolicyValueNet, TrainBackend};
-use crate::search::{enumerate_solved, ExactSolver, Wdl};
+use crate::search::{enumerate_solved, solve_retrograde, ExactSolver, Wdl};
 use burn::optim::{AdamConfig, GradientsParams, Optimizer};
 use burn::prelude::Backend;
 use burn::tensor::activation::log_softmax;
@@ -84,7 +84,7 @@ pub struct ExactDataset {
     pub max_features: usize,
 }
 
-fn splitmix64(mut x: u64) -> u64 {
+pub fn splitmix64(mut x: u64) -> u64 {
     x = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
     x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
@@ -124,6 +124,74 @@ pub fn build_exact_dataset<G: Game>(game: &G) -> ExactDataset {
         }
     });
     dataset
+}
+
+/// Second hash stream for thinning evaluation buckets, so thinning is
+/// independent of the split assignment.
+const EVAL_THIN_SALT: u64 = 0x5eed_ab1e_0f0f_0f0f;
+
+/// Oracle dataset for repetition-capable games via the retrograde
+/// solver. Evaluation-only: `train` stays empty; `val`/`test` are the
+/// usual position-key buckets, deterministically thinned to at most
+/// about `eval_cap` states each so evaluation cost stays bounded on
+/// large instances.
+pub fn build_retrograde_dataset<G: Game>(
+    game: &G,
+    max_positions: usize,
+    eval_cap: usize,
+) -> Result<ExactDataset, String> {
+    let solution = solve_retrograde(game, max_positions)?;
+    let mut dataset = ExactDataset {
+        train: Vec::new(),
+        val: Vec::new(),
+        test: Vec::new(),
+        max_features: 0,
+    };
+    let mut bucket_sizes = [0u64; 2];
+    for state in &solution.states {
+        if game.outcome(state).is_some() {
+            continue;
+        }
+        match splitmix64(game.position_key(state)) % 10 {
+            8 => bucket_sizes[0] += 1,
+            9 => bucket_sizes[1] += 1,
+            _ => {}
+        }
+    }
+    let denominators =
+        bucket_sizes.map(|n| n.div_ceil(eval_cap.max(1) as u64).max(1));
+    let mut features = Vec::new();
+    let mut legal = Vec::new();
+    for (index, state) in solution.states.iter().enumerate() {
+        if game.outcome(state).is_some() {
+            continue;
+        }
+        let key = game.position_key(state);
+        let slot = match splitmix64(key) % 10 {
+            8 => 0usize,
+            9 => 1,
+            _ => continue,
+        };
+        if splitmix64(key ^ EVAL_THIN_SALT) % denominators[slot] != 0 {
+            continue;
+        }
+        game.encode_features(state, &mut features);
+        game.legal_moves(state, &mut legal);
+        let example = Example {
+            features: features.clone(),
+            legal: legal.iter().map(|&m| game.action_id(state, m)).collect(),
+            child_wdl: solution.child_values(index),
+            wdl: solution.values[index],
+            ply: 0,
+        };
+        dataset.max_features = dataset.max_features.max(example.features.len());
+        if slot == 0 {
+            dataset.val.push(example);
+        } else {
+            dataset.test.push(example);
+        }
+    }
+    Ok(dataset)
 }
 
 /// Tensor batch for a slice of examples.

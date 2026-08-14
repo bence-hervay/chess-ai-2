@@ -4,6 +4,7 @@
 pub mod breakthrough;
 pub mod chess;
 pub mod connect_k;
+pub mod forward_chess;
 pub mod othello;
 
 use serde::{Deserialize, Serialize};
@@ -28,6 +29,10 @@ pub enum GameSpec {
     Othello { width: u16, height: u16 },
     #[serde(rename = "chess")]
     Chess {},
+    #[serde(rename = "forward_chess")]
+    ForwardChess {
+        ruleset: crate::games::forward_chess::Ruleset,
+    },
 }
 
 impl GameSpec {
@@ -54,6 +59,7 @@ impl GameSpec {
                 format!("othello-{width}x{height}")
             }
             GameSpec::Chess {} => "chess".to_string(),
+            GameSpec::ForwardChess { ruleset } => format!("fc-{}", ruleset.label()),
         }
     }
 }
