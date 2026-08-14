@@ -1,0 +1,84 @@
+{
+  "budgets": [
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 72,
+        "candidate_points": 4.0,
+        "candidate_wins": 0,
+        "draws": 8,
+        "games": 80,
+        "mean_plies": 76.8375,
+        "pairs": 40,
+        "score": 0.05,
+        "score_lcb95": 0.01449612697183588
+      },
+      "node_budget": 1
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 66,
+        "candidate_points": 8.0,
+        "candidate_wins": 2,
+        "draws": 12,
+        "games": 80,
+        "mean_plies": 100.9625,
+        "pairs": 40,
+        "score": 0.1,
+        "score_lcb95": 0.05161637673757783
+      },
+      "node_budget": 100
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 26,
+        "candidate_points": 40.0,
+        "candidate_wins": 26,
+        "draws": 28,
+        "games": 80,
+        "mean_plies": 135.625,
+        "pairs": 40,
+        "score": 0.5,
+        "score_lcb95": 0.5
+      },
+      "node_budget": 400
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 9,
+        "candidate_points": 63.5,
+        "candidate_wins": 56,
+        "draws": 15,
+        "games": 80,
+        "mean_plies": 125.3375,
+        "pairs": 40,
+        "score": 0.79375,
+        "score_lcb95": 0.7204800475126399
+      },
+      "node_budget": 1600
+    }
+  ],
+  "config": {
+    "baseline_nodes": 400,
+    "checkpoint": "runs/20260814-120150-selfplay-chess-w64-g200-e10-s1-2327384/checkpoint",
+    "game": {
+      "kind": "chess"
+    },
+    "node_budgets": [
+      1,
+      100,
+      400,
+      1600
+    ],
+    "opening_plies": 4,
+    "opponent_checkpoint": "runs/20260814-120150-selfplay-chess-w64-g200-e10-s1-2327384/checkpoint",
+    "pairs": 40,
+    "seed": 13,
+    "threads": 7
+  },
+  "parameter_count": 329419,
+  "wall_seconds": 266.948755349
+}

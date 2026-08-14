@@ -382,6 +382,10 @@ pub struct Searcher<G: Game> {
     ordering: MoveOrdering,
     nodes: u64,
     node_limit: u64,
+    /// Optional wall-clock deadline (§11.4), checked every 128 nodes
+    /// (fine-grained because model evaluators cost ~0.2 ms per node).
+    /// Node-budget runs leave this `None` and stay fully deterministic.
+    deadline: Option<std::time::Instant>,
     aborted: bool,
     scores: Vec<f32>,
 }
@@ -395,9 +399,15 @@ impl<G: Game> Searcher<G> {
             ordering,
             nodes: 0,
             node_limit: u64::MAX,
+            deadline: None,
             aborted: false,
             scores: Vec::new(),
         }
+    }
+
+    /// Set or clear the wall-clock deadline for subsequent searches.
+    pub fn set_deadline(&mut self, deadline: Option<std::time::Instant>) {
+        self.deadline = deadline;
     }
 
     pub fn tt_stats(&self) -> (u64, u64) {
@@ -535,6 +545,14 @@ impl<G: Game> Searcher<G> {
         if self.nodes >= self.node_limit {
             self.aborted = true;
             return 0;
+        }
+        if self.nodes.is_multiple_of(128) {
+            if let Some(deadline) = self.deadline {
+                if std::time::Instant::now() >= deadline {
+                    self.aborted = true;
+                    return 0;
+                }
+            }
         }
         if let Some(outcome) = game.outcome(state) {
             return terminal_score(outcome, game.side_to_move(state), ply);
@@ -992,6 +1010,92 @@ mod tests {
             "4x4 othello root: {exact:?} ({} solved states)",
             solver.solved_states()
         );
+    }
+
+    #[test]
+    fn chess_mates_in_n_with_deterministic_evaluator() {
+        use crate::games::chess::{Chess, ChessMove};
+        let game = Chess::new();
+        // (FEN, mate distance in plies, forced best first move or None)
+        let cases: [(&str, i32, Option<&str>); 3] = [
+            // Back-rank mate in one.
+            ("6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", 1, Some("a1a8")),
+            // Ladder mate in two moves (three plies): Rb7 then Ra8#.
+            ("6k1/8/8/8/8/8/1R6/R5K1 w - - 0 1", 3, None),
+            // Mated side: best defence still loses in one ply after any move?
+            // Use a mate-in-one against the mover's opponent instead:
+            // Black to move, White mates next: value is a loss at 2 plies.
+            ("R5k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1", 0, None),
+        ];
+        for (fen, plies, best) in cases {
+            let mut state = game.state_from_fen(fen).unwrap();
+            for tt in [None, Some(16)] {
+                let mut searcher: Searcher<Chess> = Searcher::new(tt, MoveOrdering::Natural);
+                let result = searcher.search(&game, &mut state, 6, u64::MAX, &mut ZeroEvaluator);
+                if plies > 0 {
+                    assert_eq!(
+                        result.value,
+                        SCORE_WIN - plies,
+                        "{fen}: expected mate in {plies} plies (tt={tt:?})"
+                    );
+                    if let Some(best) = best {
+                        let expected = ChessMove(best.parse().unwrap());
+                        assert_eq!(result.best_move, Some(expected), "{fen}");
+                    }
+                } else {
+                    // Checkmated already: search on terminal states is not
+                    // called; this row asserts the outcome directly.
+                    assert!(game.outcome(&state).is_some(), "{fen}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn chess_repetition_draw_is_seen_by_search() {
+        use crate::games::chess::{Chess, ChessMove};
+        let game = Chess::new();
+        // KQ vs KR: White to move is winning, but if the position is one
+        // repetition away from a threefold draw, the draw is available
+        // and search must still prefer the win over shuffling.
+        let mut state = game
+            .state_from_fen("4k3/8/8/8/8/8/8/R3K3 w - - 0 1")
+            .unwrap();
+        // Manufacture near-threefold history: play the shuffle twice.
+        for uci in ["a1b1", "e8d8", "b1a1", "d8e8", "a1b1", "e8d8", "b1a1"] {
+            game.make_move(&mut state, ChessMove(uci.parse().unwrap()));
+        }
+        // Black to move; d8e8 would complete the third repetition and
+        // draw. A deterministic material-counting test evaluator makes
+        // every non-drawing continuation score badly for Black, so the
+        // search must claim the draw.
+        struct RookCounter;
+        impl Evaluator<Chess> for RookCounter {
+            fn leaf_value(&mut self, game: &Chess, state: &<Chess as Game>::State) -> i32 {
+                // Score rook possession through the raw feature encoding
+                // (piece index 3 = rook, even relative index = own).
+                let mut features = Vec::new();
+                game.encode_features(state, &mut features);
+                let mut score = 0i32;
+                for f in features {
+                    let piece = (f as usize % 12) / 2;
+                    let own = (f as usize).is_multiple_of(2);
+                    if piece == 3 {
+                        score += if own { 500 } else { -500 };
+                    }
+                }
+                score
+            }
+        }
+        let mut searcher: Searcher<Chess> = Searcher::new(Some(16), MoveOrdering::Natural);
+        let result = searcher.search(&game, &mut state, 4, 200_000, &mut RookCounter);
+        let draw_move = ChessMove("d8e8".parse().unwrap());
+        assert_eq!(
+            result.best_move,
+            Some(draw_move),
+            "the losing side must claim the repetition draw"
+        );
+        assert_eq!(result.value, 0, "repetition draw scores zero");
     }
 
     #[test]

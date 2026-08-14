@@ -1,0 +1,16 @@
+checkpoint = "runs/20260814-120150-selfplay-chess-w64-g200-e10-s1-2327384/checkpoint"
+opponent_checkpoint = "runs/20260814-120150-selfplay-chess-w64-g200-e10-s1-2327384/checkpoint"
+node_budgets = [
+    1,
+    100,
+    400,
+    1600,
+]
+baseline_nodes = 400
+pairs = 40
+opening_plies = 4
+seed = 13
+threads = 7
+
+[game]
+kind = "chess"

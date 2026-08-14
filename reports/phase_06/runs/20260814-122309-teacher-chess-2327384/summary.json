@@ -1,0 +1,19 @@
+{
+  "best_move_agreement": 0.19266666666666668,
+  "chance_move_agreement": 0.09034687288984437,
+  "config": {
+    "model_width": 128,
+    "positions": 30000,
+    "seed": 1,
+    "stockfish_depth": 8,
+    "stockfish_path": "/usr/games/stockfish",
+    "threads": 7,
+    "training_steps": 20000
+  },
+  "held_out": 3000,
+  "parameter_count": 671051,
+  "peak_rss_bytes": 83542016,
+  "rows": 30000,
+  "teacher_wdl_accuracy": 0.8013333333333333,
+  "wall_seconds": 2057.631366759
+}

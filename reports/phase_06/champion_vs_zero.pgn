@@ -1,0 +1,1870 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "1"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:12"]
+[GameStartTime "2026-08-14T13:06:04 +0000"]
+[GameEndTime "2026-08-14T13:06:17 +0000"]
+[PlyCount "55"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.280s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.280s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.274s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.274s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.293s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.283s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.283s} d5 {0.00/8 0.197s} 8. Rxb5 {+6.54/3 0.275s}
+d4 {0.00/7 0.195s} 9. Nb1 {-2.35/2 0.287s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.292s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.289s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.280s} e4 {0.00/7 0.182s}
+13. Qc6+ {+7.73/3 0.301s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.278s}
+e3 {0.00/7 0.178s} 15. dxe3 {+6.67/3 0.292s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.277s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.285s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.280s} f6 {0.00/7 0.168s}
+19. Rxg8 {+5.79/3 0.291s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.270s}
+h4 {0.00/7 0.163s} 21. Rxh4 {+7.70/3 0.286s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.294s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.265s}
+Bxf5 {0.00/8 0.158s} 24. gxf5 {+9.16/3 0.253s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.264s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.256s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.259s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.270s, White loses on time (11ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "2"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:22"]
+[GameStartTime "2026-08-14T13:06:04 +0000"]
+[GameEndTime "2026-08-14T13:06:27 +0000"]
+[PlyCount "54"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.294s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.293s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.290s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.297s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.287s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.301s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.294s} d5 {0.00/8 0.197s} 8. Rxb5 {+6.54/3 0.299s}
+d4 {0.00/7 0.194s} 9. Nb1 {-2.35/2 0.298s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.274s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.284s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.280s} e4 {0.00/7 0.183s}
+13. Qc6+ {+7.73/3 0.298s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.282s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.286s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.282s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.288s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.290s} f6 {0.00/7 0.168s}
+19. Rxg8 {+5.79/3 0.287s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.279s}
+h4 {0.00/7 0.163s} 21. Rxh4 {+7.70/3 0.270s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.274s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.263s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.270s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.265s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.268s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.242s}
+Kb5 {0.00/9 0.149s, White loses on time (100ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "1"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:23"]
+[GameStartTime "2026-08-14T13:06:04 +0000"]
+[GameEndTime "2026-08-14T13:06:28 +0000"]
+[PlyCount "59"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.299s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.294s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.280s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.293s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.277s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.271s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.280s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.277s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.284s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.265s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.267s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.271s}
+13. Ra1 {0.00/8 0.181s} Be6 {+6.21/2 0.263s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.274s} 15. Ra1 {0.00/7 0.175s} Bc8 {+6.70/3 0.273s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.281s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.266s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.260s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.270s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.259s} 21. Ra1 {0.00/7 0.163s} Bh4 {+7.25/3 0.256s}
+22. Nh3 {0.00/7 0.158s} gxh3 {+7.64/3 0.269s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.274s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.272s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.265s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.260s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.258s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.241s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.257s}
+30. Qh1 {0.00/7 0.149s, Black loses on time (100ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "2"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:06:17 +0000"]
+[GameEndTime "2026-08-14T13:06:30 +0000"]
+[PlyCount "60"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.300s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.291s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.285s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.279s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.277s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.271s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.271s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.281s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.274s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.264s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.266s} 12. Rb1 {0.00/7 0.182s} Bc8 {+6.97/3 0.272s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.261s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.284s} 15. Ra1 {0.00/7 0.175s} Bc8 {+6.70/3 0.268s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.278s} 17. Ra1 {0.00/8 0.170s}
+Ra8 {+7.23/3 0.270s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.266s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.266s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.260s} 21. Ra1 {0.00/7 0.162s} Bh4 {+7.25/3 0.247s}
+22. Nh3 {0.00/7 0.159s} gxh3 {+7.64/3 0.270s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.279s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.271s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.260s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.283s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.240s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.258s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.240s} 30. Qh1 {0.00/7 0.149s}
+Bg4+ {+7.44/2 0.251s, Black loses on time (83ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "3"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:06:28 +0000"]
+[GameEndTime "2026-08-14T13:06:41 +0000"]
+[PlyCount "58"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.290s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.294s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.285s}
+4. Rb1 {0.00/8 0.209s} Na6 {+5.92/3 0.281s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.283s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.301s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.270s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.277s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.278s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.269s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.254s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.277s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.271s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.284s} 15. Ra1 {0.00/7 0.174s} Bc8 {+6.70/3 0.273s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.293s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.286s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.264s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.269s} 20. Rb1 {0.00/7 0.163s}
+Be7 {+7.63/3 0.270s} 21. Ra1 {0.00/7 0.162s} Bh4 {+7.25/3 0.282s}
+22. Nh3 {0.00/7 0.159s} gxh3 {+7.64/3 0.267s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.282s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.276s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.259s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.260s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.264s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.254s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.248s, Black loses on time (61ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "3"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:22"]
+[GameStartTime "2026-08-14T13:06:27 +0000"]
+[GameEndTime "2026-08-14T13:06:50 +0000"]
+[PlyCount "54"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.289s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.285s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.279s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.288s} b5 {0.00/8 0.209s} 5. Bxa3 {+5.15/3 0.284s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.271s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.281s} d5 {0.00/8 0.198s} 8. Rxb5 {+6.54/3 0.288s}
+d4 {0.00/7 0.195s} 9. Nb1 {-2.35/2 0.298s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.293s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.296s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.292s} e4 {0.00/6 0.182s}
+13. Qc6+ {+7.73/3 0.293s} Nxc6 {0.00/8 0.179s} 14. Nc3 {+6.22/3 0.297s}
+e3 {0.00/7 0.178s} 15. dxe3 {+6.67/3 0.297s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.277s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.282s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.292s} f6 {0.00/7 0.168s}
+19. Rxg8 {+5.79/3 0.285s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.271s}
+h4 {0.00/7 0.164s} 21. Rxh4 {+7.70/3 0.282s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.261s} Rb1 {0.00/7 0.158s} 23. Nxb1 {+2.74/4 0.274s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.291s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.247s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.278s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.270s}
+Kb5 {0.00/9 0.149s, White loses on time (100ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "4"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:23"]
+[GameStartTime "2026-08-14T13:06:30 +0000"]
+[GameEndTime "2026-08-14T13:06:54 +0000"]
+[PlyCount "60"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.262s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.276s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.275s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.264s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.260s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.272s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.298s} d5 {0.00/8 0.197s} 8. Rxb5 {+6.54/3 0.281s}
+d4 {0.00/7 0.194s} 9. Nb1 {-2.35/2 0.287s} d3 {0.00/7 0.192s}
+10. Rg5 {+6.35/3 0.287s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.283s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.283s} e4 {0.00/7 0.182s}
+13. Qc6+ {+7.73/3 0.289s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.271s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.278s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.273s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.271s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.266s} f6 {0.00/7 0.167s}
+19. Rxg8 {+5.79/3 0.279s} h5 {0.00/7 0.167s} 20. Rxh8 {+2.09/4 0.277s}
+h4 {0.00/7 0.164s} 21. Rxh4 {+7.70/3 0.265s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.254s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.245s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.244s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.246s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.240s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.252s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.231s} Ka4 {0.00/9 0.148s} 29. Nc3+ {+8.52/4 0.235s}
+Kb3 {0.00/8 0.146s} 30. Kd3 {+9.83/3 0.240s}
+Kb4 {0.00/8 0.145s, White loses on time (100ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "4"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:06:41 +0000"]
+[GameEndTime "2026-08-14T13:06:54 +0000"]
+[PlyCount "60"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.287s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.284s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.277s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.281s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.274s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.279s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.283s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.279s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.282s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.261s} 11. Ra1 {0.00/8 0.186s}
+c4 {+6.21/3 0.267s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.268s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.259s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.273s} 15. Ra1 {0.00/7 0.174s} Bc8 {+6.70/3 0.277s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.272s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.273s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.266s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.270s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.261s} 21. Ra1 {0.00/7 0.162s} Bh4 {+7.25/3 0.263s}
+22. Nh3 {0.00/7 0.159s} gxh3 {+7.64/3 0.259s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.268s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.263s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.256s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.264s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.256s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.246s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.259s} 30. Qh1 {0.00/7 0.149s}
+Bg4+ {+7.44/2 0.262s, Black loses on time (69ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "5"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:12"]
+[GameStartTime "2026-08-14T13:06:50 +0000"]
+[GameEndTime "2026-08-14T13:07:03 +0000"]
+[PlyCount "55"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.292s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.283s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.296s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.281s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.273s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.293s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.289s} d5 {0.00/7 0.197s} 8. Rxb5 {+6.54/3 0.287s}
+d4 {0.00/7 0.195s} 9. Nb1 {-2.35/2 0.305s} d3 {0.00/7 0.192s}
+10. Rg5 {+6.35/3 0.299s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.290s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.294s} e4 {0.00/7 0.183s}
+13. Qc6+ {+7.73/3 0.290s} Nxc6 {0.00/8 0.179s} 14. Nc3 {+6.22/3 0.279s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.289s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.287s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.283s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.291s} f6 {0.00/7 0.167s}
+19. Rxg8 {+5.79/3 0.266s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.268s}
+h4 {0.00/7 0.164s} 21. Rxh4 {+7.70/3 0.265s} Ra1 {0.00/7 0.162s}
+22. g4 {+7.83/3 0.258s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.263s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.278s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.254s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.267s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.265s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.271s, White loses on time (56ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "5"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:06:54 +0000"]
+[GameEndTime "2026-08-14T13:07:07 +0000"]
+[PlyCount "58"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.292s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.288s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.299s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.286s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.276s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.272s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.297s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.276s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.279s}
+10. Rb1 {0.00/8 0.189s} Be6 {-3.15/2 0.278s} 11. Ra1 {0.00/8 0.186s}
+c4 {+6.21/3 0.286s} 12. Rb1 {0.00/7 0.182s} Bc8 {+6.97/3 0.280s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.282s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.280s} 15. Ra1 {0.00/7 0.174s} Bc8 {+6.70/3 0.273s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.272s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.270s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.267s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.271s} 20. Rb1 {0.00/7 0.165s}
+Be7 {+7.63/3 0.267s} 21. Ra1 {0.00/7 0.161s} Bh4 {+7.25/3 0.265s}
+22. Nh3 {0.00/7 0.159s} gxh3 {+7.64/3 0.271s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.272s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.262s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.259s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.263s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.260s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.265s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.270s, Black loses on time (78ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "6"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:23"]
+[GameStartTime "2026-08-14T13:06:54 +0000"]
+[GameEndTime "2026-08-14T13:07:17 +0000"]
+[PlyCount "58"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.286s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.280s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.279s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.283s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.282s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.288s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.276s} d5 {0.00/8 0.197s} 8. Rxb5 {+6.54/3 0.265s}
+d4 {0.00/7 0.195s} 9. Nb1 {-2.35/2 0.288s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.280s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.283s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.292s} e4 {0.00/7 0.183s}
+13. Qc6+ {+7.73/3 0.274s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.277s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.285s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.262s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.276s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.273s} f6 {0.00/7 0.167s}
+19. Rxg8 {+5.79/3 0.276s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.263s}
+h4 {0.00/7 0.163s} 21. Rxh4 {+7.70/3 0.264s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.260s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.262s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.258s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.261s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.272s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.245s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.253s} Ka4 {0.00/9 0.148s} 29. Nc3+ {+8.52/4 0.251s}
+Kb3 {0.00/8 0.147s, White loses on time (100ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "6"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:22"]
+[GameStartTime "2026-08-14T13:07:03 +0000"]
+[GameEndTime "2026-08-14T13:07:26 +0000"]
+[PlyCount "55"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.285s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.297s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.297s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.302s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.295s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.280s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.291s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.288s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.283s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.288s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.285s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.288s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.278s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.285s} 15. Ra1 {0.00/7 0.175s} Bc8 {+6.70/3 0.278s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.273s} 17. Ra1 {0.00/7 0.169s}
+Ra8 {+7.23/3 0.283s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.283s}
+19. Ra1 {0.00/7 0.165s} Ne4 {+7.32/3 0.281s} 20. Rb1 {0.00/7 0.165s}
+Be7 {+7.63/3 0.269s} 21. Ra1 {0.00/7 0.161s} Bh4 {+7.25/3 0.268s}
+22. Nh3 {0.00/7 0.159s} gxh3 {+7.64/3 0.277s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.287s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.282s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.284s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.291s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.278s}
+28. Bg2 {0.00/7 0.152s, Black loses on time (100ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "7"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:23"]
+[GameStartTime "2026-08-14T13:07:07 +0000"]
+[GameEndTime "2026-08-14T13:07:30 +0000"]
+[PlyCount "56"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.280s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.285s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.280s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.283s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.288s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.292s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.293s} d5 {0.00/8 0.197s} 8. Rxb5 {+6.54/3 0.291s}
+d4 {0.00/7 0.194s} 9. Nb1 {-2.35/2 0.295s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.285s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.296s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.292s} e4 {0.00/7 0.182s}
+13. Qc6+ {+7.73/3 0.284s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.272s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.288s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.275s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.291s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.285s} f6 {0.00/7 0.167s}
+19. Rxg8 {+5.79/3 0.279s} h5 {0.00/7 0.166s} 20. Rxh8 {+2.09/4 0.262s}
+h4 {0.00/7 0.163s} 21. Rxh4 {+7.70/3 0.265s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.256s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.268s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.247s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.261s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.247s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.257s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.274s}
+Ka4 {0.00/9 0.148s, White loses on time (100ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "7"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:07:17 +0000"]
+[GameEndTime "2026-08-14T13:07:31 +0000"]
+[PlyCount "60"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.288s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.285s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.285s}
+4. Rb1 {0.00/8 0.209s} Na6 {+5.92/3 0.279s} 5. Ra1 {0.00/8 0.205s}
+d5 {+5.66/3 0.274s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.274s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.279s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.275s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.263s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.257s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.257s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.258s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.254s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.284s} 15. Ra1 {0.00/7 0.176s} Bc8 {+6.70/3 0.267s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.281s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.275s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.276s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.260s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.254s} 21. Ra1 {0.00/7 0.162s} Bh4 {+7.25/3 0.258s}
+22. Nh3 {0.00/7 0.158s} gxh3 {+7.64/3 0.243s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.269s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.263s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.261s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.268s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.274s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.282s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.260s} 30. Qh1 {0.00/7 0.149s}
+Bg4+ {+7.44/2 0.269s, Black loses on time (72ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "8"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:12"]
+[GameStartTime "2026-08-14T13:07:26 +0000"]
+[GameEndTime "2026-08-14T13:07:38 +0000"]
+[PlyCount "53"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.306s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.300s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.298s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.289s} b5 {0.00/8 0.209s} 5. Bxa3 {+5.15/3 0.294s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.303s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.298s} d5 {0.00/8 0.197s} 8. Rxb5 {+6.54/3 0.295s}
+d4 {0.00/7 0.194s} 9. Nb1 {-2.35/2 0.292s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.293s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.284s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.288s} e4 {0.00/7 0.182s}
+13. Qc6+ {+7.73/3 0.291s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.280s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.276s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.298s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.295s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.292s} f6 {0.00/6 0.167s}
+19. Rxg8 {+5.79/3 0.299s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.280s}
+h4 {0.00/7 0.163s} 21. Rxh4 {+7.70/3 0.273s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.270s} Rb1 {0.00/7 0.160s} 23. Nxb1 {+2.74/4 0.278s}
+Bxf5 {0.00/8 0.158s} 24. gxf5 {+9.16/3 0.284s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.276s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.271s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.272s, White loses on time (75ms overrun)}
+0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "8"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:07:30 +0000"]
+[GameEndTime "2026-08-14T13:07:43 +0000"]
+[PlyCount "58"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.293s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.287s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.287s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.287s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.278s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.288s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.281s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.285s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.276s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.269s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.270s} 12. Rb1 {0.00/7 0.183s} Bc8 {+6.97/3 0.270s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.262s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.262s} 15. Ra1 {0.00/7 0.175s} Bc8 {+6.70/3 0.272s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.276s} 17. Ra1 {0.00/7 0.169s}
+Ra8 {+7.23/3 0.271s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.278s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.271s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.269s} 21. Ra1 {0.00/7 0.163s} Bh4 {+7.25/3 0.271s}
+22. Nh3 {0.00/7 0.158s} gxh3 {+7.64/3 0.265s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.280s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.276s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.276s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.261s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.271s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.260s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.266s, Black loses on time (58ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "9"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:12"]
+[GameStartTime "2026-08-14T13:07:31 +0000"]
+[GameEndTime "2026-08-14T13:07:44 +0000"]
+[PlyCount "57"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.287s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.291s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.279s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.279s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.278s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.284s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.288s} d5 {0.00/7 0.198s} 8. Rxb5 {+6.54/3 0.277s}
+d4 {0.00/7 0.194s} 9. Nb1 {-2.35/2 0.294s} d3 {0.00/7 0.192s}
+10. Rg5 {+6.35/3 0.285s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.290s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.280s} e4 {0.00/7 0.183s}
+13. Qc6+ {+7.73/3 0.283s} Nxc6 {0.00/8 0.179s} 14. Nc3 {+6.22/3 0.284s}
+e3 {0.00/7 0.178s} 15. dxe3 {+6.67/3 0.288s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.287s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.282s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.276s} f6 {0.00/7 0.167s}
+19. Rxg8 {+5.79/3 0.279s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.256s}
+h4 {0.00/7 0.163s} 21. Rxh4 {+7.70/3 0.266s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.253s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.266s}
+Bxf5 {0.00/8 0.158s} 24. gxf5 {+9.16/3 0.261s} Qd1+ {0.00/9 0.156s}
+25. Kxd1 {+7.09/4 0.242s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.254s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.256s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.255s} Ka4 {0.00/9 0.148s}
+29. Nc3+ {+8.52/4 0.256s, White loses on time (56ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "9"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:12"]
+[GameStartTime "2026-08-14T13:07:38 +0000"]
+[GameEndTime "2026-08-14T13:07:51 +0000"]
+[PlyCount "54"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.280s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.292s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.270s}
+4. Rb1 {0.00/8 0.209s} Na6 {+5.92/3 0.291s} 5. Ra1 {0.00/8 0.205s}
+d5 {+5.66/3 0.295s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.286s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.296s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.291s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.292s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.281s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.283s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.293s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.285s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.286s} 15. Ra1 {0.00/7 0.175s} Bc8 {+6.70/3 0.294s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.287s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.300s} 18. Rb1 {0.00/8 0.167s} Nd6 {+7.56/3 0.275s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.273s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.272s} 21. Ra1 {0.00/7 0.162s} Bh4 {+7.25/3 0.285s}
+22. Nh3 {0.00/7 0.158s} gxh3 {+7.64/3 0.289s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.295s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.286s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.280s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.284s} 27. Rb1 {0.00/7 0.154s}
+f4 {+9.46/3 0.271s, Black loses on time (12ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "10"]
+[White "champion"]
+[Black "zero"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:13"]
+[GameStartTime "2026-08-14T13:07:43 +0000"]
+[GameEndTime "2026-08-14T13:07:56 +0000"]
+[PlyCount "57"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.304s} a5 {0.00/8 0.220s} 2. f4 {+3.90/3 0.279s}
+a4 {0.00/8 0.216s} 3. h3 {+3.93/3 0.273s} a3 {0.00/8 0.212s}
+4. b4 {+4.76/3 0.278s} b5 {0.00/8 0.208s} 5. Bxa3 {+5.15/3 0.267s}
+c5 {0.00/8 0.204s} 6. Rb1 {+6.11/3 0.282s} cxb4 {0.00/8 0.201s}
+7. Rxb4 {+6.48/3 0.283s} d5 {0.00/7 0.197s} 8. Rxb5 {+6.54/3 0.268s}
+d4 {0.00/7 0.195s} 9. Nb1 {-2.35/2 0.276s} d3 {0.00/7 0.191s}
+10. Rg5 {+6.35/3 0.294s} dxc2 {0.00/7 0.188s} 11. Qxc2 {+5.77/3 0.295s}
+e5 {0.00/7 0.185s} 12. Rxg7 {+6.51/3 0.282s} e4 {0.00/7 0.182s}
+13. Qc6+ {+7.73/3 0.271s} Nxc6 {0.00/8 0.180s} 14. Nc3 {+6.22/3 0.295s}
+e3 {0.00/7 0.177s} 15. dxe3 {+6.67/3 0.296s} Nb4 {0.00/6 0.174s}
+16. e4 {+6.37/3 0.291s} Nxa2 {0.00/6 0.172s} 17. f5 {+7.03/3 0.278s}
+Nc1 {0.00/6 0.169s} 18. Bxc1 {+6.34/3 0.285s} f6 {0.00/7 0.167s}
+19. Rxg8 {+5.79/3 0.286s} h5 {0.00/7 0.165s} 20. Rxh8 {+2.09/4 0.270s}
+h4 {0.00/7 0.164s} 21. Rxh4 {+7.70/3 0.280s} Ra1 {0.00/7 0.161s}
+22. g4 {+7.83/3 0.262s} Rb1 {0.00/7 0.159s} 23. Nxb1 {+2.74/4 0.261s}
+Bxf5 {0.00/8 0.157s} 24. gxf5 {+9.16/3 0.270s} Qd1+ {0.00/9 0.155s}
+25. Kxd1 {+7.09/4 0.260s} Kd7 {0.00/9 0.153s} 26. Nf3 {+9.78/3 0.237s}
+Kc6 {0.00/9 0.151s} 27. Rh2 {+9.90/3 0.248s} Kb5 {0.00/9 0.149s}
+28. Kd2 {+9.92/3 0.247s} Ka4 {0.00/9 0.148s}
+29. Nc3+ {+8.52/4 0.246s, White loses on time (64ms overrun)} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "10"]
+[White "zero"]
+[Black "champion"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:12"]
+[GameStartTime "2026-08-14T13:07:44 +0000"]
+[GameEndTime "2026-08-14T13:07:57 +0000"]
+[PlyCount "58"]
+[Termination "time forfeit"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.220s} f5 {+2.70/3 0.296s} 2. Rb1 {0.00/8 0.216s}
+c5 {+5.00/3 0.290s} 3. Ra1 {0.00/8 0.212s} e5 {+4.61/3 0.288s}
+4. Rb1 {0.00/8 0.208s} Na6 {+5.92/3 0.300s} 5. Ra1 {0.00/8 0.204s}
+d5 {+5.66/3 0.277s} 6. Rb1 {0.00/8 0.201s} g5 {+6.41/3 0.279s}
+7. Ra1 {0.00/8 0.197s} g4 {+6.64/3 0.279s} 8. Rb1 {0.00/8 0.194s}
+Nh6 {+7.25/3 0.282s} 9. Ra1 {0.00/8 0.191s} Nf7 {+7.00/3 0.258s}
+10. Rb1 {0.00/8 0.188s} Be6 {-3.15/2 0.272s} 11. Ra1 {0.00/8 0.185s}
+c4 {+6.21/3 0.273s} 12. Rb1 {0.00/8 0.182s} Bc8 {+6.97/3 0.277s}
+13. Ra1 {0.00/8 0.180s} Be6 {+6.21/2 0.270s} 14. Rb1 {0.00/8 0.177s}
+h6 {+6.97/3 0.271s} 15. Ra1 {0.00/7 0.174s} Bc8 {+6.70/3 0.278s}
+16. Rb1 {0.00/8 0.172s} Rb8 {+7.50/3 0.270s} 17. Ra1 {0.00/8 0.169s}
+Ra8 {+7.23/3 0.266s} 18. Rb1 {0.00/8 0.168s} Nd6 {+7.56/3 0.270s}
+19. Ra1 {0.00/8 0.165s} Ne4 {+7.32/3 0.271s} 20. Rb1 {0.00/7 0.164s}
+Be7 {+7.63/3 0.260s} 21. Ra1 {0.00/7 0.161s} Bh4 {+7.25/3 0.263s}
+22. Nh3 {0.00/7 0.159s} gxh3 {+7.64/3 0.267s} 23. e3 {0.00/7 0.157s}
+Bxf2+ {+8.27/3 0.275s} 24. Ke2 {-319.94/6 0.000s} hxg2 {+8.48/3 0.267s}
+25. Rb1 {0.00/7 0.158s} gxh1=R {+0.91/2 0.262s} 26. Ra1 {0.00/7 0.156s}
+Nb8 {+9.27/3 0.265s} 27. Rb1 {0.00/7 0.154s} f4 {+9.46/3 0.255s}
+28. Bg2 {0.00/7 0.152s} Rxh2 {+3.12/2 0.262s} 29. Qe1 {0.00/7 0.151s}
+Rxg2 {+5.76/2 0.266s, Black loses on time (9ms overrun)} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "1"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:09:29 +0000"]
+[GameEndTime "2026-08-14T13:09:34 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.183s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.179s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.178s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.170s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.169s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.169s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.168s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.167s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.164s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.158s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.157s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.159s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.153s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "2"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:09:34 +0000"]
+[GameEndTime "2026-08-14T13:09:38 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.176s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.179s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.175s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.177s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.170s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.170s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.170s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.165s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.164s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.159s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.160s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.157s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.159s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "1"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:09"]
+[GameStartTime "2026-08-14T13:09:29 +0000"]
+[GameEndTime "2026-08-14T13:09:39 +0000"]
+[PlyCount "69"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.176s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.173s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.179s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.170s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.169s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.166s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.168s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.169s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.168s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.158s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.165s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+0.61/2 0.160s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.160s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.158s}
+Qe7 {0.00/8 0.153s} 15. Rxe7+ {+3.63/2 0.157s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.153s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.154s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.149s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.151s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.143s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.142s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.143s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.142s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.144s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.142s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.137s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.142s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.138s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.133s}
+Kd8 {0.00/8 0.136s} 30. Nc2 {+9.81/3 0.140s} Ba1 {0.00/8 0.134s}
+31. Nxa1 {+8.98/2 0.135s} h5 {0.00/7 0.133s} 32. gxh5 {+9.86/3 0.130s}
+Ke8 {-319.94/6 0.000s} 33. Nf3 {+9.90/3 0.134s} Kd8 {-319.96/4 0.000s}
+34. Rg2 {+319.97/3 0.112s} Ke8 {-319.98/2 0.000s}
+35. Rg8# {+319.99/1 0.003s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "2"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:09"]
+[GameStartTime "2026-08-14T13:09:29 +0000"]
+[GameEndTime "2026-08-14T13:09:39 +0000"]
+[PlyCount "69"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.180s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.178s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.172s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.172s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.175s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.169s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.165s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.164s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.165s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.165s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.160s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+0.61/2 0.160s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.160s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.158s}
+Qe7 {0.00/8 0.153s} 15. Rxe7+ {+3.63/2 0.152s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.150s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.157s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.150s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.149s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.145s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.147s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.143s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.141s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.140s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.142s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.139s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.143s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.134s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.139s}
+Kd8 {0.00/8 0.136s} 30. Nc2 {+9.81/3 0.136s} Ba1 {0.00/8 0.134s}
+31. Nxa1 {+8.98/2 0.136s} h5 {0.00/7 0.133s} 32. gxh5 {+9.86/3 0.133s}
+Ke8 {-319.94/6 0.000s} 33. Nf3 {+9.90/3 0.134s} Kd8 {-319.96/4 0.000s}
+34. Rg2 {+319.97/3 0.118s} Ke8 {-319.98/2 0.000s}
+35. Rg8# {+319.99/1 0.003s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "4"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:10"]
+[GameStartTime "2026-08-14T13:09:39 +0000"]
+[GameEndTime "2026-08-14T13:09:50 +0000"]
+[PlyCount "73"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.178s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.176s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.175s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.171s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.172s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.172s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.166s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.168s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.169s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.160s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.157s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+0.61/2 0.156s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.157s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.156s}
+Qe7 {0.00/8 0.153s} 15. Rxe7+ {+3.63/2 0.158s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.152s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.151s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.150s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.146s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.151s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.142s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.142s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.141s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.143s} Bb2 {0.00/9 0.140s}
+25. Qb7+ {+8.79/2 0.138s} Kd6 {0.00/8 0.140s} 26. Qb8+ {+9.04/2 0.139s}
+Kc5 {0.00/8 0.138s} 27. Ke1 {+8.87/2 0.138s} Ba1 {0.00/8 0.137s}
+28. g3 {+9.75/3 0.139s} Bb2 {0.00/7 0.136s} 29. Bg2 {+9.84/3 0.133s}
+Bd4 {0.00/7 0.136s} 30. h4 {+9.33/2 0.132s} Bxg1 {0.00/7 0.134s}
+31. Qc8+ {+9.42/2 0.132s} Kb4 {0.00/8 0.133s} 32. a3+ {+9.49/2 0.140s}
+Kb3 {0.00/7 0.132s} 33. Qc3+ {+9.42/2 0.133s} Ka2 {-319.94/6 0.000s}
+34. a4 {+9.06/2 0.130s} Bf2+ {-319.94/6 0.005s} 35. Kxf2 {+9.65/4 0.130s}
+Kxb1 {-319.96/4 0.000s} 36. Rh1+ {+319.97/3 0.034s} Ka2 {-319.98/2 0.000s}
+37. Bd5# {+319.99/1 0.003s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "3"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:15"]
+[GameStartTime "2026-08-14T13:09:38 +0000"]
+[GameEndTime "2026-08-14T13:09:54 +0000"]
+[PlyCount "141"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.179s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.179s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.171s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.174s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.171s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.173s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.168s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.167s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.166s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.167s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.159s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+5.95/3 0.162s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.154s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.158s}
+Qe7 {0.00/8 0.153s} 15. Rxe7+ {+3.63/2 0.150s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.149s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.149s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.149s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.145s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.149s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.144s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.148s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.140s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.145s} Bb2 {0.00/9 0.140s}
+25. Qb7+ {+8.79/2 0.141s} Kd6 {0.00/8 0.140s} 26. Qb8+ {+9.04/2 0.137s}
+Kc5 {0.00/8 0.138s} 27. Ke1 {+8.87/2 0.141s} Ba1 {0.00/8 0.137s}
+28. g3 {+9.75/3 0.139s} Bb2 {0.00/7 0.136s} 29. Bg2 {+9.84/3 0.140s}
+Bd4 {0.00/7 0.136s} 30. h4 {+9.33/2 0.134s} Bxg1 {0.00/7 0.134s}
+31. h5 {+9.93/3 0.139s} Bd4 {0.00/7 0.133s} 32. Ba8 {+9.41/2 0.135s}
+Bg1 {0.00/7 0.132s} 33. Bg2 {+9.93/3 0.132s} h6 {-319.92/8 0.048s}
+34. Qa7+ {+9.38/2 0.130s} Kd6 {-319.92/8 0.110s} 35. Qb8+ {+9.51/2 0.132s}
+Kd7 {0.00/9 0.133s} 36. Bc6+ {+9.36/2 0.128s} Kxc6 {0.00/9 0.132s}
+37. e4 {+9.89/3 0.129s} Bf2+ {0.00/9 0.131s} 38. Kxf2 {+9.74/4 0.129s}
+Kc5 {-319.92/8 0.110s} 39. Ke3 {+9.96/3 0.127s} Kc6 {-319.92/8 0.078s}
+40. d3 {+9.97/3 0.127s} Kd7 {-319.94/6 0.001s} 41. Rh3 {+9.97/3 0.127s}
+Ke7 {-319.92/8 0.073s} 42. Rh4 {+9.97/3 0.122s} Kd7 {-319.92/8 0.080s}
+43. Rh2 {+9.97/3 0.129s} Kc6 {-319.94/6 0.001s} 44. Rd2 {+9.98/3 0.123s}
+Kd7 {-319.94/6 0.003s} 45. Qa7+ {+9.97/3 0.124s} Kc6 {-319.94/6 0.004s}
+46. Rh2 {+9.97/3 0.127s} Kb5 {-319.96/4 0.000s} 47. Rh4 {+9.82/2 0.125s}
+Kc6 {-319.94/6 0.000s} 48. Rh3 {+9.98/3 0.123s} Kd6 {-319.92/8 0.045s}
+49. Qb7 {+9.97/3 0.124s} Kc5 {-319.94/6 0.001s} 50. d4+ {+9.98/3 0.123s}
+Kd6 {-319.92/8 0.036s} 51. Qa7 {+9.73/4 0.121s} Kc6 {-319.94/6 0.000s}
+52. d5+ {+9.97/3 0.116s} Kb5 {-319.94/6 0.003s} 53. Qd7+ {+9.98/3 0.122s}
+Kb4 {-319.94/6 0.007s} 54. d6 {+9.98/3 0.120s} Kc4 {-319.94/6 0.005s}
+55. Rh4 {+9.98/3 0.121s} Kb4 {-319.94/6 0.005s} 56. e5+ {+9.98/3 0.118s}
+Kc5 {-319.94/6 0.006s} 57. exf6 {+9.98/3 0.119s} Kb6 {-319.94/6 0.006s}
+58. f7 {+9.99/3 0.118s} Ka5 {-319.94/6 0.008s} 59. Rh1 {+10.00/3 0.120s}
+Ka6 {-319.94/6 0.007s} 60. Rg1 {+10.00/3 0.112s} Ka5 {-319.94/6 0.006s}
+61. Re1 {+10.00/3 0.119s} Kb4 {-319.94/6 0.006s} 62. Rc1 {+10.00/3 0.117s}
+Ka5 {-319.94/6 0.007s} 63. Kf4 {+10.00/3 0.118s} Ka6 {-319.94/6 0.006s}
+64. Ke4 {+10.00/3 0.116s} Ka5 {-319.94/6 0.006s} 65. Kf4 {+10.00/3 0.117s}
+Kb4 {-319.94/6 0.004s} 66. Ke4 {+10.00/3 0.115s} Ka5 {-319.94/6 0.000s}
+67. Kd3 {+10.00/3 0.108s} Ka6 {-319.94/6 0.007s} 68. Kd4 {+10.00/3 0.114s}
+Ka5 {-319.94/6 0.006s} 69. Kc5 {+10.00/3 0.114s} Ka6 {-319.96/4 0.000s}
+70. Kb4 {+319.97/3 0.072s} Kb6 {-319.98/2 0.000s}
+71. Rc6# {+319.99/1 0.002s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "3"]
+[White "zero"]
+[Black "champion"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:29"]
+[GameStartTime "2026-08-14T13:09:39 +0000"]
+[GameEndTime "2026-08-14T13:10:09 +0000"]
+[PlyCount "242"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.177s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.178s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.177s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.172s} 5. Ra1 {0.00/8 0.168s}
+f4 {-3.24/2 0.173s} 6. Rb1 {0.00/7 0.166s} Qb6 {+6.22/3 0.169s}
+7. Ra1 {0.00/7 0.164s} Qb4 {+5.93/3 0.164s} 8. Rb1 {0.00/8 0.162s}
+f3 {+6.50/3 0.165s} 9. Ra1 {0.00/7 0.160s} Qb6 {+5.79/2 0.162s}
+10. Rb1 {0.00/7 0.159s} fxg2 {+6.67/3 0.158s} 11. Ra1 {0.00/7 0.157s}
+gxh1=Q {+7.96/3 0.164s} 12. Rb1 {0.00/8 0.156s} Qxg1 {+0.38/2 0.155s}
+13. Ra1 {0.00/7 0.154s} h5 {+1.70/2 0.155s} 14. Rb1 {0.00/7 0.153s}
+d5 {+2.31/2 0.156s} 15. Ra1 {0.00/7 0.152s} Be6 {+3.18/2 0.156s}
+16. Rb1 {0.00/7 0.150s} Be7 {+4.36/2 0.155s} 17. Ra1 {0.00/7 0.148s}
+Bf8 {+7.82/2 0.155s} 18. Rb1 {0.00/8 0.148s} g5 {+8.15/3 0.151s}
+19. Ra1 {0.00/7 0.146s} g4 {+4.46/2 0.145s} 20. Rb1 {0.00/7 0.145s}
+Be7 {+5.81/2 0.145s} 21. Ra1 {0.00/7 0.144s} Bf8 {+8.60/2 0.148s}
+22. Rb1 {0.00/8 0.143s} c4 {+8.65/2 0.142s} 23. d4 {0.00/7 0.141s}
+Bb4+ {+6.21/2 0.146s} 24. Bd2 {0.00/7 0.140s} Bxd2+ {+5.28/2 0.146s}
+25. Qxd2 {0.00/7 0.140s} Rd8 {+6.32/2 0.138s} 26. Ra1 {0.00/7 0.138s}
+Qxf2+ {+6.23/2 0.143s} 27. Kxf2 {0.00/8 0.137s} Ne7 {+4.10/2 0.139s}
+28. Rb1 {0.00/7 0.136s} Nc8 {+5.13/2 0.134s} 29. Ra1 {0.00/7 0.136s}
+Ne7 {+7.22/2 0.137s} 30. Rb1 {0.00/7 0.134s} Bc8 {+7.60/2 0.138s}
+31. Ra1 {0.00/7 0.133s} Qe6 {+3.79/2 0.132s} 32. Rb1 {0.00/7 0.132s}
+Qb6 {+7.60/2 0.135s} 33. Ra1 {0.00/7 0.132s} Rh7 {+8.09/3 0.132s}
+34. Rb1 {0.00/7 0.131s} Be6 {+3.73/2 0.131s} 35. Ra1 {0.00/7 0.130s}
+Bc8 {+8.09/2 0.128s} 36. Rb1 {0.00/7 0.129s} Qf6+ {+8.54/3 0.130s}
+37. Qf4 {0.00/7 0.128s} Qxf4+ {+5.91/2 0.129s} 38. Ke1 {0.00/8 0.128s}
+Qxh2 {+5.70/2 0.128s} 39. Ra1 {0.00/8 0.127s} Qg3+ {+5.62/2 0.129s}
+40. Kd1 {0.00/8 0.126s} Qe1+ {+5.24/2 0.124s} 41. Kxe1 {0.00/9 0.125s}
+g3 {+7.60/3 0.131s} 42. Rb1 {0.00/8 0.125s} Bf5 {+4.76/2 0.126s}
+43. Ra1 {0.00/8 0.124s} Bc8 {+7.60/2 0.129s} 44. Rb1 {0.00/9 0.124s}
+Nc6 {+8.79/3 0.129s} 45. Ra1 {0.00/8 0.123s} h4 {+8.64/3 0.127s}
+46. Rb1 {0.00/8 0.122s} h3 {+4.30/2 0.120s} 47. Ra1 {0.00/8 0.122s}
+Bd7 {+4.47/2 0.123s} 48. Rb1 {0.00/8 0.121s} Bc8 {+9.07/3 0.124s}
+49. Ra1 {0.00/9 0.120s} h2 {+9.19/3 0.123s} 50. Rb1 {0.00/8 0.120s}
+Be6 {+5.39/2 0.124s} 51. Ra1 {0.00/8 0.120s} Bc8 {+9.19/2 0.118s}
+52. Rb1 {0.00/8 0.119s} Ncb8 {+9.54/3 0.123s} 53. Ra1 {0.00/8 0.119s}
+Nd7 {+4.27/2 0.124s} 54. Rb1 {0.00/8 0.118s} Ndb8 {+9.54/2 0.119s}
+55. Ra1 {0.00/9 0.117s} exd4 {+9.66/3 0.121s} 56. Rb1 {0.00/8 0.117s}
+Nc6 {+4.71/2 0.122s} 57. Ra1 {0.00/8 0.116s} Ncb8 {+9.66/2 0.120s}
+58. Rb1 {0.00/9 0.116s} Rh6 {+9.69/3 0.119s} 59. Ra1 {0.00/8 0.116s}
+Be6 {+3.90/2 0.120s} 60. Rb1 {0.00/8 0.116s} Bc8 {+9.69/3 0.114s}
+61. Ra1 {0.00/9 0.115s} Rc6 {+9.68/3 0.121s} 62. Rb1 {0.00/8 0.115s}
+Nd7 {+5.29/2 0.115s} 63. Ra1 {0.00/8 0.114s} Ndb8 {+9.68/3 0.113s}
+64. Rb1 {0.00/9 0.114s} Ke7 {+9.71/3 0.118s} 65. Ra1 {0.00/8 0.113s}
+Ke6 {+4.46/2 0.116s} 66. Rb1 {0.00/8 0.113s} Ke5 {+9.74/3 0.109s}
+67. Ra1 {0.00/8 0.112s} Kd6 {+9.74/2 0.114s} 68. Rb1 {0.00/8 0.112s}
+Ke5 {+9.74/3 0.111s} 69. Ra1 {0.00/8 0.112s} Kd6 {+9.74/3 0.111s}
+70. Rb1 {0.00/9 0.112s} Rd7 {+9.74/3 0.115s} 71. Ra1 {0.00/8 0.112s}
+Rg7 {+4.10/2 0.111s} 72. Rb1 {0.00/8 0.111s} Rd7 {+9.74/2 0.109s}
+73. Ra1 {0.00/9 0.111s} Ke5 {+9.74/3 0.114s} 74. Rb1 {0.00/8 0.111s}
+Rh7 {+5.66/2 0.109s} 75. Ra1 {0.00/8 0.110s} Rb6 {+6.03/2 0.111s}
+76. Rb1 {0.00/8 0.110s} Rc6 {+9.72/2 0.115s} 77. Ra1 {0.00/8 0.110s}
+Rh4 {+9.68/2 0.106s} 78. Rb1 {0.00/8 0.109s} Rhh6 {+5.72/2 0.105s}
+79. Ra1 {0.00/8 0.109s} Rh4 {+9.68/2 0.112s} 80. Rb1 {0.00/8 0.109s}
+Rhh6 {+9.69/3 0.113s} 81. Ra1 {0.00/8 0.108s} Rh7 {+9.72/3 0.108s}
+82. Rb1 {0.00/8 0.108s} Rb6 {+6.45/2 0.109s} 83. Ra1 {0.00/8 0.108s}
+Rc6 {+9.72/2 0.109s} 84. Rb1 {0.00/8 0.108s} Rd7 {+9.74/3 0.108s}
+85. Ra1 {0.00/8 0.108s} Rg7 {+5.04/2 0.112s} 86. Rb1 {0.00/8 0.108s}
+Rd7 {+9.74/3 0.110s} 87. Ra1 {0.00/9 0.108s} Kd6 {+9.73/3 0.108s}
+88. Rb1 {0.00/9 0.107s} Rd8 {+9.74/3 0.109s} 89. Ra1 {0.00/8 0.107s}
+Ke6 {+9.72/2 0.111s} 90. Rb1 {0.00/8 0.107s} Kd6 {+9.74/3 0.107s}
+91. Ra1 {0.00/9 0.107s} Kc5 {+9.70/3 0.107s} 92. Rb1 {0.00/8 0.106s}
+Rb6 {+5.78/2 0.107s} 93. Ra1 {0.00/8 0.106s} Rc6 {+9.70/2 0.104s}
+94. Rb1 {0.00/9 0.106s} Kb4 {+9.78/3 0.108s} 95. Ra1 {0.00/8 0.106s}
+Rb6 {+9.75/2 0.101s} 96. Rb1 {0.00/8 0.106s} Kc5 {+9.66/2 0.101s}
+97. Ra1 {0.00/8 0.105s} Kb4 {+9.75/3 0.101s} 98. Rb1 {0.00/9 0.105s}
+Rd7 {+9.78/3 0.106s} 99. Ra1 {0.00/8 0.105s} Rc6 {+9.80/3 0.103s}
+100. Rb1 {0.00/8 0.105s} Rb6 {+9.78/3 0.102s} 101. Ra1 {0.00/9 0.105s}
+Rc6 {+9.80/3 0.103s} 102. Rb1 {0.00/9 0.105s} Nc5 {+9.78/3 0.103s}
+103. Ra1 {0.00/8 0.104s} Rg7 {+1.84/2 0.102s} 104. Rb1 {0.00/7 0.104s}
+Rd7 {+9.78/3 0.106s} 105. Ra1 {0.00/8 0.104s} b6 {+9.79/3 0.101s}
+106. Rb1 {0.00/7 0.104s} Ka5 {+0.34/2 0.107s} 107. Ra1 {0.00/7 0.104s}
+Nba6 {+1.77/2 0.100s} 108. Rb1 {0.00/7 0.104s} Kb4 {+9.72/3 0.105s}
+109. Ra1 {0.00/8 0.104s} Ka5 {+9.53/2 0.101s} 110. Rb1 {0.00/8 0.104s}
+Kb4 {+9.72/3 0.103s} 111. Ra1 {0.00/8 0.104s} c3 {+9.71/3 0.108s}
+112. Rb1 {0.00/8 0.104s} cxb2 {+9.72/3 0.104s} 113. Ra1 {0.00/7 0.104s}
+bxa1=Q+ {+6.45/2 0.108s} 114. Nb1 {-319.94/6 0.001s} Rdc7 {+8.09/2 0.102s}
+115. Bg2 {0.00/7 0.106s} Qxa2 {+7.95/2 0.105s} 116. Nd2 {0.00/7 0.106s}
+Qxc2 {+8.87/2 0.105s} 117. e3 {-319.94/6 0.000s} Ka5 {+9.56/2 0.103s}
+118. Bf3 {0.00/7 0.108s} Bh3 {+9.61/2 0.103s} 119. Ke2 {-319.94/6 0.052s}
+d3+ {+9.80/2 0.107s} 120. Ke1 {-319.96/4 0.000s} h1=Q+ {+319.97/3 0.081s}
+121. Nf1 {-319.98/2 0.000s} Qxf1# {+319.99/1 0.003s, Black mates} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "5"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:17"]
+[GameStartTime "2026-08-14T13:09:54 +0000"]
+[GameEndTime "2026-08-14T13:10:11 +0000"]
+[PlyCount "137"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.177s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.175s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.179s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.174s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.171s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.165s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.167s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.168s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.160s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.162s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.158s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+5.95/3 0.155s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.153s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.158s}
+Qe7 {0.00/8 0.153s} 15. Rxe7+ {+3.63/2 0.154s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.157s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.156s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.148s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.145s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.148s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.144s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.144s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.144s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.141s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.139s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.139s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.141s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.140s} Bb2 {0.00/9 0.136s} 29. Nc2 {+9.85/3 0.137s}
+Ba1 {0.00/8 0.136s} 30. Rh1 {+9.87/3 0.133s} Bb2 {0.00/9 0.134s}
+31. Ke1 {+9.90/3 0.135s} Ba1 {0.00/9 0.133s} 32. a5 {+9.91/3 0.137s}
+Bb2 {0.00/9 0.132s} 33. Kf2 {+9.87/3 0.135s} Ba1 {0.00/8 0.132s}
+34. Ke3 {+9.92/3 0.133s} Bb2 {0.00/9 0.131s} 35. Qb7+ {+9.92/3 0.128s}
+Kd6 {0.00/8 0.130s} 36. Qc7+ {+9.93/3 0.134s} Kxc7 {0.00/10 0.129s}
+37. Kd3 {+9.79/3 0.127s} Ba1 {0.00/10 0.128s} 38. Nxa1 {+8.24/4 0.133s}
+Kc6 {0.00/10 0.128s} 39. Bg2+ {+9.03/4 0.131s} Kb5 {0.00/10 0.127s}
+40. Be4 {+9.73/3 0.130s} Ka4 {0.00/9 0.126s} 41. Ke3 {+9.82/3 0.123s}
+Ka3 {0.00/9 0.125s} 42. Nc2+ {+9.87/3 0.129s} Ka2 {0.00/9 0.125s}
+43. Bf3 {+9.85/3 0.127s} Kb1 {0.00/10 0.124s} 44. Bd5 {+9.79/3 0.122s}
+Kxc2 {0.00/9 0.124s} 45. Bf7 {+9.81/3 0.128s} Kb1 {0.00/9 0.123s}
+46. Bb3 {+9.81/3 0.124s} Ka1 {0.00/10 0.122s} 47. Kd3 {+9.29/4 0.120s}
+Kb2 {0.00/9 0.122s} 48. Bg8 {+9.17/4 0.126s} Ka3 {0.00/10 0.121s}
+49. Bxh7 {+9.60/4 0.120s} Ka2 {0.00/10 0.120s} 50. e3 {+9.77/4 0.120s}
+Kb2 {0.00/10 0.120s} 51. Bg8 {+9.79/4 0.117s} Ka3 {0.00/9 0.120s}
+52. Bf7 {+9.75/4 0.118s} Kb2 {0.00/9 0.119s} 53. Nf3 {+9.81/4 0.117s}
+Ka3 {-319.92/8 0.006s} 54. Rb1 {+9.91/3 0.116s} Ka4 {-319.94/6 0.000s}
+55. Ke4 {+9.93/3 0.121s} Kxa5 {-319.92/8 0.066s} 56. d3 {+9.95/3 0.121s}
+Ka4 {-319.92/8 0.062s} 57. Rb3 {+9.96/3 0.115s} Ka5 {-319.92/8 0.027s}
+58. d4 {+9.95/3 0.114s} Ka4 {-319.92/8 0.042s} 59. h4 {+9.96/3 0.117s}
+Ka5 {-319.92/8 0.031s} 60. g5 {+9.97/3 0.117s} Ka4 {0.00/9 0.131s}
+61. gxf6 {+9.99/3 0.117s} Ka5 {-319.92/8 0.029s} 62. Rc3 {+9.98/3 0.118s}
+Ka4 {0.00/9 0.132s} 63. Bd5 {+9.99/3 0.113s} Ka5 {-319.92/8 0.027s}
+64. f7 {+9.99/3 0.113s} Kb4 {-319.94/6 0.001s} 65. Kd3 {+9.99/3 0.116s}
+Ka4 {-319.94/6 0.006s} 66. Kd2 {+9.99/3 0.116s} Ka5 {-319.94/6 0.005s}
+67. Rb3 {+9.99/3 0.113s} Ka6 {-319.96/4 0.000s} 68. f8=R {+319.97/3 0.084s}
+Ka5 {-319.98/2 0.000s} 69. Ra8# {+319.99/1 0.002s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "5"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:10:09 +0000"]
+[GameEndTime "2026-08-14T13:10:13 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.184s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.177s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.177s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.176s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.172s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.165s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.166s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.168s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.166s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.160s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.160s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.162s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.161s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "6"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:10:13 +0000"]
+[GameEndTime "2026-08-14T13:10:18 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.179s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.177s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.173s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.170s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.171s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.166s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.166s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.167s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.165s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.165s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.156s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.163s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.154s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "4"]
+[White "zero"]
+[Black "champion"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:30"]
+[GameStartTime "2026-08-14T13:09:50 +0000"]
+[GameEndTime "2026-08-14T13:10:21 +0000"]
+[PlyCount "268"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.185s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.174s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.179s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.170s} 5. Ra1 {0.00/8 0.168s}
+f4 {-3.24/2 0.169s} 6. Rb1 {0.00/7 0.166s} Qb6 {+6.22/3 0.165s}
+7. Ra1 {0.00/7 0.164s} Qb4 {+5.93/3 0.170s} 8. Rb1 {0.00/8 0.162s}
+f3 {+6.50/3 0.171s} 9. Ra1 {0.00/7 0.160s} Qb6 {+5.79/2 0.162s}
+10. Rb1 {0.00/7 0.159s} fxg2 {+6.67/3 0.165s} 11. Ra1 {0.00/7 0.157s}
+gxh1=Q {+7.96/3 0.161s} 12. Rb1 {0.00/8 0.156s} Qxg1 {+0.38/2 0.158s}
+13. Ra1 {0.00/7 0.154s} h5 {+1.70/2 0.159s} 14. Rb1 {0.00/7 0.153s}
+d5 {+2.31/2 0.158s} 15. Ra1 {0.00/7 0.152s} Be6 {+3.18/2 0.157s}
+16. Rb1 {0.00/7 0.150s} Be7 {+4.36/2 0.148s} 17. Ra1 {0.00/7 0.148s}
+Bf8 {+7.82/2 0.154s} 18. Rb1 {0.00/8 0.148s} Rd8 {+8.01/2 0.150s}
+19. Ra1 {0.00/7 0.146s} Qxh2 {+3.63/2 0.149s} 20. Rb1 {0.00/7 0.145s}
+Qg1 {+5.52/2 0.147s} 21. Ra1 {0.00/7 0.144s} Qh2 {+7.70/2 0.148s}
+22. Rb1 {0.00/8 0.143s} Qh1 {+8.25/2 0.144s} 23. Ra1 {0.00/7 0.141s}
+Qxf1+ {+5.63/2 0.145s} 24. Kxf1 {0.00/8 0.140s} Bh3+ {+4.36/2 0.139s}
+25. Ke1 {0.00/8 0.140s} Be6 {+3.80/2 0.144s} 26. Rb1 {0.00/8 0.138s}
+Be7 {+4.89/2 0.140s} 27. Ra1 {0.00/7 0.137s} Bf8 {+6.81/2 0.139s}
+28. Rb1 {0.00/8 0.136s} g6 {+7.71/3 0.134s} 29. Ra1 {0.00/7 0.136s}
+Be7 {+7.49/2 0.136s} 30. Rb1 {0.00/7 0.134s} Bf8 {+7.71/2 0.132s}
+31. Ra1 {0.00/8 0.133s} Bg7 {+8.13/3 0.134s} 32. Rb1 {0.00/7 0.132s}
+Nb8 {+3.86/2 0.130s} 33. Ra1 {0.00/7 0.132s} Na6 {+8.13/2 0.133s}
+34. Rb1 {0.00/8 0.131s} Qxb2 {+8.65/3 0.131s} 35. Ra1 {0.00/7 0.130s}
+Nb8 {+8.73/2 0.129s} 36. Rb1 {0.00/7 0.129s} Na6 {+8.65/2 0.128s}
+37. Ra1 {0.00/8 0.128s} Qxa2 {+9.59/3 0.130s} 38. Rb1 {0.00/7 0.128s}
+Qxc2 {+5.73/2 0.128s} 39. Ra1 {0.00/7 0.127s} Qxd1+ {+5.49/2 0.127s}
+40. Kxd1 {0.00/8 0.126s} Bf8 {+5.37/2 0.130s} 41. Rb1 {0.00/8 0.125s}
+Kd7 {+6.52/2 0.127s} 42. Ra1 {0.00/8 0.125s} c4 {+6.03/2 0.127s}
+43. Rb1 {0.00/8 0.124s} e4 {+6.62/2 0.124s} 44. Ra1 {0.00/8 0.124s}
+Nf6 {+6.34/2 0.126s} 45. Rb1 {0.00/8 0.123s} Ng8 {+8.49/2 0.126s}
+46. Ra1 {0.00/8 0.122s} Nf6 {+9.05/2 0.127s} 47. Rb1 {0.00/8 0.122s}
+Bxa3 {+9.31/2 0.123s} 48. Ra1 {0.00/8 0.121s} Kc8 {+7.07/2 0.124s}
+49. Rb1 {0.00/8 0.120s} Kd7 {+9.31/2 0.124s} 50. Ra1 {0.00/8 0.120s}
+Bxc1 {+9.60/2 0.120s} 51. Rb1 {0.00/8 0.120s} Kc8 {+9.33/2 0.117s}
+52. Ra1 {0.00/8 0.119s} Kd7 {+9.60/2 0.122s} 53. Rb1 {0.00/8 0.119s}
+Bh3 {+9.79/3 0.119s} 54. Ra1 {0.00/8 0.118s} Kc8 {+9.69/2 0.118s}
+55. Rb1 {0.00/8 0.117s} Kd7 {+9.79/2 0.120s} 56. Ra1 {0.00/8 0.117s}
+Nc5 {+9.83/2 0.119s} 57. Rb1 {0.00/8 0.116s} Bxd2 {+7.78/2 0.114s}
+58. Ra1 {0.00/7 0.116s} Ke6 {+8.56/2 0.115s} 59. Rb1 {0.00/7 0.116s}
+Kd7 {+9.80/2 0.117s} 60. Ra1 {0.00/8 0.116s} Bg2 {+9.87/2 0.114s}
+61. Rb1 {0.00/7 0.115s} Ke6 {+9.90/2 0.116s} 62. Ra1 {0.00/7 0.115s}
+Kd7 {+9.87/2 0.113s} 63. Rb1 {0.00/8 0.114s} Bf4 {+9.93/2 0.111s}
+64. Ra1 {0.00/8 0.114s} Ke6 {+8.08/2 0.111s} 65. Rb1 {0.00/7 0.113s}
+Kd7 {+9.93/2 0.117s} 66. Ra1 {0.00/8 0.113s} Ke6 {+9.90/2 0.113s}
+67. Rb1 {0.00/8 0.112s} Bd2 {+9.90/2 0.117s} 68. Ra1 {0.00/8 0.112s}
+h4 {+9.91/2 0.112s} 69. Rb1 {0.00/7 0.112s} Bh1 {+8.31/2 0.114s}
+70. Ra1 {0.00/7 0.112s} Bg2 {+9.91/2 0.116s} 71. Rb1 {0.00/8 0.112s}
+Nfd7 {+9.93/2 0.108s} 72. Ra1 {0.00/7 0.111s} Bh3 {+8.09/2 0.108s}
+73. Rb1 {0.00/7 0.111s} Bg2 {+9.93/2 0.113s} 74. Ra1 {0.00/8 0.111s}
+Na4 {+9.95/2 0.114s} 75. Rb1 {0.00/7 0.110s} Nc3+ {+8.42/2 0.114s}
+76. Kc2 {0.00/7 0.110s} Nxe2 {+8.71/2 0.113s} 77. Ra1 {0.00/7 0.110s}
+Bg5 {+9.00/2 0.106s} 78. Rb1 {0.00/7 0.109s} Bd2 {+9.96/2 0.107s}
+79. Ra1 {0.00/8 0.109s} Bf4 {+9.97/2 0.113s} 80. Rb1 {0.00/7 0.109s}
+Rdg8 {+9.43/2 0.111s} 81. Ra1 {0.00/7 0.108s} Rd8 {+9.97/2 0.112s}
+82. Rb1 {0.00/8 0.108s} c3 {+9.97/2 0.105s} 83. Ra1 {0.00/7 0.108s}
+Nd4+ {+9.20/2 0.110s} 84. Kb1 {0.00/7 0.108s} c2+ {+9.02/2 0.110s}
+85. Ka2 {0.00/7 0.108s} Nf5 {+9.03/2 0.108s} 86. Rb1 {0.00/7 0.108s}
+cxb1=Q+ {+9.55/2 0.110s} 87. Kxb1 {0.00/7 0.108s} Rdg8 {+9.72/2 0.109s}
+88. Ka1 {0.00/7 0.107s} a5 {+9.82/2 0.108s} 89. Kb1 {0.00/7 0.107s}
+b5 {+9.85/2 0.109s} 90. Ka1 {0.00/7 0.107s} Kd6 {+9.87/2 0.108s}
+91. Kb1 {0.00/7 0.107s} Bf3 {+9.90/2 0.110s} 92. Ka1 {0.00/7 0.106s}
+Bg2 {+9.94/2 0.103s} 93. Kb1 {0.00/8 0.106s} Bf3 {+9.96/2 0.112s}
+94. Ka1 {0.00/8 0.106s} b4 {+9.98/3 0.106s} 95. Kb1 {0.00/7 0.106s}
+Rh5 {+9.91/2 0.109s} 96. Ka1 {0.00/7 0.106s} Rhh8 {+9.98/2 0.108s}
+97. Kb1 {0.00/8 0.105s} Be5 {+9.99/3 0.107s} 98. Kc1 {0.00/7 0.105s}
+Bh2 {+9.91/2 0.102s} 99. Kb1 {0.00/8 0.105s} Be5 {+9.99/2 0.106s}
+100. Ka2 {0.00/8 0.105s} Bh2 {+9.91/2 0.107s} 101. Ka1 {0.00/8 0.105s}
+Ng3 {+9.99/3 0.108s} 102. Kb1 {0.00/8 0.105s} Rh5 {+9.92/2 0.107s}
+103. Ka1 {0.00/8 0.104s} Rhh8 {+9.99/2 0.104s} 104. Kb1 {0.00/9 0.104s}
+Nh5 {+9.99/3 0.104s} 105. Ka1 {0.00/8 0.104s} Nc5 {+9.93/2 0.102s}
+106. Kb1 {0.00/8 0.104s} Nd7 {+9.99/2 0.104s} 107. Ka1 {0.00/9 0.104s}
+Bg1 {+9.99/3 0.102s} 108. Kb1 {0.00/8 0.104s} Bxf2 {+10.00/3 0.105s}
+109. Ka1 {0.00/8 0.104s} Nc5 {+9.99/2 0.102s} 110. Kb1 {0.00/7 0.104s}
+Nd7 {+10.00/2 0.106s} 111. Ka1 {0.00/8 0.104s} Ng3 {+10.00/3 0.100s}
+112. Kb1 {0.00/7 0.104s} Nc5 {+9.98/2 0.105s} 113. Ka1 {0.00/7 0.104s}
+Nh5 {+9.99/2 0.107s} 114. Kb1 {0.00/8 0.104s} Nb3 {+10.00/3 0.104s}
+115. Ka2 {0.00/7 0.104s} h3 {+9.99/2 0.104s} 116. Kb1 {0.00/7 0.104s}
+h2 {+9.99/2 0.102s} 117. Ka2 {0.00/7 0.104s} h1=Q {+9.99/2 0.101s}
+118. Kxb3 {-319.94/6 0.009s} Qg2 {+9.99/2 0.107s} 119. Ka4 {-319.94/6 0.014s}
+Ke6 {+9.99/2 0.106s} 120. Kb3 {-319.94/6 0.012s} Kd6 {+9.99/2 0.099s}
+121. Ka4 {-319.94/6 0.000s} Ke6 {+9.99/3 0.106s} 122. Kxa5 {-319.94/6 0.010s}
+Rb8 {+9.98/2 0.105s} 123. Ka4 {-319.96/4 0.000s} Rhg8 {+9.99/2 0.101s}
+124. Kb3 {-319.96/4 0.000s} Kd6 {+9.99/2 0.101s} 125. Ka2 {-319.96/4 0.000s}
+Qg1 {+9.99/2 0.100s} 126. Kb2 {-319.96/4 0.000s} Qf1 {+9.99/2 0.101s}
+127. Ka2 {-319.94/6 0.016s} Qg2 {+9.99/2 0.101s} 128. Ka1 {-319.96/4 0.000s}
+Bh4 {+9.99/2 0.099s} 129. Kb1 {-319.96/4 0.000s} Qd2 {+9.99/2 0.103s}
+130. Ka1 {-319.96/4 0.000s} Bf2 {+10.00/2 0.099s} 131. Kb1 {-319.96/4 0.000s}
+Ng3 {+9.99/2 0.101s} 132. Ka1 {-319.96/4 0.000s} Nh5 {+10.00/2 0.106s}
+133. Kb1 {-319.96/4 0.000s} Rgc8 {+319.97/3 0.092s} 134. Ka1 {-319.98/2 0.000s}
+Rc1# {+319.99/1 0.003s, Black mates} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "6"]
+[White "champion"]
+[Black "zero"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:11"]
+[GameStartTime "2026-08-14T13:10:11 +0000"]
+[GameEndTime "2026-08-14T13:10:22 +0000"]
+[PlyCount "88"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.180s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.173s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.174s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.176s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.173s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.167s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.168s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.165s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.166s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.167s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.162s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+0.61/2 0.159s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.159s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.158s}
+Qe7 {0.00/7 0.153s} 15. Rxe7+ {+3.63/2 0.158s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.149s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.149s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.146s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.151s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.147s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.147s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.140s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.146s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.146s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.140s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.140s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.138s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.135s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.141s}
+Kd8 {0.00/8 0.136s} 30. Nc2 {+9.81/3 0.132s} Ba1 {0.00/8 0.134s}
+31. Nxa1 {+8.98/2 0.133s} h5 {0.00/7 0.133s} 32. gxh5 {+9.86/3 0.133s}
+Ke8 {-319.94/6 0.000s} 33. Bg2 {+9.94/2 0.129s} Kf8 {-319.94/6 0.008s}
+34. Rh1 {+9.90/3 0.134s} Ke8 {-319.94/6 0.007s} 35. Nc2 {+9.91/3 0.129s}
+Kf8 {-319.94/6 0.007s} 36. Na1 {+9.94/3 0.128s} Ke8 {-319.94/6 0.000s}
+37. Qc7 {+9.96/4 0.130s} Kf8 {-319.94/6 0.009s} 38. Nc2 {+9.92/3 0.130s}
+Kg8 {-319.94/6 0.007s} 39. Na1 {+9.93/2 0.130s} Kf8 {-319.94/6 0.000s}
+40. a5 {+9.97/3 0.124s} Kg8 {-319.94/6 0.006s} 41. Bd5+ {+9.97/2 0.125s}
+Kh8 {-319.94/6 0.004s} 42. Bg2 {+9.97/3 0.123s} Kg8 {-319.94/6 0.000s}
+43. Be4 {+9.89/3 0.125s} Kf8 {-319.94/6 0.006s} 44. Bg2 {+9.97/3 0.125s}
+Kg8 {0.00/128 0.004s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "7"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:10:21 +0000"]
+[GameEndTime "2026-08-14T13:10:25 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.180s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.175s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.173s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.176s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.169s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.173s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.165s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.167s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.160s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.159s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.161s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.159s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.157s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "7"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:09"]
+[GameStartTime "2026-08-14T13:10:18 +0000"]
+[GameEndTime "2026-08-14T13:10:27 +0000"]
+[PlyCount "69"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.179s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.178s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.173s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.172s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.175s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.167s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.166s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.167s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.165s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.160s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.162s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+0.61/2 0.156s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.156s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.157s}
+Qe7 {0.00/7 0.153s} 15. Rxe7+ {+3.63/2 0.153s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.150s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.156s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.148s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.149s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.150s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.147s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.146s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.146s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.143s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.145s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.141s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.137s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.139s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.140s}
+Kd8 {0.00/8 0.136s} 30. Nc2 {+9.81/3 0.138s} Ba1 {0.00/8 0.134s}
+31. Nxa1 {+8.98/2 0.131s} h5 {0.00/7 0.133s} 32. gxh5 {+9.86/3 0.134s}
+Ke8 {-319.94/6 0.000s} 33. Nf3 {+9.90/3 0.131s} Kd8 {-319.96/4 0.000s}
+34. Rg2 {+319.97/3 0.103s} Ke8 {-319.98/2 0.000s}
+35. Rg8# {+319.99/1 0.002s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "8"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:10:25 +0000"]
+[GameEndTime "2026-08-14T13:10:29 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.183s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.174s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.173s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.173s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.172s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.169s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.169s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.165s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.167s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.164s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.160s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.158s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.161s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "8"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:09"]
+[GameStartTime "2026-08-14T13:10:22 +0000"]
+[GameEndTime "2026-08-14T13:10:32 +0000"]
+[PlyCount "69"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.184s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.179s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.173s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.172s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.175s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.167s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.173s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.164s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.164s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.159s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.157s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+0.61/2 0.156s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.155s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.160s}
+Qe7 {0.00/7 0.153s} 15. Rxe7+ {+3.63/2 0.159s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.149s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.149s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.149s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.151s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.147s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.143s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.148s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.141s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.145s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.141s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.138s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.136s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.134s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.134s}
+Kd8 {0.00/8 0.136s} 30. Nc2 {+9.81/3 0.139s} Ba1 {0.00/8 0.134s}
+31. Nxa1 {+8.98/2 0.132s} h5 {0.00/7 0.133s} 32. gxh5 {+9.86/3 0.134s}
+Ke8 {-319.94/6 0.000s} 33. Nf3 {+9.90/3 0.133s} Kd8 {-319.96/4 0.000s}
+34. Rg2 {+319.97/3 0.110s} Ke8 {-319.98/2 0.000s}
+35. Rg8# {+319.99/1 0.003s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "9"]
+[White "zero"]
+[Black "champion"]
+[Result "1/2-1/2"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:04"]
+[GameStartTime "2026-08-14T13:10:29 +0000"]
+[GameEndTime "2026-08-14T13:10:34 +0000"]
+[PlyCount "26"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.178s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.176s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.177s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.169s} 5. Ra1 {0.00/8 0.168s}
+d5 {+5.66/3 0.174s} 6. Rb1 {0.00/7 0.166s} Be6 {-2.73/2 0.165s}
+7. Ra1 {0.00/7 0.164s} f4 {-2.00/2 0.165s} 8. Rb1 {0.00/7 0.162s}
+h5 {-1.14/2 0.162s} 9. Ra1 {0.00/7 0.160s} c4 {-0.33/2 0.160s}
+10. Rb1 {0.00/7 0.159s} Nc5 {+0.44/2 0.159s} 11. Ra1 {0.00/7 0.157s}
+Na6 {+2.25/2 0.162s} 12. Rb1 {0.00/8 0.156s} Bc8 {+4.76/3 0.163s}
+13. Ra1 {0.00/7 0.154s} Be6 {0.00/2 0.155s, Draw by 3-fold repetition} 1/2-1/2
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "10"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:11"]
+[GameStartTime "2026-08-14T13:10:32 +0000"]
+[GameEndTime "2026-08-14T13:10:43 +0000"]
+[PlyCount "89"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.184s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.179s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.177s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.175s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.169s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.171s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.164s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.168s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.162s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.164s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.164s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+5.95/3 0.158s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.156s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.152s}
+Qe7 {0.00/7 0.153s} 15. Rxe7+ {+3.63/2 0.158s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.155s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.150s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.150s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.148s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.149s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.142s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.146s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.140s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.143s} Bb2 {0.00/8 0.140s}
+25. Qf3 {+9.65/3 0.141s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.137s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.137s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.139s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.138s}
+Kd8 {0.00/8 0.136s} 30. Nc2 {+9.81/3 0.138s} Ba1 {0.00/8 0.134s}
+31. Nxa1 {+8.98/2 0.135s} h5 {0.00/7 0.133s} 32. gxh5 {+9.89/2 0.133s}
+Ke8 {-319.94/6 0.000s} 33. Bg2 {+9.94/2 0.137s} Kf8 {-319.94/6 0.008s}
+34. Rh1 {+9.90/3 0.133s} Ke8 {-319.94/6 0.007s} 35. Nc2 {+9.91/3 0.132s}
+Kf8 {-319.94/6 0.007s} 36. Na1 {+9.94/3 0.130s} Ke8 {-319.94/6 0.000s}
+37. Qc7 {+9.96/3 0.132s} Kf8 {-319.94/6 0.007s} 38. Nc2 {+9.92/3 0.128s}
+Kg8 {-319.94/6 0.007s} 39. Na1 {+9.93/2 0.124s} Kf8 {-319.94/6 0.000s}
+40. Nc2 {+9.93/3 0.129s} Kg8 {-319.94/6 0.000s} 41. Ke1 {+9.90/3 0.126s}
+Kf8 {-319.94/6 0.008s} 42. Qd7 {+9.92/2 0.122s} Kg8 {-319.94/6 0.008s}
+43. Kd1 {+9.97/3 0.123s} Kf8 {-319.96/4 0.000s} 44. h6 {+319.97/3 0.079s}
+Kg8 {-319.98/2 0.000s} 45. Qg7# {+319.99/1 0.002s, White mates} 1-0
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "10"]
+[White "zero"]
+[Black "champion"]
+[Result "0-1"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:14"]
+[GameStartTime "2026-08-14T13:10:34 +0000"]
+[GameEndTime "2026-08-14T13:10:48 +0000"]
+[PlyCount "108"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Sodium Attack"]
+
+1. Na3 {0.00/8 0.176s} f5 {+2.70/3 0.185s} 2. Rb1 {0.00/8 0.173s}
+c5 {+5.00/3 0.180s} 3. Ra1 {0.00/8 0.172s} e5 {+4.61/3 0.180s}
+4. Rb1 {0.00/8 0.169s} Na6 {+5.92/3 0.174s} 5. Ra1 {0.00/8 0.168s}
+f4 {-3.24/2 0.173s} 6. Rb1 {0.00/7 0.166s} Nb8 {+5.41/2 0.168s}
+7. Ra1 {0.00/8 0.164s} g5 {+4.80/3 0.169s} 8. Rb1 {0.00/7 0.162s}
+g4 {+6.13/3 0.168s} 9. Ra1 {0.00/8 0.160s} h5 {-2.94/2 0.160s}
+10. Rb1 {0.00/7 0.159s} h4 {+5.55/3 0.161s} 11. Ra1 {0.00/8 0.157s}
+h3 {+5.47/3 0.158s} 12. Rb1 {0.00/7 0.156s} hxg2 {+6.92/3 0.156s}
+13. Ra1 {0.00/7 0.154s} gxh1=Q {+1.13/2 0.156s} 14. Rb1 {0.00/8 0.153s}
+Qxg1 {+4.24/2 0.157s} 15. d3 {0.00/8 0.152s} Qxh2 {+5.44/2 0.156s}
+16. Ra1 {0.00/8 0.150s} Qg1 {+5.83/2 0.155s} 17. Rb1 {0.00/8 0.148s}
+Rh2 {+8.44/2 0.147s} 18. Ra1 {0.00/8 0.148s} Rh5 {+6.22/2 0.148s}
+19. Rb1 {0.00/8 0.146s} Rh2 {+8.44/2 0.148s} 20. Ra1 {0.00/8 0.145s}
+Kf7 {+8.92/3 0.153s} 21. Rb1 {0.00/8 0.144s} Rh8 {+7.17/2 0.148s}
+22. Ra1 {0.00/8 0.143s} Rh2 {+8.92/2 0.141s} 23. Rb1 {0.00/8 0.141s}
+Be7 {+8.99/2 0.142s} 24. Ra1 {0.00/8 0.140s} Rh8 {+8.99/2 0.140s}
+25. Rb1 {0.00/8 0.140s} Rh2 {+8.99/2 0.137s} 26. Ra1 {0.00/8 0.138s}
+Rh7 {+9.12/2 0.141s} 27. Rb1 {0.00/8 0.137s} Nc6 {+7.38/2 0.140s}
+28. Ra1 {0.00/7 0.136s} Nb8 {+9.12/2 0.140s} 29. Rb1 {0.00/8 0.136s}
+Qxf1+ {+9.34/2 0.138s} 30. Kxf1 {0.00/8 0.134s} f3 {+5.74/2 0.139s}
+31. Bh6 {0.00/8 0.133s} fxe2+ {+7.53/2 0.136s} 32. Qxe2 {0.00/8 0.132s}
+Nxh6 {+5.86/2 0.135s} 33. Ra1 {0.00/7 0.132s} Nc6 {+5.60/2 0.133s}
+34. Rb1 {0.00/7 0.131s} Nb8 {+8.51/2 0.128s} 35. Ra1 {0.00/8 0.130s}
+c4 {+9.10/3 0.133s} 36. Rb1 {0.00/7 0.129s} cxd3 {+6.76/2 0.129s}
+37. Ra1 {0.00/7 0.128s} dxe2+ {+8.53/2 0.132s} 38. Ke1 {0.00/8 0.128s}
+d6 {+9.76/3 0.128s} 39. Rb1 {0.00/8 0.127s} Be6 {+8.83/2 0.131s}
+40. Ra1 {0.00/8 0.126s} Bc8 {+9.76/2 0.126s} 41. Rb1 {0.00/8 0.125s}
+g3 {+9.79/3 0.124s} 42. Ra1 {0.00/8 0.125s} Be6 {+8.52/2 0.126s}
+43. Rb1 {0.00/7 0.124s} Bc8 {+9.79/2 0.123s} 44. Ra1 {0.00/8 0.124s}
+Ng8 {+9.83/3 0.127s} 45. Rb1 {0.00/7 0.123s} Ke6 {+8.63/2 0.128s}
+46. Ra1 {0.00/7 0.122s} Nf6 {+9.86/3 0.121s} 47. Rb1 {0.00/7 0.122s}
+Kf7 {+9.86/2 0.122s} 48. Ra1 {0.00/7 0.121s} Ke6 {+9.86/2 0.125s}
+49. Rb1 {0.00/8 0.120s} Rh1+ {+9.92/3 0.117s} 50. Kd2 {0.00/7 0.120s}
+Rxb1 {+8.62/2 0.121s} 51. b4 {0.00/7 0.120s} e1=Q+ {+9.63/2 0.123s}
+52. Kd3 {-319.94/6 0.002s} e4+ {+9.74/2 0.124s} 53. Kd4 {-319.96/4 0.000s}
+Qd2+ {+9.82/2 0.121s} 54. Kc4 {-319.98/2 0.000s}
+Rxb4# {+319.99/1 0.003s, Black mates} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2026.08.14"]
+[Round "9"]
+[White "champion"]
+[Black "zero"]
+[Result "1-0"]
+[EngineWhiteName "selfplay-lab"]
+[EngineWhiteAuthor "selfplay-lab research"]
+[EngineBlackName "selfplay-lab"]
+[EngineBlackAuthor "selfplay-lab research"]
+[GameDuration "00:00:29"]
+[GameStartTime "2026-08-14T13:10:27 +0000"]
+[GameEndTime "2026-08-14T13:10:57 +0000"]
+[PlyCount "257"]
+[Termination "normal"]
+[TimeControl "5+0.1"]
+[ECO "A00"]
+[Opening "Van Geet Opening"]
+
+1. Nc3 {+2.59/3 0.177s} a5 {0.00/8 0.176s} 2. f4 {+3.90/3 0.176s}
+a4 {0.00/8 0.173s} 3. h3 {+3.93/3 0.177s} a3 {0.00/8 0.172s}
+4. b4 {+4.76/3 0.176s} b5 {0.00/8 0.169s} 5. Bxa3 {+5.15/3 0.168s}
+c5 {0.00/7 0.168s} 6. Rb1 {+6.11/3 0.171s} cxb4 {0.00/7 0.166s}
+7. Rxb4 {+6.48/3 0.168s} d5 {0.00/7 0.164s} 8. Rxb5 {+6.54/3 0.168s}
+d4 {0.00/7 0.162s} 9. Nb1 {-2.35/2 0.161s} d3 {0.00/7 0.160s}
+10. f5 {-0.65/2 0.158s} dxc2 {0.00/7 0.159s} 11. Qxc2 {-1.43/2 0.159s}
+e5 {0.00/7 0.157s} 12. Rxe5+ {+5.95/3 0.160s} Be6 {0.00/7 0.156s}
+13. Qb2 {+1.00/2 0.160s} f6 {0.00/7 0.154s} 14. Rxe6+ {+7.57/3 0.155s}
+Qe7 {0.00/7 0.153s} 15. Rxe7+ {+3.63/2 0.158s} Bxe7 {0.00/8 0.152s}
+16. Kd1 {+3.52/2 0.149s} Bxa3 {0.00/8 0.150s} 17. Qb5+ {+7.89/3 0.155s}
+Nc6 {0.00/8 0.148s} 18. Qxc6+ {+8.49/3 0.149s} Ke7 {0.00/8 0.148s}
+19. Qc7+ {+8.54/3 0.145s} Ke8 {0.00/8 0.146s} 20. Qxg7 {+8.56/3 0.148s}
+Bc1 {0.00/8 0.145s} 21. Rh2 {+9.12/3 0.146s} Bb2 {0.00/8 0.144s}
+22. Qxh8 {+5.65/2 0.144s} Ba1 {0.00/8 0.143s} 23. Qxg8+ {+8.72/4 0.143s}
+Kd7 {0.00/8 0.141s} 24. Qxa8 {+9.57/3 0.139s} Bb2 {0.00/9 0.140s}
+25. Qf3 {+9.65/3 0.140s} Ba1 {0.00/9 0.140s} 26. a4 {+9.73/3 0.138s}
+Bb2 {0.00/9 0.138s} 27. g4 {+9.80/3 0.141s} Ba1 {0.00/9 0.137s}
+28. Na3 {+9.83/3 0.137s} Bb2 {0.00/9 0.136s} 29. Qb7+ {+8.05/2 0.141s}
+Kd8 {0.00/8 0.136s} 30. Qa8+ {+7.91/2 0.136s} Kc7 {0.00/8 0.134s}
+31. Nb5+ {+7.96/2 0.134s} Kd7 {0.00/8 0.133s} 32. Qb7+ {+7.61/2 0.131s}
+Ke8 {-319.92/8 0.081s} 33. Nd6+ {+8.95/2 0.132s} Kd8 {-319.94/6 0.000s}
+34. Qa8+ {+8.33/2 0.134s} Kc7 {0.00/8 0.136s} 35. Qf3 {+9.83/3 0.136s}
+Ba1 {0.00/8 0.135s} 36. Qb7+ {+8.15/2 0.127s} Kxd6 {0.00/8 0.134s}
+37. Rh1 {+8.34/2 0.134s} Bb2 {0.00/9 0.133s} 38. Qf3 {+9.80/3 0.131s}
+Ba1 {0.00/9 0.132s} 39. Ke1 {+9.83/3 0.128s} Bb2 {0.00/9 0.131s}
+40. Rh2 {+9.83/3 0.127s} Ba1 {0.00/9 0.130s} 41. Rg2 {+9.82/3 0.129s}
+Bb2 {0.00/9 0.129s} 42. Kf2 {+9.81/3 0.122s} Ba1 {0.00/9 0.128s}
+43. Ke3 {+9.85/3 0.122s} Bb2 {0.00/9 0.128s} 44. g5 {+9.88/3 0.122s}
+Ba1 {0.00/9 0.128s} 45. Qf4+ {+9.89/3 0.120s} Be5 {0.00/9 0.127s}
+46. Qb4+ {+9.89/3 0.122s} Kd5 {0.00/8 0.126s} 47. Qb7+ {+9.89/3 0.120s}
+Kd6 {0.00/8 0.125s} 48. Qb6+ {+9.89/3 0.127s} Ke7 {0.00/8 0.124s}
+49. Qc5+ {+9.86/3 0.123s} Kd7 {0.00/8 0.124s} 50. Qd5+ {+9.90/3 0.124s}
+Kc7 {0.00/8 0.123s} 51. Qf3 {+9.89/3 0.121s} Ba1 {0.00/9 0.123s}
+52. Qf4+ {+9.91/3 0.119s} Be5 {0.00/9 0.122s} 53. Qc4+ {+9.87/3 0.121s}
+Kb6 {0.00/8 0.121s} 54. Qb5+ {+9.92/3 0.119s} Ka7 {0.00/8 0.121s}
+55. Qd7+ {+9.91/3 0.121s} Ka6 {0.00/8 0.120s} 56. Qc6+ {+9.94/3 0.116s}
+Ka7 {-319.92/8 0.038s} 57. Qf3 {+9.90/3 0.120s} Ba1 {0.00/9 0.121s}
+58. a5 {+9.92/3 0.113s} Bb2 {0.00/7 0.121s} 59. Qa8+ {+9.94/3 0.114s}
+Kxa8 {0.00/10 0.120s} 60. Rg4 {+9.80/3 0.117s} Ba1 {0.00/10 0.120s}
+61. g6 {+9.87/3 0.112s} Bb2 {0.00/9 0.119s} 62. Bg2+ {+9.90/3 0.115s}
+Ka7 {0.00/9 0.119s} 63. Bf1 {+9.88/3 0.113s} Ba1 {0.00/10 0.118s}
+64. d4 {+9.91/3 0.112s} Bb2 {0.00/10 0.118s} 65. Rh4 {+9.86/3 0.113s}
+Ba1 {0.00/10 0.117s} 66. Nf3 {+9.94/3 0.111s} Bb2 {0.00/10 0.116s}
+67. Rxh7+ {+9.92/3 0.111s} Ka6 {0.00/9 0.116s} 68. Ra7+ {+9.95/3 0.112s}
+Kb5 {0.00/9 0.116s} 69. Rb7+ {+9.95/3 0.109s} Ka4 {0.00/9 0.116s}
+70. Rxb2 {+9.98/3 0.112s} Ka3 {-319.92/8 0.018s} 71. Ke4 {+9.96/3 0.110s}
+Kxb2 {0.00/11 0.117s} 72. d5 {+8.77/4 0.108s} Ka1 {0.00/11 0.116s}
+73. d6 {+9.32/4 0.114s} Kb1 {0.00/11 0.116s} 74. Kd3 {+9.90/3 0.112s}
+Ka1 {-319.90/10 0.087s} 75. Bg2 {+9.74/4 0.113s} Ka2 {0.00/9 0.116s}
+76. h4 {+9.83/4 0.109s} Ka1 {0.00/9 0.116s} 77. Bh3 {+9.89/3 0.112s}
+Kb1 {-319.90/10 0.089s} 78. e4 {+9.89/3 0.108s} Ka1 {0.00/9 0.116s}
+79. Bg4 {+9.91/4 0.113s} Kb1 {-319.90/10 0.075s} 80. Ke3 {+9.87/3 0.109s}
+Kc1 {0.00/10 0.116s} 81. Nd4 {+9.91/4 0.107s} Kb1 {0.00/9 0.116s}
+82. Kd3 {+9.91/4 0.111s} Ka2 {-319.90/10 0.071s} 83. Be2 {+9.91/4 0.112s}
+Ka3 {0.00/9 0.116s} 84. Kc4 {+9.91/4 0.110s} Ka2 {-319.82/9 0.116s}
+85. Bg4 {+9.91/4 0.105s} Kb2 {-319.90/10 0.087s} 86. Be2 {+9.91/4 0.111s}
+Kb1 {-319.90/10 0.093s} 87. Kb3 {+9.92/3 0.105s} Ka1 {-319.92/8 0.004s}
+88. Bg4 {+9.91/4 0.108s} Kb1 {-319.92/8 0.000s} 89. Kc4 {+9.91/4 0.109s}
+Ka2 {-319.90/10 0.013s} 90. Nb3 {+9.92/4 0.106s} Kb2 {-319.90/10 0.095s}
+91. Nd4 {+9.91/4 0.106s} Ka3 {-319.90/10 0.021s} 92. Be2 {+9.91/4 0.105s}
+Kb2 {-319.90/10 0.031s} 93. Bg4 {+9.91/4 0.105s} Ka1 {-319.90/10 0.002s}
+94. e5 {+9.92/4 0.104s} Ka2 {0.00/10 0.130s} 95. exf6 {+9.98/4 0.103s}
+Ka1 {0.00/9 0.129s} 96. f7 {+9.99/4 0.105s} Kb1 {-319.92/8 0.008s}
+97. Be2 {+9.97/3 0.103s} Kc1 {-319.90/9 0.131s} 98. Nf3 {+9.99/3 0.105s}
+Kb1 {-319.92/8 0.039s} 99. g7 {+9.99/3 0.109s} Ka2 {-319.92/8 0.069s}
+100. f6 {+9.99/3 0.110s} Kb2 {-319.92/8 0.064s} 101. Kb4 {+9.99/3 0.106s}
+Kc2 {-319.92/8 0.044s} 102. g8=R {+9.99/3 0.103s} Kb2 {-319.94/6 0.002s}
+103. Kc4 {+9.93/2 0.105s} Ka3 {-319.92/8 0.063s} 104. Rg1 {+9.95/2 0.105s}
+Kb2 {-319.94/6 0.000s} 105. Ra1 {+9.99/3 0.105s} Kxa1 {-319.92/8 0.023s}
+106. Kb4 {+9.98/3 0.105s} Kb1 {-319.92/8 0.029s} 107. Bc4 {+9.99/3 0.103s}
+Kb2 {-319.90/9 0.145s} 108. Bd5 {+9.99/3 0.105s} Kc2 {-319.88/9 0.144s}
+109. Be6 {+9.99/3 0.102s} Kd3 {0.00/9 0.143s} 110. Bf5+ {+9.98/3 0.104s}
+Ke2 {0.00/9 0.141s} 111. Nd2 {+9.91/2 0.103s} Kd1 {0.00/9 0.140s}
+112. Nf3 {+9.98/3 0.101s} Ke2 {0.00/9 0.140s} 113. Nd2 {+9.97/3 0.103s}
+Kd1 {0.00/9 0.137s} 114. Nb1 {+9.93/4 0.103s} Ke1 {0.00/9 0.137s}
+115. Be6 {+9.99/3 0.103s} Kd1 {0.00/9 0.136s} 116. Bb3+ {+9.99/3 0.102s}
+Ke1 {0.00/9 0.136s} 117. Ka4 {+9.99/3 0.100s} Kf1 {0.00/10 0.134s}
+118. f8=Q {+9.98/3 0.106s} Ke1 {0.00/9 0.133s} 119. f7 {+9.99/3 0.106s}
+Kf1 {-319.92/8 0.057s} 120. Kb4 {+9.99/3 0.100s} Ke2 {-319.92/8 0.103s}
+121. Qh8 {+9.99/3 0.101s} Kf3 {-319.92/8 0.114s} 122. Nd2+ {+9.95/2 0.106s}
+Kf2 {0.00/7 0.133s} 123. Bd5 {+9.98/2 0.105s} Ke1 {-319.94/6 0.016s}
+124. Nc4 {+9.97/2 0.105s} Kd1 {-319.94/6 0.018s} 125. Qb2 {+9.98/2 0.103s}
+Ke1 {-319.96/4 0.000s} 126. Nd2 {+9.99/2 0.103s} Kd1 {-319.94/6 0.006s}
+127. Nc4 {+9.99/2 0.103s} Ke1 {-319.96/4 0.000s} 128. f8=Q {+319.97/3 0.032s}
+Kd1 {-319.98/2 0.000s} 129. Qf1# {+319.99/1 0.003s, White mates} 1-0
+

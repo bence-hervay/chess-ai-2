@@ -39,11 +39,24 @@ environment manifest, metrics, and game records.
 | 3 — Self-play recovery of exact strategy | **PASS** | [reports/phase_03.md](reports/phase_03.md) |
 | 4 — Breakthrough curriculum | **PASS** | [reports/phase_04.md](reports/phase_04.md) |
 | 5 — Othello benchmark | **PASS** | [reports/phase_05.md](reports/phase_05.md) |
-| 6 — Standard chess | not started | — |
+| 6 — Standard chess integration | **PASS** | [reports/phase_06.md](reports/phase_06.md) |
+| 7 — Measurable chess strength | not started | — |
 
 ### Current state (2026-08-14)
 
-Phases 0–5 complete and promoted. **Two independent styles of
+Phases 0–6 complete and promoted. **Chess is integrated end-to-end**:
+
+- cozy-chess rules behind the unchanged Game trait (perft-exact,
+  differential-tested, threefold + fifty-move draws), UCI engine that
+  passes fastchess tournaments with zero crashes/illegal moves/timeouts.
+- Tabula-rasa self-play works at chess scale: champions reach 0.900 vs
+  generation 0; games shorten from 265-ply shuffle-draws to 114-ply
+  decisive play; raw policy scores just 0.050 against its own 400-node
+  searched self — search is the engine of strength.
+- Stockfish diagnostic ceiling (teacher-assisted, quarantined): 80.1%
+  teacher-WDL accuracy, 2.1x chance move agreement from 27k positions.
+
+Phase 5 (Othello) demonstrated a second positional style. **Two independent styles of
 positional learning demonstrated with one unchanged learner**:
 
 - Othello (occupancy features only, pass moves, material reversals):
@@ -107,6 +120,6 @@ is mathematically correct before any learning exists:
 - Phase 0 foundation: byte-identical game records across 1/2/4/8 worker
   threads; 1.13M random games/s at 8 workers.
 
-Next: Phase 6 — standard chess: cozy-chess rules backend behind the
-same Game trait, repetition handling, UCI binary, fixed-node and
-fixed-time strength measurement, self-play at chess scale.
+Next: Phase 7 — measurable standard-chess strength: scaled self-play,
+statistically meaningful fixed-node and fixed-time match protocols
+against reference opponents, inference optimization.

@@ -1,0 +1,7 @@
+seed = 1
+model_width = 128
+positions = 30000
+stockfish_depth = 8
+stockfish_path = "/usr/games/stockfish"
+training_steps = 20000
+threads = 7

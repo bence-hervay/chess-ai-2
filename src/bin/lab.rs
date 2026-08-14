@@ -24,6 +24,7 @@ use selfplay_lab::experiment::{
 };
 use selfplay_lab::game::Game;
 use selfplay_lab::games::breakthrough::Breakthrough;
+use selfplay_lab::games::chess::Chess;
 use selfplay_lab::games::connect_k::ConnectK;
 use selfplay_lab::games::othello::Othello;
 use selfplay_lab::games::GameSpec;
@@ -67,6 +68,10 @@ macro_rules! dispatch_game {
                 let $game = Othello::new(*width, *height)?;
                 $body
             }
+            GameSpec::Chess {} => {
+                let $game = Chess::new();
+                $body
+            }
         }
     };
 }
@@ -101,6 +106,11 @@ enum LabCommand {
     /// Run synchronous Expert Iteration self-play generations.
     Selfplay {
         /// Path to a self-play configuration file.
+        config: PathBuf,
+    },
+    /// Stockfish diagnostic ceiling (teacher-assisted; plan §26).
+    Teacher {
+        /// Path to a teacher configuration file.
         config: PathBuf,
     },
     /// Run a manifest of experiment configs with CPU-slot scheduling.
@@ -228,6 +238,7 @@ fn main() {
         LabCommand::Solve { config } => solve(&config),
         LabCommand::Train { config } => train(&config),
         LabCommand::Selfplay { config } => selfplay(&config),
+        LabCommand::Teacher { config } => teacher(&config),
         LabCommand::Sweep { manifest } => sweep(&manifest),
     };
     if let Err(message) = result {
@@ -479,6 +490,9 @@ fn run_arena<G: Game>(
 
 fn solve(config_path: &Path) -> Result<(), String> {
     let config: SolveConfig = read_config(config_path)?;
+    if matches!(config.game, GameSpec::Chess {}) {
+        return Err("chess cannot be exactly solved or enumerated".into());
+    }
     let label = format!("solve-{}-{}", config.method.label(), config.game.label());
     let (run_dir, manifest) = start_run(&label, &config, 0, 1)?;
     let mut log = String::new();
@@ -681,6 +695,9 @@ struct TrainConfig {
 
 fn train(config_path: &Path) -> Result<(), String> {
     let config: TrainConfig = read_config(config_path)?;
+    if matches!(config.game, GameSpec::Chess {}) {
+        return Err("supervised oracle training needs an exactly solvable game".into());
+    }
     if config.model_width == 0 || config.train_positions == 0 || config.training_steps == 0 {
         return Err("model_width, train_positions, training_steps must be positive".into());
     }
@@ -1091,6 +1108,9 @@ fn selfplay(config_path: &Path) -> Result<(), String> {
     }
     if config.replay_generations == 0 {
         return Err("replay_generations must be at least 1".into());
+    }
+    if matches!(config.game, GameSpec::Chess {}) && config.promotion == "oracle" {
+        return Err("chess self-play requires match promotion (not exactly solvable)".into());
     }
     match config.promotion.as_str() {
         "oracle" => {
@@ -1557,6 +1577,9 @@ fn load_checkpoint(dir: &Path) -> Result<(PolicyValueNet<InferBackend>, ModelDim
 }
 
 fn probe(config: ProbeConfig) -> Result<(), String> {
+    if matches!(config.game, GameSpec::Chess {}) {
+        return Err("oracle probes need an exactly solvable game; use match_probe".into());
+    }
     if config.node_budgets.is_empty() {
         return Err("node_budgets must not be empty".into());
     }
@@ -1683,4 +1706,296 @@ fn run_probe<G: Game>(
         }
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// lab teacher (plan §26: Stockfish diagnostic ceiling — teacher-assisted,
+// never the tabula-rasa champion)
+// ---------------------------------------------------------------------------
+
+/// Fully explicit configuration for the Stockfish diagnostic.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct TeacherConfig {
+    seed: u64,
+    model_width: usize,
+    /// Number of labelled positions (90/10 train/held-out split).
+    positions: usize,
+    /// Fixed Stockfish search depth used for every label.
+    stockfish_depth: u32,
+    /// Path to the Stockfish binary.
+    stockfish_path: PathBuf,
+    training_steps: u64,
+    threads: usize,
+}
+
+/// One Stockfish-labelled position.
+struct TeacherRow {
+    features: Vec<u32>,
+    legal: Vec<u32>,
+    wdl: Wdl,
+    best_action: u32,
+}
+
+/// Drive one Stockfish process over a batch of FENs at a fixed depth.
+fn stockfish_label(
+    stockfish: &Path,
+    depth: u32,
+    fens: &[String],
+) -> Result<Vec<(i32, String)>, String> {
+    use std::io::{BufRead, BufReader, Write};
+    let mut child = std::process::Command::new(stockfish)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map_err(|e| format!("spawning {}: {e}", stockfish.display()))?;
+    let mut stdin = child.stdin.take().expect("piped stdin");
+    let stdout = child.stdout.take().expect("piped stdout");
+    let mut reader = BufReader::new(stdout);
+    let mut labels = Vec::with_capacity(fens.len());
+    writeln!(stdin, "uci").map_err(|e| e.to_string())?;
+    let mut line = String::new();
+    loop {
+        line.clear();
+        reader.read_line(&mut line).map_err(|e| e.to_string())?;
+        if line.starts_with("uciok") {
+            break;
+        }
+    }
+    for fen in fens {
+        writeln!(stdin, "position fen {fen}").map_err(|e| e.to_string())?;
+        writeln!(stdin, "go depth {depth}").map_err(|e| e.to_string())?;
+        let mut score_cp = 0i32;
+        let best = loop {
+            line.clear();
+            if reader.read_line(&mut line).map_err(|e| e.to_string())? == 0 {
+                return Err("stockfish exited early".into());
+            }
+            if line.starts_with("info") {
+                let words: Vec<&str> = line.split_whitespace().collect();
+                if let Some(i) = words.iter().position(|&w| w == "score") {
+                    match (words.get(i + 1), words.get(i + 2)) {
+                        (Some(&"cp"), Some(v)) => score_cp = v.parse().unwrap_or(0),
+                        (Some(&"mate"), Some(v)) => {
+                            let mate: i32 = v.parse().unwrap_or(0);
+                            score_cp = if mate > 0 { 10_000 } else { -10_000 };
+                        }
+                        _ => {}
+                    }
+                }
+            } else if let Some(rest) = line.strip_prefix("bestmove ") {
+                break rest.split_whitespace().next().unwrap_or("").to_string();
+            }
+        };
+        labels.push((score_cp, best));
+    }
+    writeln!(stdin, "quit").ok();
+    child.wait().ok();
+    Ok(labels)
+}
+
+fn teacher(config_path: &Path) -> Result<(), String> {
+    let config: TeacherConfig = read_config(config_path)?;
+    if config.positions < 100 {
+        return Err("need at least 100 positions".into());
+    }
+    let (run_dir, mut manifest) = start_run("teacher-chess", &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    let started = Instant::now();
+    let game = Chess::new();
+    let dims = ModelDims {
+        feature_count: game.feature_count(),
+        action_count: game.action_count(),
+        width: config.model_width,
+    };
+
+    // 1. Position corpus from seeded random legal trajectories, sampled
+    // sparsely along each game to decorrelate.
+    use rand::Rng as _;
+    use rand::SeedableRng as _;
+    use selfplay_lab::game::Game as _;
+    let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(config.seed ^ 0x5f);
+    let mut states = Vec::new();
+    let mut fens = Vec::new();
+    while states.len() < config.positions {
+        let mut state = game.initial_state();
+        let mut moves = Vec::new();
+        loop {
+            if game.outcome(&state).is_some() {
+                break;
+            }
+            if rng.gen::<f64>() < 0.15 {
+                states.push(state.clone());
+                fens.push(format!("{}", game.board_of(&state)));
+                if states.len() >= config.positions {
+                    break;
+                }
+            }
+            game.legal_moves(&state, &mut moves);
+            let mv = moves[rng.gen_range(0..moves.len())];
+            game.make_move(&mut state, mv);
+        }
+    }
+    say(
+        format!(
+            "corpus: {} positions ({:.1}s)",
+            states.len(),
+            started.elapsed().as_secs_f64()
+        ),
+        &mut log,
+    );
+
+    // 2. Label with a fixed, documented Stockfish budget, in parallel.
+    let label_started = Instant::now();
+    let chunk = states.len().div_ceil(config.threads.max(1));
+    let fen_chunks: Vec<&[String]> = fens.chunks(chunk).collect();
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(config.threads)
+        .build()
+        .map_err(|e| e.to_string())?;
+    let labels: Vec<(i32, String)> = pool.install(|| {
+        use rayon::prelude::*;
+        fen_chunks
+            .par_iter()
+            .map(|chunk| {
+                stockfish_label(&config.stockfish_path, config.stockfish_depth, chunk)
+                    .expect("stockfish labelling failed")
+            })
+            .collect::<Vec<_>>()
+            .concat()
+    });
+    say(
+        format!(
+            "labelled at depth {} in {:.1}s ({:.1} pos/s)",
+            config.stockfish_depth,
+            label_started.elapsed().as_secs_f64(),
+            labels.len() as f64 / label_started.elapsed().as_secs_f64()
+        ),
+        &mut log,
+    );
+
+    // 3. Rows: WDL from the documented cp rule (win > 100 cp, loss < -100),
+    // policy target = Stockfish best move.
+    let mut rows = Vec::new();
+    let mut skipped = 0usize;
+    let mut max_features = 1usize;
+    for (state, (cp, best)) in states.iter().zip(&labels) {
+        let mut moves = Vec::new();
+        game.legal_moves(state, &mut moves);
+        let Some(best_move) = selfplay_lab::games::chess::parse_move_text(&game, state, best)
+        else {
+            skipped += 1;
+            continue;
+        };
+        let mut features = Vec::new();
+        game.encode_features(state, &mut features);
+        max_features = max_features.max(features.len());
+        rows.push(TeacherRow {
+            features,
+            legal: moves.iter().map(|&m| game.action_id(state, m)).collect(),
+            wdl: if *cp > 100 {
+                Wdl::Win
+            } else if *cp < -100 {
+                Wdl::Loss
+            } else {
+                Wdl::Draw
+            },
+            best_action: game.action_id(state, best_move),
+        });
+    }
+    say(
+        format!(
+            "rows: {} usable, {skipped} skipped (unparsable bestmove)",
+            rows.len()
+        ),
+        &mut log,
+    );
+
+    // 4. Train (recipe v1) on 90%, hold out 10% by position order hash.
+    let train_rows: Vec<TrainRow> = rows
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| i % 10 != 9)
+        .map(|(_, r)| TrainRow {
+            features: r.features.clone(),
+            legal: r.legal.clone(),
+            wdl: r.wdl,
+            policy_actions: vec![r.best_action],
+        })
+        .collect();
+    let held_out: Vec<&TeacherRow> = rows
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| i % 10 == 9)
+        .map(|(_, r)| r)
+        .collect();
+    let net = train_supervised(
+        dims,
+        &train_rows,
+        max_features,
+        config.seed,
+        config.training_steps,
+        |_, _| {},
+    );
+    manifest.model_parameter_count = net.num_params() as u64;
+
+    // 5. Held-out agreement with the teacher (and chance baselines).
+    let compiled = CompiledNet::from_net(&net.valid(), dims);
+    let mut wdl_hits = 0usize;
+    let mut move_hits = 0usize;
+    let mut legal_sum = 0f64;
+    let mut wdl_logits = [0.0f32; 3];
+    let mut action_logits = Vec::new();
+    for row in &held_out {
+        compiled.forward(&row.features, &mut wdl_logits, &mut action_logits);
+        let predicted = (0..3)
+            .max_by(|&a, &b| wdl_logits[a].total_cmp(&wdl_logits[b]))
+            .unwrap();
+        wdl_hits += usize::from(predicted == row.wdl as usize);
+        let best_legal = row
+            .legal
+            .iter()
+            .max_by(|&&a, &&b| action_logits[a as usize].total_cmp(&action_logits[b as usize]))
+            .copied()
+            .unwrap();
+        move_hits += usize::from(best_legal == row.best_action);
+        legal_sum += 1.0 / row.legal.len() as f64;
+    }
+    let n = held_out.len().max(1) as f64;
+    let wdl_accuracy = wdl_hits as f64 / n;
+    let move_agreement = move_hits as f64 / n;
+    let chance_move = legal_sum / n;
+    say(
+        format!(
+            "held-out ({} positions): teacher-WDL accuracy {:.4}, best-move agreement {:.4} \
+             (chance {:.4})",
+            held_out.len(),
+            wdl_accuracy,
+            move_agreement,
+            chance_move,
+        ),
+        &mut log,
+    );
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "config": config,
+                "parameter_count": manifest.model_parameter_count,
+                "rows": rows.len(),
+                "held_out": held_out.len(),
+                "teacher_wdl_accuracy": wdl_accuracy,
+                "best_move_agreement": move_agreement,
+                "chance_move_agreement": chance_move,
+                "wall_seconds": started.elapsed().as_secs_f64(),
+                "peak_rss_bytes": peak_rss_bytes().unwrap_or(0),
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(&run_dir, manifest, &log)
 }

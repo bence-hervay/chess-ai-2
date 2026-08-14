@@ -2,6 +2,7 @@
 //! [`crate::game::Game`]; there is no plugin system.
 
 pub mod breakthrough;
+pub mod chess;
 pub mod connect_k;
 pub mod othello;
 
@@ -25,6 +26,8 @@ pub enum GameSpec {
     Breakthrough { width: u16, height: u16, rows: u16 },
     #[serde(rename = "othello")]
     Othello { width: u16, height: u16 },
+    #[serde(rename = "chess")]
+    Chess {},
 }
 
 impl GameSpec {
@@ -50,6 +53,7 @@ impl GameSpec {
             GameSpec::Othello { width, height } => {
                 format!("othello-{width}x{height}")
             }
+            GameSpec::Chess {} => "chess".to_string(),
         }
     }
 }

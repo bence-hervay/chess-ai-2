@@ -180,3 +180,33 @@ strict-alternation perspective flip. Passes cannot repeat positions
 only, per §25 restrictions. `match_probe` gained a required
 `opponent_checkpoint` field for cross-run champion comparisons (the
 data-scaling axis on non-exact sizes).
+
+## 2026-08-14 — D024: Chess wrapper design
+
+cozy-chess 0.3 is the rules backend (plan-mandated). The wrapper adds a
+hash history that resets on halfmove-clock resets for threefold
+detection; draws = stalemate + fifty-move (via Board::status) +
+threefold. Undo restores a full board copy (Board is small). Known
+standard approximation: position_key is the board hash only, so TT
+entries ignore repetition context. Features: 768 piece-square (side-to-
+move rank-mirrored) + 4 castling + 8 en-passant files = 780. Actions:
+from x to (4096, queen promotions included) + 72 underpromotion slots =
+4168, perspective-mirrored. cozy-chess castling is king-takes-rook; UCI
+translation lives in games::chess::parse_move_text.
+
+## 2026-08-14 — D025: UCI engine behavior
+
+Synchronous single-thread search: `stop` is a no-op; `go` without
+limits (or `go infinite`) gets a 1 s default deadline so the engine
+always answers. Time allocation: (time/30 + inc/2) x 0.8, floor 10 ms.
+The search deadline is checked every 128 nodes (model evaluators cost
+~0.2 ms/node; the original 4096-node interval lost all 20 games on
+time in the first fastchess run).
+
+## 2026-08-14 — D026: Stockfish diagnostic protocol (teacher-assisted)
+
+`lab teacher`: corpus = seeded random legal trajectories sampled at 15%
+per ply; labels = Stockfish 17 at fixed depth 8 (cp and bestmove); WDL
+rule: win > +100 cp, loss < -100 cp, else draw; policy target = the
+teacher's best move; recipe v1 training; 90/10 held-out split. The
+checkpoint is never used as the tabula-rasa champion.
