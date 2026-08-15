@@ -292,6 +292,39 @@ impl ForwardChess {
         true
     }
 
+    // -- crate-internal accessors for the structured feature extractor
+    //    (`features::forward_chess`). Rule-level facts only; no strategy.
+
+    /// The packed cell array of a state (see `pack`/`unpack_code`).
+    pub(crate) fn state_cells<'a>(&self, state: &'a FcState) -> &'a [u8] {
+        &state.core.cells
+    }
+
+    /// Decode a non-empty packed cell code.
+    pub(crate) fn unpack_code(code: u8) -> (Player, Piece, bool) {
+        unpack(code)
+    }
+
+    /// Is `target` attacked by any piece of `attacker` (rules §3–4)?
+    pub(crate) fn cell_attacked_by(&self, cells: &[u8], target: u16, attacker: Player) -> bool {
+        self.square_attacked(cells, target, attacker)
+    }
+
+    /// Is the side to move currently in check?
+    pub(crate) fn in_check(&self, state: &FcState) -> bool {
+        let mover = state.core.to_move;
+        let king = self.king_square(&state.core.cells, mover);
+        self.square_attacked(&state.core.cells, king, mover.opponent())
+    }
+
+    /// Ranks a natural pawn of `owner` on `cell` still has to advance
+    /// before promotion (rules §4/§8).
+    pub(crate) fn pawn_promotion_distance(&self, owner: Player, cell: u16) -> u16 {
+        let rank = cell / self.width;
+        let last = Self::last_rank(owner, self.height);
+        rank.abs_diff(last)
+    }
+
     /// Is `target` attacked by any piece of `attacker`?
     fn square_attacked(&self, cells: &[u8], target: u16, attacker: Player) -> bool {
         for (cell, &code) in cells.iter().enumerate() {
@@ -733,7 +766,7 @@ impl ForwardChess {
 
     /// Perspective cell: the board rotated 180 degrees for Black, so
     /// "forward" is always +rank and layouts mirror onto themselves.
-    fn perspective_cell(&self, cell: u16, mover: Player) -> u16 {
+    pub(crate) fn perspective_cell(&self, cell: u16, mover: Player) -> u16 {
         match mover {
             Player::One => cell,
             Player::Two => self.cell_count() as u16 - 1 - cell,

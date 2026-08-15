@@ -27,6 +27,8 @@ use selfplay_lab::evaluation::{run_random_arena, ArenaSummary};
 use selfplay_lab::experiment::{
     collect_manifest, peak_rss_bytes, process_cpu_seconds, unix_seconds, Manifest, RunDir,
 };
+use selfplay_lab::features::forward_chess::{FcExtractor, FcRecipe};
+use selfplay_lab::features::FeatureExtractor as _;
 use selfplay_lab::game::Game;
 use selfplay_lab::games::breakthrough::Breakthrough;
 use selfplay_lab::games::chess::Chess;
@@ -132,6 +134,13 @@ enum LabCommand {
     /// program §18.2, §19.5, §55).
     Relabel {
         /// Path to a relabel configuration file.
+        config: PathBuf,
+    },
+    /// Fit a structured evaluator (or the raw-MLP baseline) on exact
+    /// Forward Chess data and probe its searched decisions against the
+    /// exact solution (SHSD program §56).
+    Fit {
+        /// Path to a fit configuration file.
         config: PathBuf,
     },
     /// Run a manifest of experiment configs with CPU-slot scheduling.
@@ -314,6 +323,7 @@ fn main() {
         LabCommand::Selfplay { config } => selfplay(&config),
         LabCommand::Teacher { config } => teacher(&config),
         LabCommand::Relabel { config } => relabel(&config),
+        LabCommand::Fit { config } => fit(&config),
         LabCommand::Sweep { manifest } => sweep(&manifest),
         LabCommand::Play {
             game,
@@ -1209,7 +1219,8 @@ fn run_train<G: Game>(
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct SweepEntry {
-    /// `lab` subcommand to run: "train", "solve", or "evaluate".
+    /// `lab` subcommand to run: "train", "solve", "evaluate",
+    /// "selfplay", "fit", or "relabel".
     command: String,
     config: PathBuf,
     /// CPU slots this run occupies while active.
@@ -1240,7 +1251,7 @@ fn sweep(manifest_path: &Path) -> Result<(), String> {
         }
         if !matches!(
             entry.command.as_str(),
-            "train" | "solve" | "evaluate" | "selfplay"
+            "train" | "solve" | "evaluate" | "selfplay" | "fit" | "relabel"
         ) {
             return Err(format!("unknown sweep command {:?}", entry.command));
         }
@@ -2305,6 +2316,713 @@ fn play(game_label: &str, checkpoint: Option<&Path>, nodes: u64, side: &str) -> 
         }
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// lab fit (SHSD Stage C: structured evaluators on exact data)
+// ---------------------------------------------------------------------------
+
+/// Where the exact `(state, WDL)` stream comes from.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum FitSource {
+    /// A checksummed retrograde tablebase written by `lab solve`
+    /// (fc-small scale; D029 format).
+    Tablebase { path: PathBuf },
+    /// Solve the instance in-process (fc-tiny scale).
+    Solve { max_positions: usize },
+}
+
+/// Model family under fit. Both families consume identical train,
+/// validation, and test states, so comparisons are paired.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum FitModel {
+    /// Structured linear WDL model over a named feature recipe.
+    Structured {
+        recipe: FcRecipe,
+        steps: u64,
+        batch: usize,
+        lr: f64,
+        l2: f64,
+    },
+    /// The raw sparse MLP baseline (§9.3) under training recipe v1.
+    RawMlp { width: usize, steps: u64 },
+}
+
+impl FitModel {
+    fn label(&self) -> String {
+        match self {
+            FitModel::Structured { recipe, .. } => recipe.label().to_string(),
+            FitModel::RawMlp { width, .. } => format!("mlp-w{width}"),
+        }
+    }
+}
+
+/// Fully explicit configuration for `lab fit`.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FitConfig {
+    game: GameSpec,
+    source: FitSource,
+    model: FitModel,
+    /// Train-set size: the `train_positions` bucket-0..7 states with the
+    /// smallest `splitmix64(key ^ FIT_TRAIN_SALT)` — subsets nest across
+    /// sizes, so every data-ladder rung trains on a superset of the
+    /// previous one (§48.5).
+    train_positions: usize,
+    /// Cap per evaluation bucket (existing D029 thinning rule).
+    eval_cap: usize,
+    /// Probe: searched-decision states drawn from the test bucket.
+    probe_states: usize,
+    probe_nodes: Vec<u64>,
+    seed: u64,
+    threads: usize,
+}
+
+/// Salt of the nested train-subset selection (ledger: engineering).
+const FIT_TRAIN_SALT: u64 = 0x0f17_5a17_ab5e_ed01;
+
+/// One exactly labelled state.
+struct FitState {
+    state: selfplay_lab::games::forward_chess::FcState,
+    wdl: Wdl,
+}
+
+/// A probe state with its exact optimal-action set.
+struct ProbePosition {
+    state: selfplay_lab::games::forward_chess::FcState,
+    optimal: Vec<u32>,
+}
+
+#[derive(Serialize)]
+struct ProbeReport {
+    states: usize,
+    /// Argmax over one-ply child evaluations (no search).
+    raw_optimal_rate: f64,
+    /// Aligned with the configured probe budgets.
+    searched_optimal_rate: Vec<f64>,
+}
+
+#[derive(Serialize)]
+struct FitSplitMetrics {
+    log_loss: f64,
+    accuracy: f64,
+}
+
+fn fit(config_path: &Path) -> Result<(), String> {
+    let config: FitConfig = read_config(config_path)?;
+    let GameSpec::ForwardChess { ruleset } = &config.game else {
+        return Err("lab fit currently supports forward_chess only".into());
+    };
+    if config.train_positions == 0 || config.eval_cap == 0 {
+        return Err("train_positions and eval_cap must be positive".into());
+    }
+    let game = ForwardChess::new(*ruleset);
+    let label = format!(
+        "fit-{}-{}-n{}-s{}",
+        config.game.label(),
+        config.model.label(),
+        config.train_positions,
+        config.seed
+    );
+    let (run_dir, manifest) = start_run(&label, &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+    let started = Instant::now();
+
+    // -- Load the exact stream and select train/val/test states.
+    let mut key_wdl: std::collections::HashMap<u64, Wdl> = std::collections::HashMap::new();
+    let mut bucket_sizes = [0u64; 2];
+    let visit_count = |game: &ForwardChess,
+                       state: &selfplay_lab::games::forward_chess::FcState,
+                       wdl: Wdl,
+                       key_wdl: &mut std::collections::HashMap<u64, Wdl>,
+                       bucket_sizes: &mut [u64; 2]| {
+        let key = game.position_key(state);
+        key_wdl.insert(key, wdl);
+        if game.outcome(state).is_none() {
+            match splitmix64(key) % 10 {
+                8 => bucket_sizes[0] += 1,
+                9 => bucket_sizes[1] += 1,
+                _ => {}
+            }
+        }
+    };
+
+    // Selection state for the second pass.
+    let mut train_heap: std::collections::BinaryHeap<(u64, u64)> =
+        std::collections::BinaryHeap::new(); // (selection hash, key)
+    let mut train_states: std::collections::HashMap<u64, FitState> =
+        std::collections::HashMap::new();
+    let mut val_states: Vec<FitState> = Vec::new();
+    let mut test_states: Vec<FitState> = Vec::new();
+
+    let select = |game: &ForwardChess,
+                  state: selfplay_lab::games::forward_chess::FcState,
+                  wdl: Wdl,
+                  denominators: &[u64; 2],
+                  train_heap: &mut std::collections::BinaryHeap<(u64, u64)>,
+                  train_states: &mut std::collections::HashMap<u64, FitState>,
+                  val_states: &mut Vec<FitState>,
+                  test_states: &mut Vec<FitState>| {
+        if game.outcome(&state).is_some() {
+            return;
+        }
+        let key = game.position_key(&state);
+        match splitmix64(key) % 10 {
+            8 | 9 => {
+                let slot = (splitmix64(key) % 10 - 8) as usize;
+                if splitmix64(key ^ selfplay_lab::training::EVAL_THIN_SALT)
+                    .is_multiple_of(denominators[slot])
+                {
+                    let bucket = if slot == 0 {
+                        &mut *val_states
+                    } else {
+                        &mut *test_states
+                    };
+                    bucket.push(FitState { state, wdl });
+                }
+            }
+            _ => {
+                let hash = splitmix64(key ^ FIT_TRAIN_SALT);
+                if train_heap.len() < config.train_positions {
+                    train_heap.push((hash, key));
+                    train_states.insert(key, FitState { state, wdl });
+                } else if let Some(&(max_hash, max_key)) = train_heap.peek() {
+                    if hash < max_hash {
+                        train_heap.pop();
+                        train_states.remove(&max_key);
+                        train_heap.push((hash, key));
+                        train_states.insert(key, FitState { state, wdl });
+                    }
+                }
+            }
+        }
+    };
+
+    match &config.source {
+        FitSource::Tablebase { path } => {
+            let bytes =
+                std::fs::read(path).map_err(|e| format!("reading {}: {e}", path.display()))?;
+            say(
+                format!(
+                    "tablebase: {} ({} MB)",
+                    path.display(),
+                    bytes.len() / 1_000_000
+                ),
+                &mut log,
+            );
+            let mut cursor = std::io::Cursor::new(&bytes);
+            read_tablebase_with(&game, &mut cursor, |_, state, wdl| {
+                visit_count(&game, &state, wdl, &mut key_wdl, &mut bucket_sizes);
+                Ok(())
+            })?;
+            let denominators =
+                bucket_sizes.map(|n| n.div_ceil(config.eval_cap.max(1) as u64).max(1));
+            let mut cursor = std::io::Cursor::new(&bytes);
+            read_tablebase_with(&game, &mut cursor, |_, state, wdl| {
+                select(
+                    &game,
+                    state,
+                    wdl,
+                    &denominators,
+                    &mut train_heap,
+                    &mut train_states,
+                    &mut val_states,
+                    &mut test_states,
+                );
+                Ok(())
+            })?;
+        }
+        FitSource::Solve { max_positions } => {
+            say(
+                "solving in-process by retrograde analysis".to_string(),
+                &mut log,
+            );
+            let solution = solve_retrograde(&game, *max_positions)?;
+            for (state, &wdl) in solution.states.iter().zip(&solution.values) {
+                visit_count(&game, state, wdl, &mut key_wdl, &mut bucket_sizes);
+            }
+            let denominators =
+                bucket_sizes.map(|n| n.div_ceil(config.eval_cap.max(1) as u64).max(1));
+            for (state, &wdl) in solution.states.iter().zip(&solution.values) {
+                select(
+                    &game,
+                    state.clone(),
+                    wdl,
+                    &denominators,
+                    &mut train_heap,
+                    &mut train_states,
+                    &mut val_states,
+                    &mut test_states,
+                );
+            }
+        }
+    }
+    let mut train: Vec<FitState> = train_states.into_values().collect();
+    // Deterministic order regardless of hash-map iteration.
+    train.sort_unstable_by_key(|s| game.position_key(&s.state));
+    val_states.sort_unstable_by_key(|s| game.position_key(&s.state));
+    test_states.sort_unstable_by_key(|s| game.position_key(&s.state));
+    say(
+        format!(
+            "selected {} train / {} val / {} test states ({} positions mapped)",
+            train.len(),
+            val_states.len(),
+            test_states.len(),
+            key_wdl.len()
+        ),
+        &mut log,
+    );
+    if train.is_empty() || val_states.is_empty() || test_states.is_empty() {
+        return Err("empty split; lower eval_cap or check the source".into());
+    }
+
+    // -- Probe positions: test-bucket states with exact optimal sets.
+    let child_wdl = |state: &selfplay_lab::games::forward_chess::FcState,
+                     mv: selfplay_lab::games::forward_chess::FcMove|
+     -> Result<Wdl, String> {
+        let mut child = state.clone();
+        game.make_move(&mut child, mv);
+        if let Some(outcome) = game.outcome(&child) {
+            return Ok(Wdl::from_outcome(outcome, game.side_to_move(&child)));
+        }
+        key_wdl
+            .get(&game.position_key(&child))
+            .copied()
+            .ok_or_else(|| "child position missing from the exact map".to_string())
+    };
+    let mut probes: Vec<ProbePosition> = Vec::new();
+    let mut moves = Vec::new();
+    for fit_state in test_states.iter().take(config.probe_states) {
+        game.legal_moves(&fit_state.state, &mut moves);
+        let mut optimal = Vec::new();
+        for &mv in &moves {
+            if child_wdl(&fit_state.state, mv)?.flip() == fit_state.wdl {
+                optimal.push(game.action_id(&fit_state.state, mv));
+            }
+        }
+        if optimal.is_empty() {
+            return Err("exact optimal set is empty; map or rules inconsistency".into());
+        }
+        probes.push(ProbePosition {
+            state: fit_state.state.clone(),
+            optimal,
+        });
+    }
+    say(format!("probe positions: {}", probes.len()), &mut log);
+
+    // -- Fit the configured model and evaluate.
+    let (val_metrics, test_metrics, prior, probe_report, extraction_ns) = match &config.model {
+        FitModel::Structured {
+            recipe,
+            steps,
+            batch,
+            lr,
+            l2,
+        } => {
+            use selfplay_lab::structured_eval::{
+                class_prior_baseline, evaluate_linear_wdl, fit_linear_wdl, FitHyper,
+                StructuredEvaluator, StructuredRow,
+            };
+            let dimension = FcExtractor::new(&game, *recipe).dimension();
+            let extract_rows = |states: &[FitState]| -> (Vec<StructuredRow>, f64) {
+                let pool = rayon::ThreadPoolBuilder::new()
+                    .num_threads(config.threads)
+                    .build()
+                    .expect("rayon pool");
+                let t0 = Instant::now();
+                let rows = pool.install(|| {
+                    use rayon::prelude::*;
+                    states
+                        .par_iter()
+                        .map_init(
+                            || FcExtractor::new(&game, *recipe),
+                            |extractor, fit_state| {
+                                let mut x = Vec::new();
+                                extractor.extract(&game, &fit_state.state, &mut x);
+                                StructuredRow {
+                                    x,
+                                    wdl: fit_state.wdl,
+                                }
+                            },
+                        )
+                        .collect()
+                });
+                let ns = t0.elapsed().as_nanos() as f64 / states.len().max(1) as f64;
+                (rows, ns)
+            };
+            let (train_rows, extraction_ns) = extract_rows(&train);
+            let (val_rows, _) = extract_rows(&val_states);
+            let (test_rows, _) = extract_rows(&test_states);
+            say(
+                format!(
+                    "extracted {} features/position mean, {:.0} ns/position, dimension {}",
+                    train_rows.iter().map(|r| r.x.len()).sum::<usize>() as f64
+                        / train_rows.len() as f64,
+                    extraction_ns,
+                    dimension
+                ),
+                &mut log,
+            );
+            let hyper = FitHyper {
+                steps: *steps,
+                batch: *batch,
+                lr: *lr,
+                l2: *l2,
+            };
+            let mut metric_rows: Vec<serde_json::Value> = Vec::new();
+            let model = {
+                let val_rows_ref = &val_rows;
+                fit_linear_wdl(
+                    recipe.label(),
+                    dimension,
+                    &train_rows,
+                    hyper,
+                    config.seed,
+                    |step| {
+                        if step.step % 500 == 0 || step.step == hyper.steps {
+                            metric_rows.push(serde_json::json!({
+                                "step": step.step,
+                                "train_loss": step.train_loss,
+                            }));
+                        }
+                        let _ = val_rows_ref;
+                    },
+                )
+            };
+            run_dir
+                .append_jsonl("metrics.jsonl", &metric_rows)
+                .map_err(|e| e.to_string())?;
+            let (val_loss, val_acc) = evaluate_linear_wdl(&model, &val_rows);
+            let (test_loss, test_acc) = evaluate_linear_wdl(&model, &test_rows);
+            let prior = class_prior_baseline(&train_rows, &test_rows);
+            run_dir
+                .create_subdir("checkpoint")
+                .map_err(|e| e.to_string())?;
+            run_dir
+                .write_json("checkpoint/structured.json", &model)
+                .map_err(|e| e.to_string())?;
+            // Weight inspection for the report (§52.5): top |weight|
+            // features by class margin.
+            let mut inspect: Vec<(String, [f32; 3])> = Vec::new();
+            let extractor = FcExtractor::new(&game, *recipe);
+            let mut indices: Vec<usize> = (0..dimension).collect();
+            indices.sort_by(|&a, &b| {
+                let ma = (model.weights[a][2] - model.weights[a][0]).abs();
+                let mb = (model.weights[b][2] - model.weights[b][0]).abs();
+                mb.total_cmp(&ma)
+            });
+            for &i in indices.iter().take(25) {
+                inspect.push((extractor.feature_name(i as u32), model.weights[i]));
+            }
+            run_dir
+                .write_json("checkpoint/weight_inspection.json", &inspect)
+                .map_err(|e| e.to_string())?;
+            let probe_report =
+                probe_decisions(&game, &probes, &config.probe_nodes, config.threads, || {
+                    StructuredEvaluator::new(&model, FcExtractor::new(&game, *recipe))
+                });
+            (
+                FitSplitMetrics {
+                    log_loss: val_loss,
+                    accuracy: val_acc,
+                },
+                FitSplitMetrics {
+                    log_loss: test_loss,
+                    accuracy: test_acc,
+                },
+                prior,
+                probe_report,
+                extraction_ns,
+            )
+        }
+        FitModel::RawMlp { width, steps } => {
+            // Recipe v1 on the identical states: raw sparse features,
+            // WDL target, uniform-over-optimal policy target.
+            let build_rows = |states: &[FitState]| -> Result<Vec<TrainRow>, String> {
+                let mut rows = Vec::with_capacity(states.len());
+                let mut features = Vec::new();
+                let mut moves = Vec::new();
+                for fit_state in states {
+                    game.encode_features(&fit_state.state, &mut features);
+                    game.legal_moves(&fit_state.state, &mut moves);
+                    let mut legal = Vec::with_capacity(moves.len());
+                    let mut policy_actions = Vec::new();
+                    for &mv in &moves {
+                        let action = game.action_id(&fit_state.state, mv);
+                        legal.push(action);
+                        if child_wdl(&fit_state.state, mv)?.flip() == fit_state.wdl {
+                            policy_actions.push(action);
+                        }
+                    }
+                    rows.push(TrainRow {
+                        features: features.clone(),
+                        legal,
+                        wdl: fit_state.wdl,
+                        policy_actions,
+                    });
+                }
+                Ok(rows)
+            };
+            let t0 = Instant::now();
+            let train_rows = build_rows(&train)?;
+            let extraction_ns = t0.elapsed().as_nanos() as f64 / train.len().max(1) as f64;
+            let val_rows = build_rows(&val_states)?;
+            let test_rows = build_rows(&test_states)?;
+            let max_features = train_rows
+                .iter()
+                .chain(&val_rows)
+                .chain(&test_rows)
+                .map(|r| r.features.len())
+                .max()
+                .unwrap_or(1);
+            let dims = ModelDims {
+                feature_count: game.feature_count(),
+                action_count: game.action_count(),
+                width: *width,
+            };
+            let mut metric_rows: Vec<serde_json::Value> = Vec::new();
+            let net = train_supervised(
+                dims,
+                &train_rows,
+                max_features,
+                config.seed,
+                *steps,
+                |m, _| {
+                    if m.step % 500 == 0 || m.step == *steps {
+                        metric_rows.push(serde_json::json!({
+                            "step": m.step,
+                            "wdl_loss": m.wdl_loss,
+                            "policy_loss": m.policy_loss,
+                        }));
+                    }
+                },
+            );
+            run_dir
+                .append_jsonl("metrics.jsonl", &metric_rows)
+                .map_err(|e| e.to_string())?;
+            let inference = net.valid();
+            let compiled = CompiledNet::from_net(&inference, dims);
+            let eval_rows = |rows: &[TrainRow]| -> FitSplitMetrics {
+                let mut loss = 0.0;
+                let mut correct = 0u64;
+                let mut h2 = Vec::new();
+                let mut wdl_logits = [0.0f32; 3];
+                for row in rows {
+                    compiled.forward_hidden(&row.features, &mut h2);
+                    compiled.wdl_head(&h2, &mut wdl_logits);
+                    let m = wdl_logits[0].max(wdl_logits[1]).max(wdl_logits[2]);
+                    let e = [
+                        f64::from(wdl_logits[0] - m).exp(),
+                        f64::from(wdl_logits[1] - m).exp(),
+                        f64::from(wdl_logits[2] - m).exp(),
+                    ];
+                    let s = e[0] + e[1] + e[2];
+                    let p = [e[0] / s, e[1] / s, e[2] / s];
+                    loss -= p[row.wdl as usize].max(1e-300).ln();
+                    let argmax = (0..3)
+                        .max_by(|&a, &b| p[a].total_cmp(&p[b]))
+                        .expect("3 classes");
+                    correct += u64::from(argmax == row.wdl as usize);
+                }
+                FitSplitMetrics {
+                    log_loss: loss / rows.len() as f64,
+                    accuracy: correct as f64 / rows.len() as f64,
+                }
+            };
+            let val_metrics = eval_rows(&val_rows);
+            let test_metrics = eval_rows(&test_rows);
+            // Class-prior floor on the same test rows.
+            let mut counts = [0u64; 3];
+            for row in &train_rows {
+                counts[row.wdl as usize] += 1;
+            }
+            let total: u64 = counts.iter().sum();
+            let p: Vec<f64> = counts
+                .iter()
+                .map(|&c| (c as f64 / total as f64).max(1e-12))
+                .collect();
+            let argmax = (0..3).max_by(|&a, &b| p[a].total_cmp(&p[b])).expect("3");
+            let mut prior_loss = 0.0;
+            let mut prior_correct = 0u64;
+            for row in &test_rows {
+                prior_loss -= p[row.wdl as usize].ln();
+                prior_correct += u64::from(argmax == row.wdl as usize);
+            }
+            let prior = (
+                prior_loss / test_rows.len() as f64,
+                prior_correct as f64 / test_rows.len() as f64,
+            );
+            run_dir
+                .create_subdir("checkpoint")
+                .map_err(|e| e.to_string())?;
+            let recorder = BinFileRecorder::<FullPrecisionSettings>::new();
+            inference
+                .clone()
+                .save_file(run_dir.path().join("checkpoint/model"), &recorder)
+                .map_err(|e| format!("saving checkpoint: {e}"))?;
+            run_dir
+                .write_json(
+                    "checkpoint/model.json",
+                    &serde_json::json!({
+                        "dims": dims,
+                        "max_features": max_features,
+                        "seed": config.seed,
+                        "training_steps": steps,
+                        "train_positions": train.len(),
+                    }),
+                )
+                .map_err(|e| e.to_string())?;
+            let probe_report =
+                probe_decisions(&game, &probes, &config.probe_nodes, config.threads, || {
+                    ModelEvaluator::new(&compiled)
+                });
+            (
+                val_metrics,
+                test_metrics,
+                prior,
+                probe_report,
+                extraction_ns,
+            )
+        }
+    };
+
+    // Search-only baseline row on the same probes (§9.2).
+    let zero_probe = probe_decisions(&game, &probes, &config.probe_nodes, config.threads, || {
+        ZeroEvaluator
+    });
+
+    say(
+        format!(
+            "val: logloss {:.4} acc {:.4} | test: logloss {:.4} acc {:.4} (prior: {:.4}/{:.4})",
+            val_metrics.log_loss,
+            val_metrics.accuracy,
+            test_metrics.log_loss,
+            test_metrics.accuracy,
+            prior.0,
+            prior.1
+        ),
+        &mut log,
+    );
+    say(
+        format!(
+            "probe raw optimal {:.4}; searched {:?} -> {:?}; zero-eval searched {:?}",
+            probe_report.raw_optimal_rate,
+            config.probe_nodes,
+            probe_report.searched_optimal_rate,
+            zero_probe.searched_optimal_rate
+        ),
+        &mut log,
+    );
+
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "model": config.model.label(),
+                "train_states": train.len(),
+                "val_states": val_states.len(),
+                "test_states": test_states.len(),
+                "extraction_ns_per_position": extraction_ns,
+                "class_prior": { "log_loss": prior.0, "accuracy": prior.1 },
+                "val": val_metrics,
+                "test": test_metrics,
+                "probe": probe_report,
+                "probe_zero_evaluator": zero_probe,
+                "cost": {
+                    "wall_seconds": wall_seconds,
+                    "cpu_seconds": cpu_seconds,
+                    "utilization": cpu_seconds / (wall_seconds * config.threads as f64),
+                    "peak_rss_bytes": peak_rss_bytes(),
+                },
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(&run_dir, manifest, &log)
+}
+
+/// Decision quality of an evaluator on exact probe positions: raw
+/// one-ply argmax and full searches at each budget, scored against the
+/// exact optimal-action sets.
+fn probe_decisions<E, F>(
+    game: &ForwardChess,
+    probes: &[ProbePosition],
+    budgets: &[u64],
+    threads: usize,
+    make_eval: F,
+) -> ProbeReport
+where
+    E: Evaluator<ForwardChess>,
+    F: Fn() -> E + Sync,
+{
+    use selfplay_lab::training::SELFPLAY_TT_LOG2;
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("rayon pool");
+    let results: Vec<(bool, Vec<bool>)> = pool.install(|| {
+        use rayon::prelude::*;
+        probes
+            .par_iter()
+            .map(|probe| {
+                let mut evaluator = make_eval();
+                let mut state = probe.state.clone();
+                let mut moves = Vec::new();
+                game.legal_moves(&state, &mut moves);
+                // Raw: pick the child whose evaluation is worst for the
+                // opponent (ties -> first in stable action-ID order).
+                let mut best_action = None;
+                let mut best_score = i32::MIN;
+                for &mv in &moves {
+                    let undo = game.make_move(&mut state, mv);
+                    let score = match game.outcome(&state) {
+                        Some(outcome) => {
+                            match Wdl::from_outcome(outcome, game.side_to_move(&state)) {
+                                Wdl::Loss => selfplay_lab::search::SCORE_WIN,
+                                Wdl::Draw => 0,
+                                Wdl::Win => -selfplay_lab::search::SCORE_WIN,
+                            }
+                        }
+                        None => -evaluator.leaf_value(game, &state),
+                    };
+                    game.unmake_move(&mut state, mv, undo);
+                    if score > best_score {
+                        best_score = score;
+                        best_action = Some(game.action_id(&state, mv));
+                    }
+                }
+                let raw_ok = best_action.is_some_and(|a| probe.optimal.contains(&a));
+                let searched_ok = budgets
+                    .iter()
+                    .map(|&budget| {
+                        let mut searcher: Searcher<ForwardChess> =
+                            Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+                        let result = searcher.search(game, &mut state, 512, budget, &mut evaluator);
+                        result
+                            .best_move
+                            .is_some_and(|mv| probe.optimal.contains(&game.action_id(&state, mv)))
+                    })
+                    .collect();
+                (raw_ok, searched_ok)
+            })
+            .collect()
+    });
+    let n = probes.len().max(1) as f64;
+    ProbeReport {
+        states: probes.len(),
+        raw_optimal_rate: results.iter().filter(|(raw, _)| *raw).count() as f64 / n,
+        searched_optimal_rate: (0..budgets.len())
+            .map(|i| results.iter().filter(|(_, s)| s[i]).count() as f64 / n)
+            .collect(),
+    }
 }
 
 // ---------------------------------------------------------------------------

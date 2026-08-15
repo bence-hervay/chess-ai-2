@@ -12,8 +12,10 @@
 pub mod data;
 pub mod evaluation;
 pub mod experiment;
+pub mod features;
 pub mod game;
 pub mod games;
 pub mod model;
 pub mod search;
+pub mod structured_eval;
 pub mod training;

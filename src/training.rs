@@ -129,7 +129,7 @@ pub fn build_exact_dataset<G: Game>(game: &G) -> ExactDataset {
 
 /// Second hash stream for thinning evaluation buckets, so thinning is
 /// independent of the split assignment.
-const EVAL_THIN_SALT: u64 = 0x5eed_ab1e_0f0f_0f0f;
+pub const EVAL_THIN_SALT: u64 = 0x5eed_ab1e_0f0f_0f0f;
 
 /// Oracle dataset for repetition-capable games from a retrograde
 /// solution. Evaluation-only: `train` stays empty; `val`/`test` are the

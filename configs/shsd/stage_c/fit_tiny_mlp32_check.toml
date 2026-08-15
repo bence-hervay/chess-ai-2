@@ -1,0 +1,20 @@
+# Stage C1 pipeline validation on fc-tiny (exact in-process solve).
+train_positions = 40000
+eval_cap = 8000
+probe_states = 500
+probe_nodes = [400, 6400]
+seed = 1
+threads = 4
+
+[game]
+kind = "forward_chess"
+ruleset = "tiny"
+
+[source]
+kind = "solve"
+max_positions = 200000
+
+[model]
+kind = "raw_mlp"
+width = 32
+steps = 8000
