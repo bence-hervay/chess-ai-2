@@ -56,8 +56,21 @@ time.
 | 6 — Standard chess integration | **PASS** | [reports/phase_06.md](reports/phase_06.md) |
 | 7 — Measurable chess strength | **PASS** | [reports/phase_07.md](reports/phase_07.md) |
 | 8 — Forward Chess rules | **PASS** | [reports/phase_08.md](reports/phase_08.md) |
+| 9 — Forward Chess learning | in progress | [reports/phase_09_progress.md](reports/phase_09_progress.md) |
 
-### Current state (2026-08-14)
+### Current state (2026-08-15)
+
+Phase 9 is underway: **tabula-rasa full-board Forward Chess reached
++476 relative pool Elo in 56 generations** (400-node campaign to
++360, then an 800-node fork through the plateau; bootstrap CIs ±~90;
+pool-relative only, never human-comparable). Search scaling is
+monotone through 64× (0.988); w32 reproduces its compute-efficiency
+win from chess. Deep-search self-play also flushed out a real rules
+bug the differential tests could not see (D031: Black's rotated king
+home is d8; stale castling rights + a u16 file wrap let a "castle"
+capture the king) — fixed, regression-tested, and all tainted results
+re-run. Training now runs through resumable/forkable campaign tooling
+with cached Elo-curve evaluation (`tools/README.md`).
 
 Phases 0–8 complete and promoted. Phase 8 brought **Forward Chess in,
 exactly**:
