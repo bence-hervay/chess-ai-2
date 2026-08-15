@@ -1,13 +1,25 @@
-# Minimal CPU-First Self-Play Game AI
+# CPU-First Game AI Research Lab
 
-A Rust research system that learns deterministic, two-player, perfect-information,
-zero-sum board games through search-guided self-play (Expert Iteration with
-generic alpha-beta search), without game-specific strategic knowledge.
+A Rust research system for learning deterministic, two-player,
+perfect-information, zero-sum board games (Connect-k, Breakthrough,
+Othello, standard chess, Forward Chess) on CPU only.
 
-The governing specification is
-[`minimal_cpu_first_self_play_game_ai_research_plan.md`](minimal_cpu_first_self_play_game_ai_research_plan.md).
-The project progresses one validated phase at a time; each phase ends with a
-report in [`reports/`](reports/).
+The repository hosts two research programs, kept deliberately separate:
+
+1. **Program 1 (completed baseline)** — zero-knowledge self-play
+   (Expert Iteration, generic alpha–beta, raw sparse embedding-sum MLP),
+   governed by
+   [`minimal_cpu_first_self_play_game_ai_research_plan.md`](minimal_cpu_first_self_play_game_ai_research_plan.md).
+   Phases 0–9, reports in [`reports/`](reports/) (`phase_*.md`). Its
+   engines, solvers, and match protocols are the frozen baselines.
+2. **Program 2 (current)** — structured-heuristic, search-distillation
+   research: hand-designed *measurements*, learned *strategy* (compact
+   structured evaluators, search distillation, learned move ordering and
+   search control), governed by
+   [`structured_heuristic_search_distillation_game_ai_research_program.md`](structured_heuristic_search_distillation_game_ai_research_program.md).
+   Stage reports live in [`reports/shsd/`](reports/shsd/), starting with
+   the [Stage A audit](reports/shsd/stage_a_audit.md) that maps which
+   Program 1 components are reused.
 
 ## Building and testing
 
