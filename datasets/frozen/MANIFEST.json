@@ -1,0 +1,33 @@
+{
+  "comment": "Frozen evaluation sets (SHSD program §20.2). Files listed here are immutable after publication; new versions get new names. Hash-bucket conventions define implicit frozen splits without copying data.",
+  "conventions": {
+    "exact_split_rule": "bucket = splitmix64(position_key) % 10; 0-7 train, 8 val, 9 test (training.rs, unchanged since Phase 2)",
+    "eval_thinning": "second stream splitmix64(key ^ 0x5eed_ab1e_0f0f_0f0f), caps recorded per run (D029)",
+    "relabel_sampling": "keep position iff splitmix64(key ^ 0x7eac_4e2d_a7a5_1e11) % sample_one_in == 0 (data.rs)"
+  },
+  "sets": [
+    {
+      "name": "fc_tiny_exact_valtest",
+      "kind": "implicit_exact_buckets",
+      "definition": "Forward Chess tiny retrograde solution, buckets 8 (val) and 9 (test) under exact_split_rule",
+      "source_solve": "runs/20260814-190726-solve-retro-fc-tiny-4deabb1 (root Draw, 83,947 reachable positions)",
+      "note": "regenerable exactly by `lab solve configs/phase_08/solve_tiny.toml`"
+    },
+    {
+      "name": "fc_small_exact_valtest",
+      "kind": "implicit_exact_buckets",
+      "definition": "Forward Chess small retrograde solution, buckets 8/9, thinned to ~20k states each under eval_thinning",
+      "source_solve": "runs/20260814-190733-solve-retro-fc-small-4deabb1 (root Draw, 46,549,591 reachable; tablebase.bin checksummed)"
+    },
+    {
+      "name": "fc_full_shadow_v1",
+      "kind": "frozen_file",
+      "file": "fc_full_shadow_v1.jsonl",
+      "sha256": "878748c4b1dcc5c79b95995ffa7442578615a40ee71f5a299296918d25dd0edb",
+      "definition": "300 fc-full positions from c03-champion selfplay trajectories (seed 1), labelled at 100/400/1600 shallow + 6400 deep + all-children 400 nodes by the c03 evaluator",
+      "source_run": "runs/20260815-211948-relabel-fc-full-d691b19",
+      "config": "configs/shsd/stage_b/relabel_fc_full_w64_s1.toml",
+      "purpose": "shadow-search diagnostic constant across Stage C+ evaluator work; never used for training or tuning"
+    }
+  ]
+}

@@ -14,6 +14,10 @@ use burn::module::{AutodiffModule, Module as _};
 use burn::prelude::Backend as _;
 use burn::record::{BinFileRecorder, FullPrecisionSettings};
 use clap::{Parser, Subcommand};
+use selfplay_lab::data::{
+    collect_positions, join_retrograde_oracle, label_positions, summarize, OracleJoinStats,
+    RelabelSummary, TrajectorySpec,
+};
 use selfplay_lab::evaluation::{
     evaluate_model_oracle, exploitability_vs_perfect, play_paired_match,
     retrograde_searched_candidates, search_disagreement_analysis, searched_decision_metrics,
@@ -30,10 +34,12 @@ use selfplay_lab::games::connect_k::ConnectK;
 use selfplay_lab::games::forward_chess::{read_tablebase_with, write_tablebase, ForwardChess};
 use selfplay_lab::games::othello::Othello;
 use selfplay_lab::games::GameSpec;
-use selfplay_lab::model::{CompiledNet, InferBackend, ModelDims, PolicyValueNet, TrainBackend};
+use selfplay_lab::model::{
+    CompiledNet, InferBackend, ModelDims, ModelEvaluator, PolicyValueNet, TrainBackend,
+};
 use selfplay_lab::search::{
-    enumerate_solved, exhaustive_negamax, solve_retrograde, ExactSolver, MoveOrdering, Searcher,
-    Wdl, ZeroEvaluator,
+    enumerate_solved, exhaustive_negamax, solve_retrograde, Evaluator, ExactSolver, MoveOrdering,
+    Searcher, Wdl, ZeroEvaluator,
 };
 use selfplay_lab::training::{
     build_exact_dataset, build_retrograde_dataset, generate_selfplay, make_batch, splitmix64,
@@ -118,6 +124,14 @@ enum LabCommand {
     /// Stockfish diagnostic ceiling (teacher-assisted; plan §26).
     Teacher {
         /// Path to a teacher configuration file.
+        config: PathBuf,
+    },
+    /// Deep-search relabelling: sample positions from trajectories and
+    /// label them with shallow, deep, and counterfactual child searches,
+    /// with target provenance and optional exact-oracle join (SHSD
+    /// program §18.2, §19.5, §55).
+    Relabel {
+        /// Path to a relabel configuration file.
         config: PathBuf,
     },
     /// Run a manifest of experiment configs with CPU-slot scheduling.
@@ -299,6 +313,7 @@ fn main() {
         LabCommand::Train { config } => train(&config),
         LabCommand::Selfplay { config } => selfplay(&config),
         LabCommand::Teacher { config } => teacher(&config),
+        LabCommand::Relabel { config } => relabel(&config),
         LabCommand::Sweep { manifest } => sweep(&manifest),
         LabCommand::Play {
             game,
@@ -2290,6 +2305,284 @@ fn play(game_label: &str, checkpoint: Option<&Path>, nodes: u64, side: &str) -> 
         }
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// lab relabel (SHSD Stage B instrumentation)
+// ---------------------------------------------------------------------------
+
+/// Counterfactual child labelling policy (SHSD §19.5).
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum ChildPolicy {
+    None,
+    All,
+}
+
+/// Exact oracle joined onto the records (SHSD §9.5).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum OracleSpec {
+    /// No oracle join.
+    None {},
+    /// Solve the configured game in-process by retrograde analysis and
+    /// join by position key (repetition-as-draw caveat, D029).
+    Retrograde { max_positions: usize },
+}
+
+/// Fully explicit configuration for `lab relabel`.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RelabelConfig {
+    game: GameSpec,
+    /// `"zero"` or a checkpoint directory. The evaluator drives
+    /// trajectory play and every labelling search, and is recorded in
+    /// each record (teacher versioning, SHSD §20.5).
+    evaluator: String,
+    trajectories: TrajectorySpec,
+    /// Keep a position iff `splitmix64(key ^ salt) % sample_one_in == 0`
+    /// (1 = keep every visited position).
+    sample_one_in: u64,
+    /// Cap on distinct labelled positions.
+    max_positions: usize,
+    /// Shadow budgets compared against the deep label (may be empty).
+    shallow_nodes: Vec<u64>,
+    deep_nodes: u64,
+    children: ChildPolicy,
+    child_nodes: u64,
+    oracle: OracleSpec,
+    seed: u64,
+    threads: usize,
+}
+
+fn relabel(config_path: &Path) -> Result<(), String> {
+    let config: RelabelConfig = read_config(config_path)?;
+    if config.deep_nodes == 0 || config.sample_one_in == 0 || config.max_positions == 0 {
+        return Err("deep_nodes, sample_one_in, and max_positions must be positive".into());
+    }
+    if matches!(config.game, GameSpec::Chess {}) && !matches!(config.oracle, OracleSpec::None {}) {
+        return Err("chess cannot be exactly solved; use oracle kind = \"none\"".into());
+    }
+    let label = format!("relabel-{}", config.game.label());
+    let (run_dir, manifest) = start_run(&label, &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    dispatch_game!(&config.game, game, {
+        if config.evaluator == "zero" {
+            say(
+                "evaluator: zero (search-only baseline)".to_string(),
+                &mut log,
+            );
+            relabel_run(&game, &config, &run_dir, &mut log, || ZeroEvaluator)?;
+        } else {
+            let dir = PathBuf::from(&config.evaluator);
+            let (net, dims, _) = load_checkpoint(&dir)?;
+            if dims.feature_count != game.feature_count()
+                || dims.action_count != game.action_count()
+            {
+                return Err(format!(
+                    "checkpoint dims {dims:?} do not fit {} ({} features / {} actions)",
+                    config.game.label(),
+                    game.feature_count(),
+                    game.action_count()
+                ));
+            }
+            say(
+                format!("evaluator: {} (w{})", dir.display(), dims.width),
+                &mut log,
+            );
+            let compiled = CompiledNet::from_net(&net, dims);
+            relabel_run(&game, &config, &run_dir, &mut log, || {
+                ModelEvaluator::new(&compiled)
+            })?;
+        }
+    });
+    finish_run(&run_dir, manifest, &log)
+}
+
+/// Cost accounting for one relabelling run (SHSD §47.8).
+#[derive(Serialize)]
+struct RelabelCost {
+    wall_seconds: f64,
+    cpu_seconds: f64,
+    utilization: f64,
+    positions_per_second: f64,
+    total_search_nodes: u64,
+    peak_rss_bytes: Option<u64>,
+}
+
+#[derive(Serialize)]
+struct RelabelOutput<'a> {
+    summary: &'a RelabelSummary,
+    oracle_join: Option<OracleJoinStats>,
+    cost: RelabelCost,
+}
+
+fn relabel_run<G, E, F>(
+    game: &G,
+    config: &RelabelConfig,
+    run_dir: &RunDir,
+    log: &mut String,
+    make_eval: F,
+) -> Result<(), String>
+where
+    G: Game,
+    E: Evaluator<G>,
+    F: Fn() -> E + Sync,
+{
+    let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+    let started = Instant::now();
+
+    let samples = collect_positions(
+        game,
+        &config.trajectories,
+        config.sample_one_in,
+        config.max_positions,
+        config.seed,
+        config.threads,
+        &make_eval,
+    );
+    let total_weight: u64 = samples.iter().map(|s| u64::from(s.weight)).sum();
+    say(
+        format!(
+            "sampled {} distinct positions ({} visits) from {} trajectories",
+            samples.len(),
+            total_weight,
+            config.trajectories.games()
+        ),
+        log,
+    );
+    if samples.is_empty() {
+        return Err("no positions sampled; lower sample_one_in or add trajectories".into());
+    }
+
+    let mut records = label_positions(
+        game,
+        &samples,
+        &config.evaluator,
+        &config.shallow_nodes,
+        config.deep_nodes,
+        config.children == ChildPolicy::All,
+        config.child_nodes,
+        config.threads,
+        &make_eval,
+    );
+    say(format!("labelled {} positions", records.len()), log);
+
+    let oracle_join = match &config.oracle {
+        OracleSpec::None {} => None,
+        OracleSpec::Retrograde { max_positions } => {
+            say(
+                "solving the exact oracle by retrograde analysis".to_string(),
+                log,
+            );
+            let solution = solve_retrograde(game, *max_positions)?;
+            let stats = join_retrograde_oracle(game, &mut records, &solution);
+            say(
+                format!(
+                    "oracle join: {} joined, {} missed of {} positions",
+                    stats.joined,
+                    stats.missed,
+                    records.len()
+                ),
+                log,
+            );
+            Some(stats)
+        }
+    };
+
+    let summary = summarize(&records, &config.shallow_nodes);
+    run_dir
+        .append_jsonl("records.jsonl", &records)
+        .map_err(|e| format!("writing records.jsonl: {e}"))?;
+
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    let total_search_nodes: u64 = records
+        .iter()
+        .map(|r| {
+            r.shallow.iter().map(|l| l.nodes).sum::<u64>()
+                + r.deep.nodes
+                + r.children.iter().map(|c| c.nodes).sum::<u64>()
+        })
+        .sum();
+    let cost = RelabelCost {
+        wall_seconds,
+        cpu_seconds,
+        utilization: cpu_seconds / (wall_seconds * config.threads as f64),
+        positions_per_second: records.len() as f64 / wall_seconds,
+        total_search_nodes,
+        peak_rss_bytes: peak_rss_bytes(),
+    };
+    say(
+        format!(
+            "cost: {:.1}s wall, {:.1}s cpu (utilization {:.2}), {:.1} positions/s, {} nodes",
+            cost.wall_seconds,
+            cost.cpu_seconds,
+            cost.utilization,
+            cost.positions_per_second,
+            cost.total_search_nodes
+        ),
+        log,
+    );
+    for line in relabel_headline(&summary) {
+        say(line, log);
+    }
+    run_dir
+        .write_json(
+            "summary.json",
+            &RelabelOutput {
+                summary: &summary,
+                oracle_join,
+                cost,
+            },
+        )
+        .map_err(|e| format!("writing summary.json: {e}"))?;
+    Ok(())
+}
+
+/// Human-readable headline of a relabel summary for the run log.
+fn relabel_headline(summary: &RelabelSummary) -> Vec<String> {
+    let mut lines = Vec::new();
+    for budget in &summary.shallow {
+        lines.push(format!(
+            "shallow {:>6} nodes: best-move agreement with deep {:.3}, mean |value residual| {:.1} ({} heuristic pairs)",
+            budget.node_budget,
+            budget.best_move_agree_rate,
+            budget.mean_abs_value_residual,
+            budget.heuristic_pairs
+        ));
+    }
+    lines.push(format!(
+        "deep stability: last-iteration stable {:.3}, mean best-move changes {:.2}",
+        summary.deep_last_iteration_stable, summary.deep_mean_best_move_changes
+    ));
+    lines.push(format!(
+        "ordering: deep-best mean rank {:.2}, top-1 {:.3}, top-3 {:.3}",
+        summary.order_rank_mean, summary.order_top1_rate, summary.order_top3_rate
+    ));
+    if let Some(oracle) = &summary.oracle {
+        lines.push(format!(
+            "oracle: {} joined (W/D/L {}/{}/{}), deep optimal-decision rate {:.4}",
+            oracle.joined,
+            oracle.wdl_counts[0],
+            oracle.wdl_counts[1],
+            oracle.wdl_counts[2],
+            oracle.deep_optimal_rate
+        ));
+        for (i, rate) in oracle.shallow_optimal_rate.iter().enumerate() {
+            lines.push(format!(
+                "oracle: shallow[{i}] optimal-decision rate {rate:.4}"
+            ));
+        }
+        if let Some(rate) = oracle.child_top_optimal_rate {
+            lines.push(format!("oracle: child-argmax optimal rate {rate:.4}"));
+        }
+    }
+    lines
 }
 
 /// Load a checkpoint directory (`model.bin` + `model.json`) into an

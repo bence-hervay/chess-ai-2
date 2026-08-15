@@ -339,3 +339,32 @@ and phantom-castle-with-forced-stale-rights tests; RULES.md §12 now
 spells out the d8 home. All fc-full training results produced before
 this fix (first fc_full_w64 campaign and its n800 fork) are tainted by
 phantom black castling and were discarded and re-run.
+
+## 2026-08-15 — D032: SHSD program adoption and teacher-record design
+
+The governing spec for new work is now
+`structured_heuristic_search_distillation_game_ai_research_program.md`
+(stage reports in `reports/shsd/`); Program 1 (phases 0–9) is the
+frozen baseline per the Stage A audit. Binding Stage B decisions:
+
+- **Positions in teacher records are action paths from the initial
+  state**, not feature vectors or per-game FEN serializations: exact,
+  game-agnostic, and the only encoding that reconstructs repetition
+  history and move counters that `position_key` omits. Replay is
+  validated (`data::replay_path`), and errors rather than panics.
+- **Every record carries target provenance** (§19.9 enum) and the
+  labelling evaluator's identity; duplicate visits are counted in a
+  `weight` field (§20.4), never silently dropped.
+- Position sampling is by position-key hash (`splitmix64(key ^
+  SAMPLE_SALT) % sample_one_in`), so a position is always in or always
+  out regardless of which trajectory found it, and trajectory
+  exploration is ε-uniform (not policy-sampled) to keep the generator
+  evaluator-agnostic.
+- `SearchResult` records per-iteration `(best move, value)`; teacher
+  labels store this ladder as best-move-stability evidence, because a
+  fixed-budget deep search is a measurably unstable teacher (fc-full at
+  6,400 nodes changes its best move during the last iteration in 63% of
+  sampled positions — Stage B report).
+- Constants live in `parameter_ledger.json` with §13 provenance
+  classes; frozen evaluation sets are registered in
+  `datasets/frozen/MANIFEST.json` and never trained on.

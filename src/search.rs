@@ -500,7 +500,7 @@ fn score_from_tt(score: i32, ply: u32) -> i32 {
 }
 
 /// Result of one iterative-deepening search.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct SearchResult<M> {
     pub best_move: Option<M>,
     pub value: i32,
@@ -509,6 +509,10 @@ pub struct SearchResult<M> {
     pub nodes: u64,
     /// Nodes spent up to and including the last fully completed depth.
     pub nodes_at_completed_depth: u64,
+    /// `(best move, value)` after each completed iteration, indexed by
+    /// `depth - 1`. Best-move stability across depths is teacher-record
+    /// evidence (SHSD program §18.2).
+    pub per_depth: Vec<(M, i32)>,
 }
 
 /// The production search: negamax with alpha–beta pruning, iterative
@@ -579,6 +583,7 @@ impl<G: Game> Searcher<G> {
             completed_depth: 0,
             nodes: 0,
             nodes_at_completed_depth: 0,
+            per_depth: Vec::new(),
         };
         if game.outcome(state).is_some() {
             return result;
@@ -616,6 +621,7 @@ impl<G: Game> Searcher<G> {
             result.value = best_score;
             result.completed_depth = depth;
             result.nodes_at_completed_depth = self.nodes;
+            result.per_depth.push((best_move, best_score));
             // A proven win/loss with distance within the searched horizon
             // cannot change at deeper depths; stop deterministically.
             if best_score.abs() > SCORE_TERMINAL_BOUND

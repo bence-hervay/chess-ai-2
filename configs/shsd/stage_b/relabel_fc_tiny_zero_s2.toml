@@ -1,0 +1,26 @@
+# SHSD Stage B gate: teacher-instrumentation validation on the exactly
+# solved fc-tiny (reports/shsd/cards/stage_b_teacher_validation.md).
+# Zero evaluator = search-only baseline. Random trajectories do not
+# depend on the evaluator, so runs with the same seed label identical
+# positions — the zero/w64 comparison is paired by construction.
+evaluator = "zero"
+sample_one_in = 2
+max_positions = 2000
+shallow_nodes = [50, 200, 800]
+deep_nodes = 6400
+children = "all"
+child_nodes = 800
+seed = 2
+threads = 8
+
+[game]
+kind = "forward_chess"
+ruleset = "tiny"
+
+[trajectories]
+kind = "random"
+games = 600
+
+[oracle]
+kind = "retrograde"
+max_positions = 200000

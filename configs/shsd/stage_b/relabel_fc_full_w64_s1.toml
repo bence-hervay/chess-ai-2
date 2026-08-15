@@ -1,0 +1,25 @@
+# SHSD Stage B: residual-instrument check on full Forward Chess with the
+# strongest Program-1 champion (no oracle exists at this scale; the
+# purpose is nonzero shallow-to-deep residual measurement, §18.2/§39.1).
+evaluator = "campaigns/fc_full_w64_n800/champion"
+sample_one_in = 2
+max_positions = 300
+shallow_nodes = [100, 400, 1600]
+deep_nodes = 6400
+children = "all"
+child_nodes = 400
+seed = 1
+threads = 8
+
+[game]
+kind = "forward_chess"
+ruleset = "full"
+
+[trajectories]
+kind = "selfplay"
+games = 40
+nodes = 400
+epsilon = 0.10
+
+[oracle]
+kind = "none"

@@ -45,6 +45,7 @@ lab bench --checkpoint campaigns/my_campaign/champion --movetime-ms 2000  # node
 tools/run_match.sh anchor ckpt:<dir> sf-nodes:20 150 st=0.3  # chess vs Stockfish (§27)
 lab solve configs/phase_08/solve_small.toml           # exact solving + tablebase backup
 tools/check.sh                           # fmt + clippy + full test suite
+lab relabel configs/shsd/stage_b/relabel_fc_tiny_zero_s1.toml  # deep-search teacher records (SHSD)
 lab evaluate/train/selfplay/teacher/sweep <config.toml>  # raw lab commands
 ```
 
@@ -71,7 +72,21 @@ time.
 | 8 — Forward Chess rules | **PASS** | [reports/phase_08.md](reports/phase_08.md) |
 | 9 — Forward Chess learning | in progress | [reports/phase_09_progress.md](reports/phase_09_progress.md) |
 
-### Current state (2026-08-15)
+### Program 2 (SHSD) progress
+
+| Stage | Result | Report |
+|---|---|---|
+| A — Recover and audit the existing system | **PASS** | [reports/shsd/stage_a_audit.md](reports/shsd/stage_a_audit.md) |
+| B — Research instrumentation | **PASS** | [reports/shsd/stage_b_instrumentation.md](reports/shsd/stage_b_instrumentation.md) |
+
+Stage B delivered provenance-typed deep-search teacher records
+(`lab relabel`), validated against the exact fc-tiny oracle across 3
+seeds and two evaluators (monotone budget→accuracy, paired model
+comparison, ordering-error metrics, 100% oracle join), the
+parameter-provenance ledger (`parameter_ledger.json`), and the frozen
+evaluation-set registry (`datasets/frozen/`).
+
+### Program 1 state (2026-08-15, frozen baseline)
 
 Phase 9 is underway: **tabula-rasa full-board Forward Chess reached
 +476 relative pool Elo in 56 generations** (400-node campaign to

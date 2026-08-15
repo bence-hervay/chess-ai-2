@@ -1,0 +1,172 @@
+{
+  "comment": "Parameter-provenance ledger (SHSD program §13). Every numeric parameter in production code is classified: learned | hyperparameter | mathematical | engineering. Unclassified constants are defects. Per-run configuration values carry their provenance through experiment cards and resolved.toml; this ledger covers constants living in code. Stage reports list every change to this file.",
+  "updated": "2026-08-15",
+  "entries": [
+    {
+      "name": "exploration_epsilon",
+      "component": "training::generate_selfplay",
+      "class": "hyperparameter",
+      "value": 0.10,
+      "unit": "probability",
+      "allowed_range": "[0, 0.5]",
+      "selection": "3 eps x 3 seeds calibration, Phase 3 (D018): 0.10 most reliable exact-strategy recovery",
+      "date": "2026-08-14",
+      "code_revision": "bd70662",
+      "notes": "frozen for the Program-1 recipe; SHSD reuses only for trajectory diversity where configured per run"
+    },
+    {
+      "name": "replay_generations",
+      "component": "selfplay recipe",
+      "class": "hyperparameter",
+      "value": 4,
+      "unit": "generations",
+      "allowed_range": ">=1",
+      "selection": "D016: current-gen-only training forgot measurably; one fixed FIFO window",
+      "date": "2026-08-14",
+      "code_revision": "bd70662"
+    },
+    {
+      "name": "learning_rate",
+      "component": "training recipe v1",
+      "class": "hyperparameter",
+      "value": 0.001,
+      "unit": "Adam step size",
+      "allowed_range": "(0, 0.1]",
+      "selection": "D011 chosen default; Phase 2 sweeps monotone and seed-stable, so no tuning experiment",
+      "date": "2026-08-14",
+      "code_revision": "64d3400"
+    },
+    {
+      "name": "batch_size",
+      "component": "training recipe v1",
+      "class": "hyperparameter",
+      "value": 256,
+      "unit": "examples",
+      "allowed_range": ">=32",
+      "selection": "D011 chosen default (see learning_rate)",
+      "date": "2026-08-14",
+      "code_revision": "64d3400"
+    },
+    {
+      "name": "score_win",
+      "component": "search score convention",
+      "class": "mathematical",
+      "value": 32000,
+      "unit": "score",
+      "allowed_range": "fixed",
+      "selection": "D006: forced win at ply p scores 32000 - p; representational constant",
+      "date": "2026-08-14",
+      "code_revision": "64d3400"
+    },
+    {
+      "name": "score_terminal_bound",
+      "component": "search score convention",
+      "class": "mathematical",
+      "value": 30000,
+      "unit": "score",
+      "allowed_range": "fixed",
+      "selection": "D006: |score| above this proves a terminal result",
+      "date": "2026-08-14",
+      "code_revision": "64d3400"
+    },
+    {
+      "name": "score_eval_max",
+      "component": "search score convention",
+      "class": "mathematical",
+      "value": 1000,
+      "unit": "score",
+      "allowed_range": "fixed",
+      "selection": "D006/D019: leaf evaluations clamp to +-1000; leaf = round(1000*(P(win)-P(loss)))",
+      "date": "2026-08-14",
+      "code_revision": "64d3400"
+    },
+    {
+      "name": "selfplay_tt_log2",
+      "component": "search transposition table",
+      "class": "engineering",
+      "value": 16,
+      "unit": "log2 entries",
+      "allowed_range": "[10, 30]",
+      "selection": "memory bound per worker (~2 MB); compute_strength_profile.md documents playing RSS",
+      "date": "2026-08-14",
+      "code_revision": "bd70662"
+    },
+    {
+      "name": "solve_tt_log2",
+      "component": "lab solve experiments",
+      "class": "engineering",
+      "value": 20,
+      "unit": "log2 entries",
+      "allowed_range": "[10, 30]",
+      "selection": "single-process solve runs afford a larger table",
+      "date": "2026-08-14",
+      "code_revision": "64d3400"
+    },
+    {
+      "name": "promotion_tolerance",
+      "component": "oracle promotion rule v2",
+      "class": "hyperparameter",
+      "value": 0.005,
+      "unit": "validation regret",
+      "allowed_range": "[0, 0.05]",
+      "selection": "D017: strict rule halted on metric jitter at plateau",
+      "date": "2026-08-14",
+      "code_revision": "bd70662"
+    },
+    {
+      "name": "match_gate_confidence",
+      "component": "match promotion/strike gates",
+      "class": "hyperparameter",
+      "value": 0.95,
+      "unit": "confidence level",
+      "allowed_range": "[0.9, 0.99]",
+      "selection": "D021 promote on LCB95>0.5; D030 strike on UCB95<0.5 (symmetric proof requirement)",
+      "date": "2026-08-15",
+      "code_revision": "0d444ae"
+    },
+    {
+      "name": "deadline_check_interval",
+      "component": "search wall-clock deadline",
+      "class": "engineering",
+      "value": 128,
+      "unit": "nodes",
+      "allowed_range": ">=1",
+      "selection": "D025: model evaluators cost ~0.2 ms/node; 4096 lost every game on time",
+      "date": "2026-08-14",
+      "code_revision": "c03fefc"
+    },
+    {
+      "name": "eval_thin_salt",
+      "component": "training::build_retrograde_dataset",
+      "class": "engineering",
+      "value": "0x5eed_ab1e_0f0f_0f0f",
+      "unit": "hash salt",
+      "allowed_range": "any fixed u64",
+      "selection": "arbitrary constant separating thinning stream from split stream (D029); no strategic content",
+      "date": "2026-08-14",
+      "code_revision": "c9c1ef5"
+    },
+    {
+      "name": "sample_salt",
+      "component": "data::collect_positions",
+      "class": "engineering",
+      "value": "0x7eac_4e2d_a7a5_1e11",
+      "unit": "hash salt",
+      "allowed_range": "any fixed u64",
+      "selection": "arbitrary constant separating relabel sampling from split/thinning streams; no strategic content",
+      "date": "2026-08-15",
+      "code_revision": "stage-b"
+    },
+    {
+      "name": "labelling_max_depth",
+      "component": "data::label_positions / collect_positions",
+      "class": "engineering",
+      "value": 512,
+      "unit": "plies",
+      "allowed_range": ">= longest legal game considered",
+      "selection": "safety bound matching training/self-play searches; iterative deepening stops on node budget first",
+      "date": "2026-08-15",
+      "code_revision": "stage-b"
+    }
+  ]
+}
