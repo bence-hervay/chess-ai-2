@@ -1,0 +1,24 @@
+# F2: fc-full ordering from teacher counterfactual records.
+train_positions = 10000
+eval_cap = 20000
+probe_states = 0
+probe_nodes = []
+seed = 3
+threads = 4
+
+[game]
+kind = "forward_chess"
+ruleset = "full"
+
+[source]
+kind = "records"
+path = "runs/20260815-232720-relabel-fc-full-69f4289/records.jsonl"
+
+[model]
+kind = "ranker_from_records"
+steps = 20000
+batch = 256
+lr = 0.02
+l2 = 0.0001
+pair_cap = 8
+pair_margin = 0

@@ -217,6 +217,29 @@ enum EvaluateConfig {
     /// checkpoint or the zero evaluator, at node or movetime budgets
     /// (SHSD §56 fixed-node / fixed-time gate).
     StructuredMatch(StructuredMatchConfig),
+    /// One MLP value model against itself with different move
+    /// orderings ("policy" head vs a learned ranker) — the F2
+    /// ordering-only comparison.
+    OrderedMlpMatch(OrderedMlpMatchConfig),
+}
+
+/// Ordering-comparison match parameters (SHSD F2).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct OrderedMlpMatchConfig {
+    /// MLP checkpoint directory supplying the value model to BOTH sides.
+    mlp_checkpoint: PathBuf,
+    /// Candidate ordering: `"policy"` or a `ranker.json` path.
+    ordering: String,
+    /// Opponent ordering: `"policy"` or a `ranker.json` path.
+    opponent_ordering: String,
+    pairs: u64,
+    opening_plies: u32,
+    /// One budget for both sides: the comparison is ordering-only.
+    budget: selfplay_lab::evaluation::MoveBudget,
+    seed: u64,
+    threads: usize,
+    game: GameSpec,
 }
 
 /// Structured-vs-baseline match parameters (SHSD Stage C2).
@@ -445,7 +468,144 @@ fn evaluate(config_path: &Path) -> Result<(), String> {
         EvaluateConfig::OracleProbe(config) => probe(config),
         EvaluateConfig::MatchProbe(config) => match_probe(config),
         EvaluateConfig::StructuredMatch(config) => structured_match(config),
+        EvaluateConfig::OrderedMlpMatch(config) => ordered_mlp_match(config),
     }
+}
+
+/// F2 ordering comparison: identical MLP value both sides, orderings
+/// differ. See `OrderedMlpMatchConfig`.
+fn ordered_mlp_match(config: OrderedMlpMatchConfig) -> Result<(), String> {
+    use selfplay_lab::evaluation::play_paired_match_with;
+    use selfplay_lab::games::forward_chess::{FcMove, FcState};
+    use selfplay_lab::model::ModelEvaluator;
+    use selfplay_lab::structured_eval::{MlpRankedEvaluator, MoveRanker};
+
+    let GameSpec::ForwardChess { ruleset } = &config.game else {
+        return Err("ordered_mlp_match currently supports forward_chess only".into());
+    };
+    if config.pairs == 0 {
+        return Err("pairs must be positive".into());
+    }
+    let game = ForwardChess::new(*ruleset);
+    let (net, dims, _) = load_checkpoint(&config.mlp_checkpoint)?;
+    if dims.feature_count != game.feature_count() || dims.action_count != game.action_count() {
+        return Err("mlp checkpoint dims do not fit the ruleset".into());
+    }
+    let compiled = CompiledNet::from_net(&net, dims);
+    let load_ranker = |spec: &str| -> Result<Option<MoveRanker>, String> {
+        if spec == "policy" {
+            Ok(None)
+        } else {
+            Ok(Some(
+                serde_json::from_str(
+                    &std::fs::read_to_string(spec)
+                        .map_err(|e| format!("reading ranker {spec}: {e}"))?,
+                )
+                .map_err(|e| format!("parsing ranker {spec}: {e}"))?,
+            ))
+        }
+    };
+    let candidate_ranker = load_ranker(&config.ordering)?;
+    let opponent_ranker = load_ranker(&config.opponent_ordering)?;
+
+    enum EitherEval<'a> {
+        Policy(ModelEvaluator<'a>),
+        Ranked(MlpRankedEvaluator<'a>),
+    }
+    impl selfplay_lab::search::Evaluator<ForwardChess> for EitherEval<'_> {
+        fn leaf_value(&mut self, game: &ForwardChess, state: &FcState) -> i32 {
+            match self {
+                EitherEval::Policy(e) => e.leaf_value(game, state),
+                EitherEval::Ranked(e) => e.leaf_value(game, state),
+            }
+        }
+        fn policy_scores(
+            &mut self,
+            game: &ForwardChess,
+            state: &FcState,
+            moves: &[FcMove],
+            out: &mut Vec<f32>,
+        ) -> bool {
+            match self {
+                EitherEval::Policy(e) => e.policy_scores(game, state, moves, out),
+                EitherEval::Ranked(e) => e.policy_scores(game, state, moves, out),
+            }
+        }
+    }
+    fn make<'a>(
+        game: &'a ForwardChess,
+        compiled: &'a CompiledNet,
+        ranker: &'a Option<MoveRanker>,
+    ) -> impl Fn() -> EitherEval<'a> + Sync + 'a {
+        move || match ranker {
+            None => EitherEval::Policy(ModelEvaluator::new(compiled)),
+            Some(r) => EitherEval::Ranked(MlpRankedEvaluator::new(game, compiled, r)),
+        }
+    }
+
+    let label = format!(
+        "ordermatch-{}-{}-vs-{}",
+        config.game.label(),
+        if candidate_ranker.is_some() {
+            "ranker"
+        } else {
+            "policy"
+        },
+        if opponent_ranker.is_some() {
+            "ranker"
+        } else {
+            "policy"
+        },
+    );
+    let (run_dir, manifest) = start_run(&label, &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    let started = Instant::now();
+    let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+    let result = play_paired_match_with(
+        &game,
+        make(&game, &compiled, &candidate_ranker),
+        make(&game, &compiled, &opponent_ranker),
+        config.pairs,
+        config.opening_plies,
+        config.budget,
+        config.budget,
+        config.seed,
+        config.threads,
+    );
+    say(
+        format!(
+            "candidate ordering score {:.4} [{:.4}, {:.4}] over {} games (W/D/L {}/{}/{}, mean plies {:.1})",
+            result.score,
+            result.score_lcb95,
+            result.score_ucb95,
+            result.games,
+            result.candidate_wins,
+            result.draws,
+            result.candidate_losses,
+            result.mean_plies
+        ),
+        &mut log,
+    );
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "result": result,
+                "cost": {
+                    "wall_seconds": wall_seconds,
+                    "cpu_seconds": cpu_seconds,
+                    "utilization": cpu_seconds / (wall_seconds * config.threads as f64),
+                },
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(&run_dir, manifest, &log)
 }
 
 fn match_probe(config: MatchProbeConfig) -> Result<(), String> {
@@ -2504,6 +2664,10 @@ enum FitSource {
     Tablebase { path: PathBuf },
     /// Solve the instance in-process (fc-tiny scale).
     Solve { max_positions: usize },
+    /// Teacher records written by `lab relabel` (`records.jsonl`):
+    /// no oracle; targets come from stored search labels. Only valid
+    /// with the `ranker_from_records` model.
+    Records { path: PathBuf },
 }
 
 /// Model family under fit. Both families consume identical train,
@@ -2535,6 +2699,20 @@ enum FitModel {
         /// Fixed depths for the with/without-ordering node comparison.
         depth_probe: Vec<u32>,
     },
+    /// Linear pairwise move ranker on teacher-record child labels
+    /// (F2: no oracle; §19.5 counterfactual values as noisy targets).
+    RankerFromRecords {
+        steps: u64,
+        batch: usize,
+        lr: f64,
+        l2: f64,
+        /// Max ranking pairs drawn per position (deterministic by key).
+        pair_cap: usize,
+        /// Minimum child-value difference (search score units) for a
+        /// pair to count as better/worse — noise guard on shallow
+        /// child searches.
+        pair_margin: i32,
+    },
 }
 
 impl FitModel {
@@ -2543,6 +2721,7 @@ impl FitModel {
             FitModel::Structured { recipe, .. } => recipe.label().to_string(),
             FitModel::RawMlp { width, .. } => format!("mlp-w{width}"),
             FitModel::Ranker { .. } => "move-ranker".to_string(),
+            FitModel::RankerFromRecords { .. } => "move-ranker-records".to_string(),
         }
     }
 }
@@ -2623,6 +2802,48 @@ fn fit(config_path: &Path) -> Result<(), String> {
     let cpu_before = process_cpu_seconds().unwrap_or(0.0);
     let started = Instant::now();
 
+    // -- Teacher-record source: no oracle, ranker-from-records only.
+    if let FitSource::Records { path } = &config.source {
+        let FitModel::RankerFromRecords {
+            steps,
+            batch,
+            lr,
+            l2,
+            pair_cap,
+            pair_margin,
+        } = &config.model
+        else {
+            return Err("source kind = records requires model kind = ranker_from_records".into());
+        };
+        if config.probe_states != 0 || !config.probe_nodes.is_empty() {
+            return Err(
+                "records source has no oracle probes; set probe_states = 0 and probe_nodes = []"
+                    .into(),
+            );
+        }
+        return fit_records_ranker(
+            &game,
+            &config,
+            path.clone(),
+            RecordsRankerParams {
+                steps: *steps,
+                batch: *batch,
+                lr: *lr,
+                l2: *l2,
+                pair_cap: *pair_cap,
+                pair_margin: *pair_margin,
+            },
+            &run_dir,
+            manifest,
+            log,
+            started,
+            cpu_before,
+        );
+    }
+    if matches!(config.model, FitModel::RankerFromRecords { .. }) {
+        return Err("model kind = ranker_from_records requires source kind = records".into());
+    }
+
     // -- Load the exact stream and select train/val/test states.
     let mut key_wdl: std::collections::HashMap<u64, Wdl> = std::collections::HashMap::new();
     let mut bucket_sizes = [0u64; 2];
@@ -2694,6 +2915,7 @@ fn fit(config_path: &Path) -> Result<(), String> {
     };
 
     match &config.source {
+        FitSource::Records { .. } => unreachable!("handled above"),
         FitSource::Tablebase { path } => {
             let bytes =
                 std::fs::read(path).map_err(|e| format!("reading {}: {e}", path.display()))?;
@@ -2844,7 +3066,9 @@ fn fit(config_path: &Path) -> Result<(), String> {
     // -- Fit the configured model and evaluate.
     #[allow(clippy::wildcard_in_or_patterns)]
     let (val_metrics, test_metrics, prior, probe_report, extraction_ns) = match &config.model {
-        FitModel::Ranker { .. } => unreachable!("handled above"),
+        FitModel::Ranker { .. } | FitModel::RankerFromRecords { .. } => {
+            unreachable!("handled above")
+        }
         FitModel::Structured {
             recipe,
             steps,
@@ -3173,6 +3397,308 @@ fn fit(config_path: &Path) -> Result<(), String> {
         )
         .map_err(|e| e.to_string())?;
     finish_run(&run_dir, manifest, &log)
+}
+
+/// Records-ranker parameters (unpacked from `FitModel::RankerFromRecords`).
+struct RecordsRankerParams {
+    steps: u64,
+    batch: usize,
+    lr: f64,
+    l2: f64,
+    pair_cap: usize,
+    pair_margin: i32,
+}
+
+/// Fit a move ranker on teacher-record child labels (F2 card): pairs
+/// from counterfactual child values, evaluation against the deep
+/// label's best action and the recorded policy-ordering rank.
+#[allow(clippy::too_many_arguments)] // one experiment, one call site
+fn fit_records_ranker(
+    game: &ForwardChess,
+    config: &FitConfig,
+    records_path: PathBuf,
+    params: RecordsRankerParams,
+    run_dir: &RunDir,
+    manifest: Manifest,
+    mut log: String,
+    started: Instant,
+    cpu_before: f64,
+) -> Result<(), String> {
+    use rand::Rng as _;
+    use rand::SeedableRng as _;
+    use selfplay_lab::data::{replay_path, TeacherRecord};
+    use selfplay_lab::features::forward_chess::{FcMoveFeatures, MOVE_FEATURE_DIMENSION};
+    use selfplay_lab::structured_eval::{
+        evaluate_move_ranker, fit_move_ranker, FitHyper, RankPair,
+    };
+
+    let text = std::fs::read_to_string(&records_path)
+        .map_err(|e| format!("reading {}: {e}", records_path.display()))?;
+    let mut records: Vec<TeacherRecord> = text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| serde_json::from_str(l).map_err(|e| format!("record parse: {e}")))
+        .collect::<Result<_, _>>()?;
+    records.retain(|r| r.children.len() >= 2);
+    say(
+        format!(
+            "{} usable records from {}",
+            records.len(),
+            records_path.display()
+        ),
+        &mut log,
+    );
+    if records.is_empty() {
+        return Err("no records with counterfactual children".into());
+    }
+
+    // Standard bucket split by position key; caps by the standing
+    // smallest-hash rules so subsets stay nested and deterministic.
+    let mut train: Vec<&TeacherRecord> = Vec::new();
+    let mut val: Vec<&TeacherRecord> = Vec::new();
+    let mut test: Vec<&TeacherRecord> = Vec::new();
+    for record in &records {
+        match splitmix64(record.key) % 10 {
+            8 => val.push(record),
+            9 => test.push(record),
+            _ => train.push(record),
+        }
+    }
+    train.sort_unstable_by_key(|r| splitmix64(r.key ^ FIT_TRAIN_SALT));
+    train.truncate(config.train_positions);
+    for bucket in [&mut val, &mut test] {
+        bucket.sort_unstable_by_key(|r| splitmix64(r.key ^ selfplay_lab::training::EVAL_THIN_SALT));
+        bucket.truncate(config.eval_cap);
+    }
+    say(
+        format!(
+            "records split: {} train / {} val / {} test (margin {}, cap {}/position)",
+            train.len(),
+            val.len(),
+            test.len(),
+            params.pair_margin,
+            params.pair_cap
+        ),
+        &mut log,
+    );
+
+    // Pair building and the teacher-rank metric both need the replayed
+    // state and per-move features; do both in one parallel pass.
+    struct RecordDerived {
+        pairs: Vec<RankPair>,
+        /// Rank of the deep-best action under the ranker is computed
+        /// after fitting; store the per-move features and the deep
+        /// best action here.
+        move_features: Vec<(u32, Vec<(u32, f32)>)>,
+        deep_best: u32,
+        policy_rank: u32,
+    }
+    let derive = |records: &[&TeacherRecord]| -> Result<Vec<RecordDerived>, String> {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(config.threads)
+            .build()
+            .expect("rayon pool");
+        pool.install(|| {
+            use rayon::prelude::*;
+            records
+                .par_iter()
+                .map(|record| {
+                    let state =
+                        replay_path(game, &record.path).map_err(|e| format!("replay: {e}"))?;
+                    let mut moves = Vec::new();
+                    game.legal_moves(&state, &mut moves);
+                    let mut extractor = FcMoveFeatures::new(game);
+                    let mut features: Vec<(u32, Vec<(u32, f32)>)> = Vec::new();
+                    for &mv in &moves {
+                        let mut x = Vec::new();
+                        extractor.extract(game, &state, mv, &mut x);
+                        features.push((game.action_id(&state, mv), x));
+                    }
+                    let feature_of = |action: u32| {
+                        features
+                            .iter()
+                            .find(|(a, _)| *a == action)
+                            .map(|(_, x)| x.clone())
+                            .ok_or_else(|| "child action not in legal moves".to_string())
+                    };
+                    // Candidate pairs: child value difference beyond the
+                    // margin; deterministic cap by position key.
+                    let mut candidates: Vec<(u32, u32)> = Vec::new();
+                    for a in &record.children {
+                        for b in &record.children {
+                            if a.value - b.value > params.pair_margin {
+                                candidates.push((a.action, b.action));
+                            }
+                        }
+                    }
+                    let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(
+                        splitmix64(record.key) ^ splitmix64(config.seed),
+                    );
+                    let chosen: Vec<usize> = if candidates.len() <= params.pair_cap {
+                        (0..candidates.len()).collect()
+                    } else {
+                        let mut set = std::collections::BTreeSet::new();
+                        while set.len() < params.pair_cap {
+                            set.insert(rng.gen_range(0..candidates.len()));
+                        }
+                        set.into_iter().collect()
+                    };
+                    let mut pairs = Vec::with_capacity(chosen.len());
+                    for index in chosen {
+                        let (better, worse) = candidates[index];
+                        pairs.push(RankPair {
+                            better: feature_of(better)?,
+                            worse: feature_of(worse)?,
+                        });
+                    }
+                    Ok(RecordDerived {
+                        pairs,
+                        move_features: features,
+                        deep_best: record.deep.best_action,
+                        policy_rank: record.deep_best_order_rank,
+                    })
+                })
+                .collect()
+        })
+    };
+    let train_derived = derive(&train)?;
+    let val_derived = derive(&val)?;
+    let test_derived = derive(&test)?;
+    let collect_pairs = |derived: &[RecordDerived]| -> Vec<RankPair> {
+        derived.iter().flat_map(|d| d.pairs.clone()).collect()
+    };
+    let train_pairs = collect_pairs(&train_derived);
+    let val_pairs = collect_pairs(&val_derived);
+    let test_pairs = collect_pairs(&test_derived);
+    say(
+        format!(
+            "ranking pairs: {} train / {} val / {} test",
+            train_pairs.len(),
+            val_pairs.len(),
+            test_pairs.len()
+        ),
+        &mut log,
+    );
+    if train_pairs.is_empty() {
+        return Err("no ranking pairs above the margin".into());
+    }
+
+    let hyper = FitHyper {
+        steps: params.steps,
+        batch: params.batch,
+        lr: params.lr,
+        l2: params.l2,
+    };
+    let mut metric_rows: Vec<serde_json::Value> = Vec::new();
+    let ranker = fit_move_ranker(
+        "fc_move_v1",
+        MOVE_FEATURE_DIMENSION,
+        &train_pairs,
+        hyper,
+        config.seed,
+        |step| {
+            if step.step % 500 == 0 || step.step == hyper.steps {
+                metric_rows.push(serde_json::json!({
+                    "step": step.step,
+                    "train_loss": step.train_loss,
+                }));
+            }
+        },
+    );
+    run_dir
+        .append_jsonl("metrics.jsonl", &metric_rows)
+        .map_err(|e| e.to_string())?;
+    let (val_loss, val_acc) = evaluate_move_ranker(&ranker, &val_pairs);
+    let (test_loss, test_acc) = evaluate_move_ranker(&ranker, &test_pairs);
+    say(
+        format!("pairwise: val {val_loss:.4}/{val_acc:.4}, test {test_loss:.4}/{test_acc:.4}"),
+        &mut log,
+    );
+
+    // Teacher-relative ordering: rank of the deep label's best action
+    // under the ranker, vs the recorded policy-ordering rank.
+    let rank_metrics = |derived: &[RecordDerived]| {
+        let mut ranker_rank_sum = 0f64;
+        let mut policy_rank_sum = 0f64;
+        let mut ranker_top1 = 0u64;
+        let mut policy_top1 = 0u64;
+        for d in derived {
+            let mut scored: Vec<(f64, u32)> = d
+                .move_features
+                .iter()
+                .map(|(action, x)| (ranker.score(x), *action))
+                .collect();
+            scored.sort_by(|a, b| b.0.total_cmp(&a.0));
+            let rank = scored
+                .iter()
+                .position(|&(_, a)| a == d.deep_best)
+                .expect("deep best is legal") as u32;
+            ranker_rank_sum += f64::from(rank);
+            policy_rank_sum += f64::from(d.policy_rank);
+            ranker_top1 += u64::from(rank == 0);
+            policy_top1 += u64::from(d.policy_rank == 0);
+        }
+        let n = derived.len().max(1) as f64;
+        (
+            ranker_rank_sum / n,
+            ranker_top1 as f64 / n,
+            policy_rank_sum / n,
+            policy_top1 as f64 / n,
+        )
+    };
+    let (ranker_rank, ranker_top1, policy_rank, policy_top1) = rank_metrics(&test_derived);
+    say(
+        format!(
+            "deep-best rank on test records: champion policy {policy_rank:.2} (top-1 {policy_top1:.3}) -> ranker {ranker_rank:.2} (top-1 {ranker_top1:.3})"
+        ),
+        &mut log,
+    );
+
+    run_dir
+        .create_subdir("checkpoint")
+        .map_err(|e| e.to_string())?;
+    run_dir
+        .write_json("checkpoint/ranker.json", &ranker)
+        .map_err(|e| e.to_string())?;
+    let mut inspection: Vec<(String, f32)> = (0..MOVE_FEATURE_DIMENSION)
+        .map(|i| (FcMoveFeatures::feature_name(i as u32), ranker.weights[i]))
+        .collect();
+    inspection.sort_by(|a, b| b.1.abs().total_cmp(&a.1.abs()));
+    run_dir
+        .write_json("checkpoint/weight_inspection.json", &inspection)
+        .map_err(|e| e.to_string())?;
+
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "model": "move-ranker-records",
+                "records": records.len(),
+                "train_records": train.len(),
+                "train_pairs": train_pairs.len(),
+                "pair_margin": params.pair_margin,
+                "pairwise": {
+                    "val": { "log_loss": val_loss, "accuracy": val_acc },
+                    "test": { "log_loss": test_loss, "accuracy": test_acc },
+                },
+                "deep_best_rank_test": {
+                    "policy_mean": policy_rank,
+                    "policy_top1": policy_top1,
+                    "ranker_mean": ranker_rank,
+                    "ranker_top1": ranker_top1,
+                },
+                "cost": {
+                    "wall_seconds": wall_seconds,
+                    "cpu_seconds": cpu_seconds,
+                    "utilization": cpu_seconds / (wall_seconds * config.threads as f64),
+                    "peak_rss_bytes": peak_rss_bytes(),
+                },
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(run_dir, manifest, &log)
 }
 
 /// Ranker-arm parameters (unpacked from `FitModel::Ranker`).

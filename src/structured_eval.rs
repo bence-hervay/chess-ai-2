@@ -436,6 +436,61 @@ impl Evaluator<crate::games::forward_chess::ForwardChess> for FcOrderedEvaluator
     }
 }
 
+/// Champion-MLP value with learned move ordering (F2 composite): the
+/// raw-model baseline's WDL head at leaves, a `MoveRanker` for
+/// ordering. Lets ordering models be evaluated against the policy
+/// head with the value model held fixed.
+pub struct MlpRankedEvaluator<'a> {
+    inner: crate::model::ModelEvaluator<'a>,
+    ranker: &'a MoveRanker,
+    move_features: crate::features::forward_chess::FcMoveFeatures,
+    buf: Vec<FeatureEntry>,
+}
+
+impl<'a> MlpRankedEvaluator<'a> {
+    pub fn new(
+        game: &crate::games::forward_chess::ForwardChess,
+        net: &'a crate::model::CompiledNet,
+        ranker: &'a MoveRanker,
+    ) -> Self {
+        assert_eq!(
+            ranker.dimension,
+            crate::features::forward_chess::MOVE_FEATURE_DIMENSION
+        );
+        MlpRankedEvaluator {
+            inner: crate::model::ModelEvaluator::new(net),
+            ranker,
+            move_features: crate::features::forward_chess::FcMoveFeatures::new(game),
+            buf: Vec::new(),
+        }
+    }
+}
+
+impl Evaluator<crate::games::forward_chess::ForwardChess> for MlpRankedEvaluator<'_> {
+    fn leaf_value(
+        &mut self,
+        game: &crate::games::forward_chess::ForwardChess,
+        state: &crate::games::forward_chess::FcState,
+    ) -> i32 {
+        self.inner.leaf_value(game, state)
+    }
+
+    fn policy_scores(
+        &mut self,
+        game: &crate::games::forward_chess::ForwardChess,
+        state: &crate::games::forward_chess::FcState,
+        moves: &[crate::games::forward_chess::FcMove],
+        out: &mut Vec<f32>,
+    ) -> bool {
+        out.clear();
+        for &mv in moves {
+            self.move_features.extract(game, state, mv, &mut self.buf);
+            out.push(self.ranker.score(&self.buf) as f32);
+        }
+        true
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

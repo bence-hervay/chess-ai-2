@@ -107,8 +107,9 @@ pub struct TeacherRecord {
     /// root move ordering (policy scores if provided, else stable
     /// action-ID order). Move-ordering error evidence (§55).
     pub deep_best_order_rank: u32,
-    /// Counterfactual child labels, aligned with stable action-ID order;
-    /// empty when child search is disabled.
+    /// Counterfactual child labels in legal-move generation order; each
+    /// carries its own `action` id, so consumers should match by action
+    /// rather than by index. Empty when child search is disabled.
     pub children: Vec<ChildLabel>,
     /// Exact WDL for the side to move, when an oracle was joined.
     pub exact_wdl: Option<Wdl>,

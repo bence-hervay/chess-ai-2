@@ -80,6 +80,7 @@ time.
 | B — Research instrumentation | **PASS** | [reports/shsd/stage_b_instrumentation.md](reports/shsd/stage_b_instrumentation.md) |
 | C — First compact structured evaluator | **PASS** | [reports/shsd/stage_c_structured_linear.md](reports/shsd/stage_c_structured_linear.md) |
 | F1 — Learned move ordering (exact data) | **PASS** | [reports/shsd/stage_f1_move_ordering.md](reports/shsd/stage_f1_move_ordering.md) |
+| F2 — fc-full ordering from search distillation | **PASS** | [reports/shsd/stage_f2_fullboard_ordering.md](reports/shsd/stage_f2_fullboard_ordering.md) |
 
 Stage B delivered provenance-typed deep-search teacher records
 (`lab relabel`), validated against the exact fc-tiny oracle across 3
@@ -87,6 +88,16 @@ seeds and two evaluators (monotone budget→accuracy, paired model
 comparison, ordering-error metrics, 100% oracle join), the
 parameter-provenance ledger (`parameter_ledger.json`), and the frozen
 evaluation-set registry (`datasets/frozen/`).
+
+Stage F distilled move ordering from search: a 35-parameter linear
+ranker over rule-level move features, trained on exact
+optimal/non-optimal pairs (F1, fc-small: nodes to depth 6 cut 27.6%,
+top-1 optimal ordering 0.75→0.93) and on teacher counterfactual child
+labels with no oracle (F2, fc-full: **beats the Program-1 champion's
+own policy-head ordering by ≈+93 protocol Elo at fixed time** with the
+value model held identical — equal ordering quality at a fraction of
+the per-node cost). The strongest current fc-full configuration is
+the c03 champion value + learned ranker ordering.
 
 Stage C delivered the first structured evaluator: a 426-parameter
 linear WDL model over hand-designed measurements (`lab fit`,

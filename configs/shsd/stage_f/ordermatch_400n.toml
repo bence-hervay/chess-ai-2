@@ -1,0 +1,16 @@
+kind = "ordered_mlp_match"
+mlp_checkpoint = "campaigns/fc_full_w64_n800/champion"
+ordering = "runs/20260815-234249-fit-fc-full-move-ranker-records-n10000-s1-69f4289/checkpoint/ranker.json"
+opponent_ordering = "policy"
+pairs = 300
+opening_plies = 8
+seed = 1
+threads = 4
+
+[budget]
+kind = "nodes"
+nodes = 400
+
+[game]
+kind = "forward_chess"
+ruleset = "full"
