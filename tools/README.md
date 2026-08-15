@@ -116,6 +116,24 @@ Standard chess is played through the separate UCI engine instead:
 without one it plays unlearned search; `uci --random[=seed]` is the
 uniform random baseline).
 
+## Search speed / depth benchmark
+
+```
+./target/release/lab bench --game fc-full --checkpoint campaigns/<name>/champion \
+    --nodes 400,1600,6400 --movetime-ms 2000
+./target/release/lab bench --game chess --checkpoint <ckpt-dir>
+./target/release/lab bench --game fc-full          # zero evaluator: search overhead floor
+```
+
+Single-threaded benchmark of a checkpoint's search: nodes/second,
+completed iterative-deepening depth, and ms/move at each node budget,
+plus an optional fixed wall-clock movetime probe (how many nodes and
+what depth fit in e.g. 2 s on one core). Benchmark positions come
+from deterministic self-play with the same checkpoint, so node-budget
+rows are reproducible; movetime rows are wall-clock and are not.
+Measured profiles for the Phase 9 engines are in
+`reports/compute_strength_profile.md`.
+
 ## Chess vs Stockfish (§27 protocol)
 
 ```

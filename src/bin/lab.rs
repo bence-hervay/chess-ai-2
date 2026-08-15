@@ -145,6 +145,35 @@ enum LabCommand {
         #[arg(long, default_value = "white")]
         side: String,
     },
+    /// Benchmark a checkpoint's search on one thread: nodes/second,
+    /// achieved iterative-deepening depth, and time per move at each
+    /// node budget, plus an optional fixed wall-clock movetime probe
+    /// (e.g. how many nodes fit in 2 s on one core). Positions are
+    /// drawn deterministically from self-play with the same checkpoint;
+    /// node-budget results are deterministic, movetime results are not.
+    Bench {
+        /// Game: fc-tiny | fc-small | fc-medium | fc-full | chess.
+        #[arg(long, default_value = "fc-full")]
+        game: String,
+        /// Checkpoint directory (`model.bin` + `model.json`); omit to
+        /// bench unlearned search (zero evaluator: movegen and search
+        /// overhead only).
+        #[arg(long)]
+        checkpoint: Option<PathBuf>,
+        /// Node budgets to benchmark.
+        #[arg(long, default_value = "400,800,1600,6400", value_delimiter = ',')]
+        nodes: Vec<u64>,
+        /// Fixed wall-clock budget per move to probe, in milliseconds
+        /// (0 = skip).
+        #[arg(long, default_value_t = 0)]
+        movetime_ms: u64,
+        /// Number of benchmark positions.
+        #[arg(long, default_value_t = 60)]
+        positions: usize,
+        /// Seed for the position-generating self-play games.
+        #[arg(long, default_value_t = 1)]
+        seed: u64,
+    },
 }
 
 /// Fully explicit configuration for `lab evaluate`, dispatched on `kind`.
@@ -277,6 +306,21 @@ fn main() {
             nodes,
             side,
         } => play(&game, checkpoint.as_deref(), nodes, &side),
+        LabCommand::Bench {
+            game,
+            checkpoint,
+            nodes,
+            movetime_ms,
+            positions,
+            seed,
+        } => bench(
+            &game,
+            checkpoint.as_deref(),
+            &nodes,
+            movetime_ms,
+            positions,
+            seed,
+        ),
     };
     if let Err(message) = result {
         eprintln!("error: {message}");
@@ -801,7 +845,7 @@ fn run_solve_retrograde(
         let value = solution.values[index];
         wdl_counts[value as usize] += 1;
         let key = game.position_key(state);
-        if denominator > 1 && splitmix64(key) % denominator != 0 {
+        if denominator > 1 && !splitmix64(key).is_multiple_of(denominator) {
             continue;
         }
         corpus_states += 1;
@@ -1933,6 +1977,195 @@ fn fc_engine_move(
     result
         .best_move
         .ok_or_else(|| "search returned no move".to_string())
+}
+
+fn bench(
+    game_label: &str,
+    checkpoint: Option<&Path>,
+    budgets: &[u64],
+    movetime_ms: u64,
+    positions: usize,
+    seed: u64,
+) -> Result<(), String> {
+    use selfplay_lab::games::forward_chess::Ruleset;
+    let spec = match game_label {
+        "fc-tiny" => GameSpec::ForwardChess {
+            ruleset: Ruleset::Tiny,
+        },
+        "fc-small" => GameSpec::ForwardChess {
+            ruleset: Ruleset::Small,
+        },
+        "fc-medium" => GameSpec::ForwardChess {
+            ruleset: Ruleset::Medium,
+        },
+        "fc-full" => GameSpec::ForwardChess {
+            ruleset: Ruleset::Full,
+        },
+        "chess" => GameSpec::Chess {},
+        other => {
+            return Err(format!(
+                "unknown game {other}; use fc-tiny|fc-small|fc-medium|fc-full|chess"
+            ))
+        }
+    };
+    if budgets.is_empty() {
+        return Err("give at least one node budget".to_string());
+    }
+    dispatch_game!(&spec, game, {
+        let net = match checkpoint {
+            Some(dir) => {
+                let (net, dims, _) = load_checkpoint(dir)?;
+                if dims.feature_count != game.feature_count()
+                    || dims.action_count != game.action_count()
+                {
+                    return Err(format!(
+                        "checkpoint dims {dims:?} do not fit {game_label} \
+                         ({} features / {} actions)",
+                        game.feature_count(),
+                        game.action_count()
+                    ));
+                }
+                let params = (dims.feature_count + 1) * dims.width
+                    + 2 * (dims.width * dims.width + dims.width)
+                    + (3 * dims.width + 3)
+                    + (dims.action_count * dims.width + dims.action_count);
+                println!(
+                    "bench {game_label}: checkpoint {} (w{}, {} params, {:.2} MB f32)",
+                    dir.display(),
+                    dims.width,
+                    params,
+                    params as f64 * 4.0 / 1e6
+                );
+                Some(CompiledNet::from_net(&net, dims))
+            }
+            None => {
+                println!("bench {game_label}: zero evaluator (unlearned search)");
+                None
+            }
+        };
+        bench_run(&game, net.as_ref(), budgets, movetime_ms, positions, seed)
+    })
+}
+
+fn bench_run<G: Game>(
+    game: &G,
+    net: Option<&CompiledNet>,
+    budgets: &[u64],
+    movetime_ms: u64,
+    positions: usize,
+    seed: u64,
+) -> Result<(), String> {
+    use selfplay_lab::training::SELFPLAY_TT_LOG2;
+
+    fn search_once<G: Game>(
+        searcher: &mut Searcher<G>,
+        game: &G,
+        state: &mut G::State,
+        net: Option<&CompiledNet>,
+        budget: u64,
+    ) -> selfplay_lab::search::SearchResult<G::Move> {
+        match net {
+            Some(net) => {
+                let mut evaluator = selfplay_lab::model::ModelEvaluator::new(net);
+                searcher.search(game, state, 512, budget, &mut evaluator)
+            }
+            None => searcher.search(game, state, 512, budget, &mut ZeroEvaluator),
+        }
+    }
+
+    // Deterministic ε-greedy self-play with the benched checkpoint
+    // supplies positions from the distribution the engine actually
+    // searches in games.
+    let gen_nodes = budgets[0];
+    let mut states: Vec<G::State> = Vec::new();
+    let mut searcher: Searcher<G> = Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+    let mut moves = Vec::new();
+    let mut game_idx = 0u64;
+    while states.len() < positions {
+        let mut state = game.initial_state();
+        let mut ply = 0u64;
+        while game.outcome(&state).is_none() && ply < 240 && states.len() < positions {
+            states.push(state.clone());
+            game.legal_moves(&state, &mut moves);
+            let roll = splitmix64(seed ^ (game_idx << 32) ^ ply);
+            let mv = if roll.is_multiple_of(10) {
+                moves[(splitmix64(roll) as usize) % moves.len()]
+            } else {
+                search_once(&mut searcher, game, &mut state, net, gen_nodes)
+                    .best_move
+                    .ok_or("search returned no move")?
+            };
+            game.make_move(&mut state, mv);
+            ply += 1;
+        }
+        game_idx += 1;
+    }
+    println!(
+        "{} positions from {} self-play game(s), seed {seed}; single thread\n",
+        states.len(),
+        game_idx
+    );
+
+    for &budget in budgets {
+        let mut searcher: Searcher<G> =
+            Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+        let (mut nodes_total, mut depth_total) = (0u64, 0u64);
+        let (mut depth_min, mut depth_max) = (u32::MAX, 0u32);
+        let start = Instant::now();
+        for st in &states {
+            let mut state = st.clone();
+            let result = search_once(&mut searcher, game, &mut state, net, budget);
+            nodes_total += result.nodes;
+            depth_total += u64::from(result.completed_depth);
+            depth_min = depth_min.min(result.completed_depth);
+            depth_max = depth_max.max(result.completed_depth);
+        }
+        let secs = start.elapsed().as_secs_f64();
+        let n = states.len() as f64;
+        println!(
+            "budget {budget:>7} nodes: {:>8.1} ms/move  {:>9.0} nodes/s  \
+             depth mean {:>4.1} [{}..{}]  mean {:.0} nodes searched",
+            secs * 1000.0 / n,
+            nodes_total as f64 / secs,
+            depth_total as f64 / n,
+            depth_min,
+            depth_max,
+            nodes_total as f64 / n,
+        );
+    }
+
+    if movetime_ms > 0 {
+        let mut searcher: Searcher<G> =
+            Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+        let (mut nodes_total, mut depth_total) = (0u64, 0u64);
+        let (mut depth_min, mut depth_max) = (u32::MAX, 0u32);
+        let start = Instant::now();
+        for st in &states {
+            let mut state = st.clone();
+            searcher.set_deadline(Some(
+                Instant::now() + std::time::Duration::from_millis(movetime_ms),
+            ));
+            let result = search_once(&mut searcher, game, &mut state, net, u64::MAX);
+            nodes_total += result.nodes;
+            depth_total += u64::from(result.completed_depth);
+            depth_min = depth_min.min(result.completed_depth);
+            depth_max = depth_max.max(result.completed_depth);
+        }
+        searcher.set_deadline(None);
+        let secs = start.elapsed().as_secs_f64();
+        let n = states.len() as f64;
+        println!(
+            "movetime {movetime_ms:>4} ms:      {:>8.1} ms/move  {:>9.0} nodes/s  \
+             depth mean {:>4.1} [{}..{}]  mean {:.0} nodes searched",
+            secs * 1000.0 / n,
+            nodes_total as f64 / secs,
+            depth_total as f64 / n,
+            depth_min,
+            depth_max,
+            nodes_total as f64 / n,
+        );
+    }
+    Ok(())
 }
 
 fn play(game_label: &str, checkpoint: Option<&Path>, nodes: u64, side: &str) -> Result<(), String> {

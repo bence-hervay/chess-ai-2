@@ -29,6 +29,7 @@ tools/fc_train.sh my_campaign            # chunked, resumable Forward Chess trai
 tools/fc_train.sh my_campaign --status   # progress; Ctrl-C safe, rerun to resume
 tools/fc_rating.py --campaign campaigns/my_campaign   # approximate internal Elo curve
 lab play --checkpoint campaigns/my_campaign/champion  # play the champion interactively
+lab bench --checkpoint campaigns/my_campaign/champion --movetime-ms 2000  # nodes/s + depth on one core
 tools/run_match.sh anchor ckpt:<dir> sf-nodes:20 150 st=0.3  # chess vs Stockfish (§27)
 lab solve configs/phase_08/solve_small.toml           # exact solving + tablebase backup
 tools/check.sh                           # fmt + clippy + full test suite
@@ -70,7 +71,11 @@ bug the differential tests could not see (D031: Black's rotated king
 home is d8; stale castling rights + a u16 file wrap let a "castle"
 capture the king) — fixed, regression-tested, and all tainted results
 re-run. Training now runs through resumable/forkable campaign tooling
-with cached Elo-curve evaluation (`tools/README.md`).
+with cached Elo-curve evaluation (`tools/README.md`). The measured
+compute ↔ strength profile — nodes/s and depth per core, the
+2-second-move budget, memory, Elo per search doubling, training cost
+per Elo, NNUE headroom — is in
+[`reports/compute_strength_profile.md`](reports/compute_strength_profile.md).
 
 Phases 0–8 complete and promoted. Phase 8 brought **Forward Chess in,
 exactly**:

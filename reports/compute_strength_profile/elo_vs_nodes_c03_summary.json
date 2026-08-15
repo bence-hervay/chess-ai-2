@@ -1,0 +1,140 @@
+{
+  "budgets": [
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 35,
+        "candidate_points": 3.5,
+        "candidate_wins": 2,
+        "draws": 3,
+        "games": 40,
+        "mean_plies": 68.2,
+        "pairs": 20,
+        "score": 0.0875,
+        "score_lcb95": 0.015861061565654117,
+        "score_ucb95": 0.15913893843434587
+      },
+      "node_budget": 50
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 36,
+        "candidate_points": 3.0,
+        "candidate_wins": 2,
+        "draws": 2,
+        "games": 40,
+        "mean_plies": 67.825,
+        "pairs": 20,
+        "score": 0.075,
+        "score_lcb95": 0.004842676789945877,
+        "score_ucb95": 0.14515732321005412
+      },
+      "node_budget": 100
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 32,
+        "candidate_points": 8.0,
+        "candidate_wins": 8,
+        "draws": 0,
+        "games": 40,
+        "mean_plies": 74.75,
+        "pairs": 20,
+        "score": 0.2,
+        "score_lcb95": 0.09264637872898744,
+        "score_ucb95": 0.30735362127101257
+      },
+      "node_budget": 200
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 14,
+        "candidate_points": 24.0,
+        "candidate_wins": 22,
+        "draws": 4,
+        "games": 40,
+        "mean_plies": 79.825,
+        "pairs": 20,
+        "score": 0.6,
+        "score_lcb95": 0.47316664476566106,
+        "score_ucb95": 0.7268333552343389
+      },
+      "node_budget": 800
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 6,
+        "candidate_points": 33.5,
+        "candidate_wins": 33,
+        "draws": 1,
+        "games": 40,
+        "mean_plies": 74.275,
+        "pairs": 20,
+        "score": 0.8375,
+        "score_lcb95": 0.7378298565266409,
+        "score_ucb95": 0.9371701434733591
+      },
+      "node_budget": 1600
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 2,
+        "candidate_points": 38.0,
+        "candidate_wins": 38,
+        "draws": 0,
+        "games": 40,
+        "mean_plies": 57.7,
+        "pairs": 20,
+        "score": 0.95,
+        "score_lcb95": 0.8842596014615062,
+        "score_ucb95": 1.0157403985384938
+      },
+      "node_budget": 6400
+    },
+    {
+      "baseline_nodes": 400,
+      "match": {
+        "candidate_losses": 1,
+        "candidate_points": 39.0,
+        "candidate_wins": 39,
+        "draws": 0,
+        "games": 40,
+        "mean_plies": 53.525,
+        "pairs": 20,
+        "score": 0.975,
+        "score_lcb95": 0.9272407077104361,
+        "score_ucb95": 1.0227592922895639
+      },
+      "node_budget": 25600
+    }
+  ],
+  "config": {
+    "baseline_nodes": 400,
+    "checkpoint": "campaigns/fc_full_w64_n800/champion",
+    "game": {
+      "kind": "forward_chess",
+      "ruleset": "full"
+    },
+    "node_budgets": [
+      50,
+      100,
+      200,
+      800,
+      1600,
+      6400,
+      25600
+    ],
+    "opening_plies": 2,
+    "opponent_checkpoint": "campaigns/fc_full_w64_n800/champion",
+    "pairs": 20,
+    "seed": 424242,
+    "threads": 2
+  },
+  "parameter_count": 378571,
+  "wall_seconds": 784.033296219
+}

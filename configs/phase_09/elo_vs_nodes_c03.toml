@@ -1,0 +1,16 @@
+# Elo-vs-nodes curve for the strongest Forward Chess engine (fc_full_w64_n800
+# champion = c03): the champion at each probed budget plays paired matches
+# against itself at 400 nodes. Feeds reports/compute_strength_profile.md.
+kind = "match_probe"
+checkpoint = "campaigns/fc_full_w64_n800/champion"
+opponent_checkpoint = "campaigns/fc_full_w64_n800/champion"
+node_budgets = [50, 100, 200, 800, 1600, 6400, 25600]
+baseline_nodes = 400
+pairs = 20
+opening_plies = 2
+seed = 424242
+threads = 2
+
+[game]
+kind = "forward_chess"
+ruleset = "full"

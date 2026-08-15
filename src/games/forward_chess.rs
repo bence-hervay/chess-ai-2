@@ -60,7 +60,7 @@ fn unpack(code: u8) -> (Player, Piece, bool) {
         4 => Piece::Queen,
         _ => Piece::King,
     };
-    let owner = if (index / 6) % 2 == 0 {
+    let owner = if (index / 6).is_multiple_of(2) {
         Player::One
     } else {
         Player::Two
@@ -261,7 +261,7 @@ impl ForwardChess {
         match piece {
             Piece::Pawn => dr == 1 && df.abs() == 1,
             Piece::Knight => (df.abs() == 1 && dr == 2) || (df.abs() == 2 && dr == 1),
-            Piece::King => dr >= 0 && dr <= 1 && df.abs() <= 1,
+            Piece::King => (0..=1).contains(&dr) && df.abs() <= 1,
             Piece::Rook => {
                 ((df == 0 && dr > 0) || (dr == 0 && df != 0))
                     && self.ray_clear(cells, from, target, w)
@@ -1263,7 +1263,6 @@ mod tests {
     fn reference_moves(g: &ForwardChess, state: &FcState) -> Vec<FcMove> {
         let core = &state.core;
         let w = i32::from(g.width);
-        let h = i32::from(g.height);
         let mover = core.to_move;
         let mut out = Vec::new();
         for from in 0..g.cell_count() as u16 {
@@ -1332,7 +1331,7 @@ mod tests {
                         }
                     }
                     Piece::King => {
-                        if !target_own && dr >= 0 && dr <= 1 && df.abs() <= 1 {
+                        if !target_own && (0..=1).contains(&dr) && df.abs() <= 1 {
                             candidates.push(None);
                         }
                         // Castling handled below, outside this scan.
@@ -1814,27 +1813,9 @@ mod tests {
         );
 
         // Stalemate: black king unattacked but all its 5 oriented squares
-        // are attacked or off-board.
-        let state = g.custom_state(
-            &[
-                ("h8", Player::Two, Piece::King, false),
-                ("g1", Player::One, Piece::Rook, false),
-                ("a8", Player::One, Piece::Rook, false),
-                ("a1", Player::One, Piece::King, false),
-            ],
-            Player::Two,
-            [false; 4],
-            None,
-        );
-        // Black king ahead squares: g7, h7 (rank 7), g8. a8-rook covers
-        // rank 8 horizontally? a8 natural white rook: horizontal along
-        // rank 8 ✓ attacks g8 (path clear) but NOT h8's square? it does
-        // attack h8 — that would be check. Use a reversed rook on a8
-        // instead: reversed white rook ahead = -rank; horizontal still ✓;
-        // attacks g8..b8 and a7..a1. So h8 not attacked (g8..h8? path:
-        // a8->h8 passes g8... a8 attacks h8 horizontally too!). Choose
-        // rook on g8 is adjacent... Simplest: cover rank 7 with a rook on
-        // a7 (horizontal) and g-file with rook g1; king h8 unattacked.
+        // are attacked or off-board. (A rook on a8 would attack h8 itself
+        // — check, not stalemate — so cover rank 7 with a rook on a7 and
+        // the g-file with the rook on g1; king h8 stays unattacked.)
         let state = g.custom_state(
             &[
                 ("h8", Player::Two, Piece::King, false),

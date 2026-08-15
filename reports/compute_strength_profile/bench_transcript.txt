@@ -1,0 +1,59 @@
+=== fc_w64 ===
+bench fc-full: checkpoint campaigns/fc_full_w64_n800/champion (w64, 378571 params, 1.51 MB f32)
+60 positions from 2 self-play game(s), seed 1; single thread
+
+budget     400 nodes:      9.8 ms/move      39646 nodes/s  depth mean  2.0 [1..3]  mean 387 nodes searched
+budget     800 nodes:     17.3 ms/move      43965 nodes/s  depth mean  2.1 [1..4]  mean 760 nodes searched
+budget    1600 nodes:     35.3 ms/move      42362 nodes/s  depth mean  2.7 [1..4]  mean 1496 nodes searched
+budget    6400 nodes:    161.5 ms/move      36723 nodes/s  depth mean  3.4 [1..5]  mean 5930 nodes searched
+budget   25600 nodes:    635.6 ms/move      37016 nodes/s  depth mean  4.1 [1..6]  mean 23528 nodes searched
+movetime 2000 ms:        1836.2 ms/move      37318 nodes/s  depth mean  4.8 [1..7]  mean 68525 nodes searched
+peak RSS: 13.6 MB
+
+=== fc_w32 ===
+bench fc-full: checkpoint campaigns/fc_w32_n800/champion (w32, 189323 params, 0.76 MB f32)
+60 positions from 3 self-play game(s), seed 1; single thread
+
+budget     400 nodes:      6.9 ms/move      55058 nodes/s  depth mean  2.0 [1..3]  mean 381 nodes searched
+budget     800 nodes:     13.7 ms/move      55179 nodes/s  depth mean  2.2 [1..3]  mean 758 nodes searched
+budget    1600 nodes:     26.6 ms/move      56449 nodes/s  depth mean  2.6 [1..3]  mean 1502 nodes searched
+movetime 2000 ms:        1835.0 ms/move      49934 nodes/s  depth mean  4.7 [1..6]  mean 91631 nodes searched
+peak RSS: 13.2 MB
+
+=== fc_w128 ===
+bench fc-full: checkpoint campaigns/fc_w128/chunk_001/checkpoint (w128, 769355 params, 3.08 MB f32)
+60 positions from 1 self-play game(s), seed 1; single thread
+
+budget     400 nodes:     14.4 ms/move      27710 nodes/s  depth mean  2.0 [2..3]  mean 400 nodes searched
+budget    1600 nodes:     52.0 ms/move      30756 nodes/s  depth mean  2.4 [2..3]  mean 1600 nodes searched
+movetime 2000 ms:        2002.7 ms/move      27260 nodes/s  depth mean  4.3 [4..5]  mean 54594 nodes searched
+peak RSS: 17.0 MB
+
+=== fc_zero ===
+bench fc-full: zero evaluator (unlearned search)
+60 positions from 2 self-play game(s), seed 1; single thread
+
+budget     400 nodes:      3.3 ms/move     120782 nodes/s  depth mean  2.1 [1..3]  mean 394 nodes searched
+budget    6400 nodes:     54.5 ms/move     115416 nodes/s  depth mean  4.1 [1..5]  mean 6294 nodes searched
+movetime 2000 ms:        1935.8 ms/move     108848 nodes/s  depth mean  6.8 [1..7]  mean 210713 nodes searched
+peak RSS: 11.4 MB
+
+=== chess_w32 ===
+bench chess: checkpoint runs/20260814-144846-selfplay-chess-w32-g200-e10-s1-8a1931a/checkpoint (w32, 164747 params, 0.66 MB f32)
+60 positions from 1 self-play game(s), seed 1; single thread
+
+budget     400 nodes:      3.0 ms/move     135227 nodes/s  depth mean  2.0 [2..3]  mean 400 nodes searched
+budget    1600 nodes:      9.7 ms/move     165616 nodes/s  depth mean  2.7 [2..4]  mean 1600 nodes searched
+movetime 2000 ms:        2000.8 ms/move     117338 nodes/s  depth mean  5.6 [5..7]  mean 234771 nodes searched
+peak RSS: 13.0 MB
+
+=== chess_w64 ===
+bench chess: checkpoint runs/20260814-131835-selfplay-chess-w64-g200-e10-s1-c03fefc/checkpoint (w64, 329419 params, 1.32 MB f32)
+60 positions from 1 self-play game(s), seed 1; single thread
+
+budget     400 nodes:      5.3 ms/move      75611 nodes/s  depth mean  2.1 [2..3]  mean 400 nodes searched
+budget    1600 nodes:     16.8 ms/move      95392 nodes/s  depth mean  2.5 [2..4]  mean 1600 nodes searched
+movetime 2000 ms:        2001.3 ms/move      77426 nodes/s  depth mean  5.2 [4..6]  mean 154950 nodes searched
+peak RSS: 15.6 MB
+
+ALL BENCHES DONE

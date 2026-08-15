@@ -320,8 +320,7 @@ pub fn solve_retrograde<G: Game>(
     while let Some(child) = queue.pop_front() {
         let child_value = values[child as usize].expect("resolved");
         let gain = child_value.flip();
-        for parent_index in 0..reverse[child as usize].len() {
-            let parent = reverse[child as usize][parent_index];
+        for &parent in &reverse[child as usize] {
             let p = parent as usize;
             if values[p].is_some() {
                 continue;

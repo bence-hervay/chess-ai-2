@@ -171,7 +171,7 @@ pub fn build_retrograde_dataset<G: Game>(
             9 => 1,
             _ => continue,
         };
-        if splitmix64(key ^ EVAL_THIN_SALT) % denominators[slot] != 0 {
+        if !splitmix64(key ^ EVAL_THIN_SALT).is_multiple_of(denominators[slot]) {
             continue;
         }
         game.encode_features(state, &mut features);
