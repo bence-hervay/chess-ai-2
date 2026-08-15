@@ -213,6 +213,27 @@ enum EvaluateConfig {
     /// probed node budget plays paired matches against itself at a
     /// fixed baseline budget (Phase 4, non-exact sizes).
     MatchProbe(MatchProbeConfig),
+    /// Paired match between a structured-linear checkpoint and an MLP
+    /// checkpoint or the zero evaluator, at node or movetime budgets
+    /// (SHSD §56 fixed-node / fixed-time gate).
+    StructuredMatch(StructuredMatchConfig),
+}
+
+/// Structured-vs-baseline match parameters (SHSD Stage C2).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StructuredMatchConfig {
+    /// Path to a `structured.json` checkpoint written by `lab fit`.
+    structured_checkpoint: PathBuf,
+    /// `"zero"` or an MLP checkpoint directory (`model.bin` + json).
+    opponent: String,
+    pairs: u64,
+    opening_plies: u32,
+    structured_budget: selfplay_lab::evaluation::MoveBudget,
+    opponent_budget: selfplay_lab::evaluation::MoveBudget,
+    seed: u64,
+    threads: usize,
+    game: GameSpec,
 }
 
 /// Match-probe parameters.
@@ -419,6 +440,7 @@ fn evaluate(config_path: &Path) -> Result<(), String> {
         EvaluateConfig::RandomArena(config) => run_arena_command(config),
         EvaluateConfig::OracleProbe(config) => probe(config),
         EvaluateConfig::MatchProbe(config) => match_probe(config),
+        EvaluateConfig::StructuredMatch(config) => structured_match(config),
     }
 }
 
@@ -2316,6 +2338,120 @@ fn play(game_label: &str, checkpoint: Option<&Path>, nodes: u64, side: &str) -> 
         }
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// lab evaluate kind structured_match (SHSD Stage C2)
+// ---------------------------------------------------------------------------
+
+fn parse_fc_recipe(label: &str) -> Result<FcRecipe, String> {
+    match label {
+        "fc_counts_v0" => Ok(FcRecipe::FcCountsV0),
+        "fc_structured_linear_v1" => Ok(FcRecipe::FcStructuredLinearV1),
+        other => Err(format!("unknown structured recipe {other:?}")),
+    }
+}
+
+fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
+    use selfplay_lab::evaluation::play_paired_match_with;
+    use selfplay_lab::structured_eval::{LinearWdl, StructuredEvaluator};
+
+    let GameSpec::ForwardChess { ruleset } = &config.game else {
+        return Err("structured_match currently supports forward_chess only".into());
+    };
+    if config.pairs == 0 {
+        return Err("pairs must be positive".into());
+    }
+    let game = ForwardChess::new(*ruleset);
+    let model: LinearWdl = serde_json::from_str(
+        &std::fs::read_to_string(&config.structured_checkpoint)
+            .map_err(|e| format!("reading structured checkpoint: {e}"))?,
+    )
+    .map_err(|e| format!("parsing structured checkpoint: {e}"))?;
+    let recipe = parse_fc_recipe(&model.recipe)?;
+    if FcExtractor::new(&game, recipe).dimension() != model.dimension {
+        return Err("checkpoint dimension does not fit this ruleset".into());
+    }
+
+    let label = format!("structmatch-{}-vs-{}", config.game.label(), {
+        if config.opponent == "zero" {
+            "zero".to_string()
+        } else {
+            "mlp".to_string()
+        }
+    });
+    let (run_dir, manifest) = start_run(&label, &config, config.seed, config.threads)?;
+    let mut log = String::new();
+    say(
+        format!("run directory: {}", run_dir.path().display()),
+        &mut log,
+    );
+    let started = Instant::now();
+    let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+
+    let result = if config.opponent == "zero" {
+        play_paired_match_with(
+            &game,
+            || StructuredEvaluator::new(&model, FcExtractor::new(&game, recipe)),
+            || ZeroEvaluator,
+            config.pairs,
+            config.opening_plies,
+            config.structured_budget,
+            config.opponent_budget,
+            config.seed,
+            config.threads,
+        )
+    } else {
+        let (net, dims, _) = load_checkpoint(Path::new(&config.opponent))?;
+        if dims.feature_count != game.feature_count() || dims.action_count != game.action_count() {
+            return Err(format!(
+                "opponent checkpoint dims {dims:?} do not fit {}",
+                config.game.label()
+            ));
+        }
+        let compiled = CompiledNet::from_net(&net, dims);
+        play_paired_match_with(
+            &game,
+            || StructuredEvaluator::new(&model, FcExtractor::new(&game, recipe)),
+            || ModelEvaluator::new(&compiled),
+            config.pairs,
+            config.opening_plies,
+            config.structured_budget,
+            config.opponent_budget,
+            config.seed,
+            config.threads,
+        )
+    };
+    say(
+        format!(
+            "structured score {:.4} [{:.4}, {:.4}] over {} games (W/D/L {}/{}/{}, mean plies {:.1})",
+            result.score,
+            result.score_lcb95,
+            result.score_ucb95,
+            result.games,
+            result.candidate_wins,
+            result.draws,
+            result.candidate_losses,
+            result.mean_plies
+        ),
+        &mut log,
+    );
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "result": result,
+                "cost": {
+                    "wall_seconds": wall_seconds,
+                    "cpu_seconds": cpu_seconds,
+                    "utilization": cpu_seconds / (wall_seconds * config.threads as f64),
+                },
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(&run_dir, manifest, &log)
 }
 
 // ---------------------------------------------------------------------------

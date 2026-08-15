@@ -78,6 +78,7 @@ time.
 |---|---|---|
 | A — Recover and audit the existing system | **PASS** | [reports/shsd/stage_a_audit.md](reports/shsd/stage_a_audit.md) |
 | B — Research instrumentation | **PASS** | [reports/shsd/stage_b_instrumentation.md](reports/shsd/stage_b_instrumentation.md) |
+| C — First compact structured evaluator | **PASS** | [reports/shsd/stage_c_structured_linear.md](reports/shsd/stage_c_structured_linear.md) |
 
 Stage B delivered provenance-typed deep-search teacher records
 (`lab relabel`), validated against the exact fc-tiny oracle across 3
@@ -85,6 +86,16 @@ seeds and two evaluators (monotone budget→accuracy, paired model
 comparison, ordering-error metrics, 100% oracle join), the
 parameter-provenance ledger (`parameter_ledger.json`), and the frozen
 evaluation-set registry (`datasets/frozen/`).
+
+Stage C delivered the first structured evaluator: a 426-parameter
+linear WDL model over hand-designed measurements (`lab fit`,
+`features::FcExtractor`) that is ~100x more sample-efficient than the
+raw sparse MLP below 10k exact positions (crossover at ~100k, linear
+saturation measured), adds ~+170 protocol Elo over search-only at
+equal nodes, matches the MLP at fixed time with no move-ordering
+model, and *discovers* Forward Chess strategy: pawn > rook, reversed
+queen dominant but position-dependent (winning fresh, a liability
+once spent), reversed minors negative.
 
 ### Program 1 state (2026-08-15, frozen baseline)
 

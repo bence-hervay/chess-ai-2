@@ -158,6 +158,17 @@
       "code_revision": "stage-b"
     },
     {
+      "name": "fit_train_salt",
+      "component": "lab fit train-subset selection",
+      "class": "engineering",
+      "value": "0x0f17_5a17_ab5e_ed01",
+      "unit": "hash salt",
+      "allowed_range": "any fixed u64",
+      "selection": "arbitrary constant; smallest-hash selection makes data-ladder subsets nested (§48.5); no strategic content",
+      "date": "2026-08-15",
+      "code_revision": "6b532d8"
+    },
+    {
       "name": "labelling_max_depth",
       "component": "data::label_positions / collect_positions",
       "class": "engineering",

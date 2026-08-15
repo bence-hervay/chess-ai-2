@@ -1,0 +1,22 @@
+train_positions = 100000
+eval_cap = 20000
+probe_states = 1000
+probe_nodes = [400, 6400]
+seed = 2
+threads = 1
+
+[game]
+kind = "forward_chess"
+ruleset = "small"
+
+[source]
+kind = "tablebase"
+path = "runs/20260814-190733-solve-retro-fc-small-4deabb1/tablebase.bin"
+
+[model]
+kind = "structured"
+recipe = "fc_counts_v0"
+steps = 20000
+batch = 256
+lr = 0.02
+l2 = 0.0001

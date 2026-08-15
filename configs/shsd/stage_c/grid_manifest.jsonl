@@ -1,0 +1,4 @@
+{"command":"fit","config":"configs/shsd/stage_c/grid_lr002_l20000001.toml","cores":1}
+{"command":"fit","config":"configs/shsd/stage_c/grid_lr002_l200001.toml","cores":1}
+{"command":"fit","config":"configs/shsd/stage_c/grid_lr01_l20000001.toml","cores":1}
+{"command":"fit","config":"configs/shsd/stage_c/grid_lr01_l200001.toml","cores":1}

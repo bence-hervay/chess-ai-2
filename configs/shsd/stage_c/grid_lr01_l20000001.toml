@@ -1,0 +1,23 @@
+# C1 hyperparameter mini-grid (card: select lr/l2 by val loss, 10k rung).
+train_positions = 10000
+eval_cap = 20000
+probe_states = 0
+probe_nodes = [400]
+seed = 1
+threads = 1
+
+[game]
+kind = "forward_chess"
+ruleset = "small"
+
+[source]
+kind = "tablebase"
+path = "runs/20260814-190733-solve-retro-fc-small-4deabb1/tablebase.bin"
+
+[model]
+kind = "structured"
+recipe = "fc_structured_linear_v1"
+steps = 20000
+batch = 256
+lr = 0.1
+l2 = 0.000001

@@ -789,10 +789,19 @@ pub struct MatchResult {
     pub mean_plies: f64,
 }
 
-/// Play `pairs` paired games between two model+search agents. Each pair
-/// shares one opening (uniform random legal moves for `opening_plies`
-/// plies, seeded by `(run_seed, pair)`) and swaps colours between its
-/// two games; both agents search deterministically with `node_budget`.
+/// Per-move search budget for match play. Node budgets are
+/// deterministic; movetime budgets are wall-clock and therefore not
+/// bit-reproducible (report intervals, not exact scores).
+#[derive(Clone, Copy, Debug, Serialize, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum MoveBudget {
+    Nodes { nodes: u64 },
+    MovetimeMs { ms: u64 },
+}
+
+/// Play `pairs` paired games between two model+search agents (the
+/// CompiledNet form; see [`play_paired_match_with`] for arbitrary
+/// evaluators). Each pair shares one opening and swaps colours.
 #[allow(clippy::too_many_arguments)] // match protocol parameters are irreducible
 pub fn play_paired_match<G: Game>(
     game: &G,
@@ -806,7 +815,67 @@ pub fn play_paired_match<G: Game>(
     threads: usize,
 ) -> MatchResult {
     use crate::model::ModelEvaluator;
+    play_paired_match_with(
+        game,
+        || ModelEvaluator::new(candidate),
+        || ModelEvaluator::new(champion),
+        pairs,
+        opening_plies,
+        MoveBudget::Nodes {
+            nodes: candidate_nodes,
+        },
+        MoveBudget::Nodes {
+            nodes: champion_nodes,
+        },
+        run_seed,
+        threads,
+    )
+}
+
+/// Play `pairs` paired games between two arbitrary evaluator+search
+/// agents. Each pair shares one opening (uniform random legal moves for
+/// `opening_plies` plies, seeded by `(run_seed, pair)`) and swaps
+/// colours between its two games.
+#[allow(clippy::too_many_arguments)] // match protocol parameters are irreducible
+pub fn play_paired_match_with<G, EA, EB, FA, FB>(
+    game: &G,
+    make_candidate: FA,
+    make_champion: FB,
+    pairs: u64,
+    opening_plies: u32,
+    candidate_budget: MoveBudget,
+    champion_budget: MoveBudget,
+    run_seed: u64,
+    threads: usize,
+) -> MatchResult
+where
+    G: Game,
+    EA: crate::search::Evaluator<G>,
+    EB: crate::search::Evaluator<G>,
+    FA: Fn() -> EA + Sync,
+    FB: Fn() -> EB + Sync,
+{
     use crate::search::{MoveOrdering, Searcher};
+
+    fn timed_search<G: Game, E: crate::search::Evaluator<G>>(
+        searcher: &mut Searcher<G>,
+        game: &G,
+        state: &mut G::State,
+        budget: MoveBudget,
+        eval: &mut E,
+    ) -> crate::search::SearchResult<G::Move> {
+        match budget {
+            MoveBudget::Nodes { nodes } => searcher.search(game, state, 512, nodes, eval),
+            MoveBudget::MovetimeMs { ms } => {
+                searcher.set_deadline(Some(
+                    std::time::Instant::now() + std::time::Duration::from_millis(ms),
+                ));
+                let result = searcher.search(game, state, 512, u64::MAX, eval);
+                searcher.set_deadline(None);
+                result
+            }
+        }
+    }
 
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
@@ -835,8 +904,8 @@ pub fn play_paired_match<G: Game>(
                         game.make_move(&mut state, mv);
                     }
                     let candidate_is_p1 = slot == 0;
-                    let mut cand_eval = ModelEvaluator::new(candidate);
-                    let mut champ_eval = ModelEvaluator::new(champion);
+                    let mut cand_eval = make_candidate();
+                    let mut champ_eval = make_champion();
                     let mut cand_search: Searcher<G> = Searcher::new(
                         Some(crate::training::SELFPLAY_TT_LOG2),
                         MoveOrdering::Natural,
@@ -852,19 +921,19 @@ pub fn play_paired_match<G: Game>(
                         let mover_is_candidate =
                             (game.side_to_move(&state) == Player::One) == candidate_is_p1;
                         let result = if mover_is_candidate {
-                            cand_search.search(
+                            timed_search(
+                                &mut cand_search,
                                 game,
                                 &mut state,
-                                512,
-                                candidate_nodes,
+                                candidate_budget,
                                 &mut cand_eval,
                             )
                         } else {
-                            champ_search.search(
+                            timed_search(
+                                &mut champ_search,
                                 game,
                                 &mut state,
-                                512,
-                                champion_nodes,
+                                champion_budget,
                                 &mut champ_eval,
                             )
                         };
