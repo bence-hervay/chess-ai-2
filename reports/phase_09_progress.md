@@ -54,6 +54,18 @@ correct rules search-scale better.)
   Chess. Recommendation: next long campaign at w32 with ≥800-node
   expert.
 
+## Late-night addendum: w32 at 800 nodes
+
+`fc_w32_n800` (fork of the w32 champion at 800-node expert) gained one
+more chunk (0.683 vs start, 2 promotions), then went flat and halted
+honestly under D030 in chunk 5 — w32's capacity ceiling arrives
+quickly under deep search, completing the width story: **w32 wins the
+early compute race, w64 sustains growth longer**. Best-vs-best,
+w32-n800 champion vs w64-n800 champion at 400 nodes: **0.550 (LCB
+0.456) over 80 games — statistical parity**, reached by the w32 line
+at distinctly lower generation cost. The frozen pool for Phase 9
+should carry both lines.
+
 ## The D031 find (the night's most valuable result)
 
 Deep-search self-play exposed a rules bug that random-playout
