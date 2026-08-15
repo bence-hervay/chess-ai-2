@@ -146,4 +146,9 @@ moves and queen promotions, plus `3 × width × 3` underpromotion slots
 - `full` (8×8): the standard chess array (all pieces `Natural`).
 
 Black's mirror = flip ranks and files so the position is rotationally
-fair.
+fair. Note the consequence on `full`: the 180° rotation puts the
+**black king on d8 and the black queen on e8** (the reverse of the
+familiar chess arrangement). Black therefore castles from **d8**: two
+files toward either rook, king to b8 or f8, rook to the crossed square
+(c8 or e8). "Has the king moved" in §6 refers to these homes — e1 for
+White, d8 for Black.

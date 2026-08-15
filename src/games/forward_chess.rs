@@ -305,6 +305,18 @@ impl ForwardChess {
         false
     }
 
+    /// The king's initial square. Layouts are 180-degree rotations of
+    /// each other, so Black's king home is the rotated e1 — d8 on 8x8,
+    /// NOT e8 (the queen's rotated square). Getting this wrong once let
+    /// Black keep castling rights after king moves (D031).
+    fn king_home(&self, owner: Player) -> u16 {
+        let white = self.cell(self.width / 2, 0);
+        match owner {
+            Player::One => white,
+            Player::Two => self.cell_count() as u16 - 1 - white,
+        }
+    }
+
     fn king_square(&self, cells: &[u8], owner: Player) -> u16 {
         let king = pack(owner, Piece::King, false);
         cells
@@ -507,7 +519,10 @@ impl ForwardChess {
         } else {
             self.height - 1
         };
-        if king_from / self.width != home {
+        // Rights guarantee this when rights-clearing is correct; the
+        // explicit check makes phantom castling (and the file-underflow
+        // it once caused, D031) impossible even under corrupted rights.
+        if king_from != self.king_home(mover) {
             return;
         }
         let enemy = mover.opponent();
@@ -541,6 +556,11 @@ impl ForwardChess {
                 continue;
             }
             // The two squares the king crosses must not be attacked.
+            // Files are validated before the u16 cast: an out-of-range
+            // step must be skipped, never wrapped (D031).
+            if kx + 2 * dir < 0 || kx + 2 * dir >= w {
+                continue;
+            }
             let crossed = self.cell((kx + dir) as u16, home);
             let dest = self.cell((kx + 2 * dir) as u16, home);
             if self.square_attacked(&core.cells, crossed, enemy)
@@ -809,6 +829,22 @@ impl Game for ForwardChess {
         let irreversible = self.apply_to_cells(&mut cells, state.core.ep, mv);
         state.core.cells = cells;
 
+        // Rules invariant: no legal move may remove a king. A violation
+        // is a movegen bug; dump the position so it can be reproduced.
+        for owner in [Player::One, Player::Two] {
+            let king = pack(owner, Piece::King, false);
+            if !state.core.cells.contains(&king) {
+                panic!(
+                    "king of {owner:?} vanished after {} on:\n{}",
+                    self.format_move(mv),
+                    self.render_ascii(&FcState {
+                        core: prior.clone(),
+                        history: Vec::new()
+                    }),
+                );
+            }
+        }
+
         // Castling rights: moving the king or a rook (or capturing a
         // rook on its home corner) clears rights.
         if self.ruleset.castling() {
@@ -819,7 +855,7 @@ impl Game for ForwardChess {
                 } else {
                     this.height - 1
                 };
-                if cell == this.cell(this.width / 2, home) {
+                if cell == this.king_home(owner) {
                     castling[base] = false;
                     castling[base + 1] = false;
                 }
@@ -1837,6 +1873,152 @@ mod tests {
             assert!(features.iter().all(|&f| (f as usize) < g.feature_count()));
             for &mv in &moves {
                 assert!((g.action_id(&state, mv) as usize) < g.action_count());
+            }
+        }
+    }
+
+    #[test]
+    fn corpus_castling_rights_die_with_king_moves_both_colours() {
+        let g = fc(Ruleset::Full);
+        // Black's king home is d8 (the 180-degree-rotated e1), NOT e8.
+        assert_eq!(g.king_home(Player::One), g.square("e1"));
+        assert_eq!(g.king_home(Player::Two), g.square("d8"));
+        let state = g.custom_state(
+            &[
+                ("e1", Player::One, Piece::King, false),
+                ("a1", Player::One, Piece::Rook, false),
+                ("h1", Player::One, Piece::Rook, false),
+                ("d8", Player::Two, Piece::King, false),
+                ("a8", Player::Two, Piece::Rook, false),
+                ("h8", Player::Two, Piece::Rook, false),
+            ],
+            Player::One,
+            [true; 4],
+            None,
+        );
+        let mut s = state.clone();
+        g.make_move(
+            &mut s,
+            FcMove {
+                from: g.square("e1"),
+                to: g.square("e2"),
+                promotion: None,
+            },
+        );
+        assert_eq!(s.core.castling, [false, false, true, true]);
+        g.make_move(
+            &mut s,
+            FcMove {
+                from: g.square("d8"),
+                to: g.square("d7"),
+                promotion: None,
+            },
+        );
+        assert_eq!(s.core.castling, [false; 4]);
+    }
+
+    #[test]
+    fn corpus_black_castles_from_d8() {
+        let g = fc(Ruleset::Full);
+        let state = g.custom_state(
+            &[
+                ("e1", Player::One, Piece::King, false),
+                ("d8", Player::Two, Piece::King, false),
+                ("a8", Player::Two, Piece::Rook, false),
+                ("h8", Player::Two, Piece::Rook, false),
+            ],
+            Player::Two,
+            [false, false, true, true],
+            None,
+        );
+        let mut moves = Vec::new();
+        g.legal_moves(&state, &mut moves);
+        let toward_h = FcMove {
+            from: g.square("d8"),
+            to: g.square("f8"),
+            promotion: None,
+        };
+        let toward_a = FcMove {
+            from: g.square("d8"),
+            to: g.square("b8"),
+            promotion: None,
+        };
+        assert!(moves.contains(&toward_h), "castle toward h8 from d8");
+        assert!(moves.contains(&toward_a), "castle toward a8 from d8");
+        let mut s = state.clone();
+        g.make_move(&mut s, toward_h);
+        assert_eq!(
+            unpack(s.core.cells[usize::from(g.square("e8"))]).1,
+            Piece::Rook
+        );
+        assert_eq!(
+            unpack(s.core.cells[usize::from(g.square("f8"))]).1,
+            Piece::King
+        );
+        assert_eq!(s.core.castling, [false; 4]);
+        let mut s = state.clone();
+        g.make_move(&mut s, toward_a);
+        assert_eq!(
+            unpack(s.core.cells[usize::from(g.square("c8"))]).1,
+            Piece::Rook
+        );
+        assert_eq!(
+            unpack(s.core.cells[usize::from(g.square("b8"))]).1,
+            Piece::King
+        );
+    }
+
+    #[test]
+    fn corpus_no_phantom_castle_off_home_even_with_forced_rights() {
+        let g = fc(Ruleset::Full);
+        // The D031 crash shape: black king on b8 holding a stale
+        // queenside right; the two-file step would wrap file -1 to a
+        // cell on another rank (it once captured the white king on h7).
+        let state = g.custom_state(
+            &[
+                ("h7", Player::One, Piece::King, false),
+                ("b8", Player::Two, Piece::King, false),
+                ("a8", Player::Two, Piece::Rook, false),
+            ],
+            Player::Two,
+            [false, false, false, true],
+            None,
+        );
+        let mut moves = Vec::new();
+        g.legal_moves(&state, &mut moves);
+        for mv in &moves {
+            if unpack(state.core.cells[usize::from(mv.from)]).1 == Piece::King {
+                let df = i32::from(mv.to % g.width()) - i32::from(mv.from % g.width());
+                let dr = i32::from(mv.to / g.width()) - i32::from(mv.from / g.width());
+                assert!(
+                    df.abs() <= 1 && dr.abs() <= 1,
+                    "phantom castle generated: {}",
+                    g.format_move(*mv)
+                );
+            }
+        }
+        // Mirror case: white king on g1 with a stale kingside right —
+        // the two-file step would spill past file h onto rank 2.
+        let state = g.custom_state(
+            &[
+                ("g1", Player::One, Piece::King, false),
+                ("h1", Player::One, Piece::Rook, false),
+                ("d8", Player::Two, Piece::King, false),
+            ],
+            Player::One,
+            [true, false, false, false],
+            None,
+        );
+        g.legal_moves(&state, &mut moves);
+        for mv in &moves {
+            if mv.from == g.square("g1") {
+                let df = i32::from(mv.to % g.width()) - i32::from(mv.from % g.width());
+                let dr = i32::from(mv.to / g.width()) - i32::from(mv.from / g.width());
+                assert!(
+                    df.abs() <= 1 && dr.abs() <= 1,
+                    "phantom castle generated: {}",
+                    g.format_move(*mv)
+                );
             }
         }
     }

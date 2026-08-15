@@ -314,3 +314,28 @@ replay window persists across chunks (`replay.jsonl` + `init_replay`);
 without it a continuation chunk's first candidates train on a single
 generation of data (~26 epochs on ~19k positions) and genuinely
 regress.
+
+## 2026-08-15 — D031: Black castles from d8; movegen defense-in-depth
+
+Deep-search self-play on `full` crashed with a captured king. Root
+cause chain: the 180° layout rotation puts Black's king on **d8** (e1
+rotated), but rights-clearing assumed both kings home on file
+`width/2` — so Black king moves never cleared Black's rights; a
+rights-holding king reached b8; queenside castle generation computed
+destination file 1−2 = −1, whose `as u16` cast wrapped through
+`cell()` arithmetic to h7 — "castling" onto (and capturing) White's
+king. Random-playout differential testing never caught it because
+random games shed castling rights almost immediately; 800-node search
+found it within ~50 generations of training.
+
+Fixes, each independently sufficient to prevent king capture:
+`king_home(owner)` derives the true rotated home (rights now die with
+king moves for both colours); castle generation requires the king on
+its exact home square and bounds-checks files before any u16 cast; and
+`make_move` permanently asserts both kings survive every move,
+panicking with a rendered board dump (the instrumentation that caught
+this). Corpus gains black-castles-from-d8, rights-die-with-king-moves,
+and phantom-castle-with-forced-stale-rights tests; RULES.md §12 now
+spells out the d8 home. All fc-full training results produced before
+this fix (first fc_full_w64 campaign and its n800 fork) are tainted by
+phantom black castling and were discarded and re-run.
