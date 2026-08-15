@@ -56,6 +56,9 @@ def parse_args():
                    help="add an external checkpoint to the pool (repeatable), e.g. a "
                         "parent campaign's champion when rating a fork: "
                         "--add parent=campaigns/base/champion")
+    p.add_argument("--skip-baseline", action="store_true",
+                   help="omit the campaign's own baseline_gen0 (use when rating a fork "
+                        "whose baseline duplicates the parent snapshot added via --add)")
     p.add_argument("--bootstrap", type=int, default=200, help="bootstrap resamples [200]")
     p.add_argument("--skip-matches", action="store_true",
                    help="fit from cached results only (no new matches)")
@@ -204,6 +207,8 @@ def main():
     campaign = Path(args.campaign)
     env = campaign_env(campaign)
     members = pool_members(campaign)
+    if args.skip_baseline:
+        members = [(n, p) for n, p in members if n != "gen0"]
     for spec in args.add:
         if "=" not in spec:
             sys.exit(f"--add wants NAME=PATH, got {spec}")
@@ -215,6 +220,10 @@ def main():
     if len(members) < 2:
         sys.exit("need at least two snapshots (run tools/fc_train.sh first)")
     names = [n for n, _ in members]
+    if len(set(names)) != len(names):
+        sys.exit(f"duplicate pool names {names}: results would merge under one "
+                 "rating and corrupt the fit (rename --add entries, or use "
+                 "--skip-baseline for forks)")
     print(f"pool: {' '.join(names)} ({env['GAME']} w{env['WIDTH']})")
 
     cache = campaign / "rating" / "matches"
