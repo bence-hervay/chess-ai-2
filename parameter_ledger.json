@@ -169,6 +169,17 @@
       "code_revision": "6b532d8"
     },
     {
+      "name": "ranker_pair_cap",
+      "component": "lab fit ranker pair sampling",
+      "class": "engineering",
+      "value": 8,
+      "unit": "pairs per position",
+      "allowed_range": ">=1",
+      "selection": "deterministic-by-key bound on optimal x non-optimal pair enumeration; keeps pair counts linear in positions",
+      "date": "2026-08-15",
+      "code_revision": "stage-f1"
+    },
+    {
       "name": "labelling_max_depth",
       "component": "data::label_positions / collect_positions",
       "class": "engineering",

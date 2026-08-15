@@ -225,6 +225,10 @@ enum EvaluateConfig {
 struct StructuredMatchConfig {
     /// Path to a `structured.json` checkpoint written by `lab fit`.
     structured_checkpoint: PathBuf,
+    /// Optional `ranker.json` move-ordering model for the structured
+    /// side (default: none, keeping pre-F1 configs replayable).
+    #[serde(default)]
+    structured_ranker: Option<PathBuf>,
     /// `"zero"` or an MLP checkpoint directory (`model.bin` + json).
     opponent: String,
     pairs: u64,
@@ -2354,7 +2358,7 @@ fn parse_fc_recipe(label: &str) -> Result<FcRecipe, String> {
 
 fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
     use selfplay_lab::evaluation::play_paired_match_with;
-    use selfplay_lab::structured_eval::{LinearWdl, StructuredEvaluator};
+    use selfplay_lab::structured_eval::{FcOrderedEvaluator, LinearWdl, MoveRanker};
 
     let GameSpec::ForwardChess { ruleset } = &config.game else {
         return Err("structured_match currently supports forward_chess only".into());
@@ -2372,6 +2376,16 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
     if FcExtractor::new(&game, recipe).dimension() != model.dimension {
         return Err("checkpoint dimension does not fit this ruleset".into());
     }
+    let ranker: Option<MoveRanker> = match &config.structured_ranker {
+        None => None,
+        Some(path) => Some(
+            serde_json::from_str(
+                &std::fs::read_to_string(path)
+                    .map_err(|e| format!("reading ranker checkpoint: {e}"))?,
+            )
+            .map_err(|e| format!("parsing ranker checkpoint: {e}"))?,
+        ),
+    };
 
     let label = format!("structmatch-{}-vs-{}", config.game.label(), {
         if config.opponent == "zero" {
@@ -2392,8 +2406,31 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
     let result = if config.opponent == "zero" {
         play_paired_match_with(
             &game,
-            || StructuredEvaluator::new(&model, FcExtractor::new(&game, recipe)),
+            || FcOrderedEvaluator::new(&game, &model, recipe, ranker.as_ref()),
             || ZeroEvaluator,
+            config.pairs,
+            config.opening_plies,
+            config.structured_budget,
+            config.opponent_budget,
+            config.seed,
+            config.threads,
+        )
+    } else if config.opponent.ends_with(".json") {
+        // A structured checkpoint as the opponent (no ranker): the
+        // ordered-vs-unordered and cross-checkpoint comparisons.
+        let opponent_model: selfplay_lab::structured_eval::LinearWdl = serde_json::from_str(
+            &std::fs::read_to_string(&config.opponent)
+                .map_err(|e| format!("reading opponent structured checkpoint: {e}"))?,
+        )
+        .map_err(|e| format!("parsing opponent structured checkpoint: {e}"))?;
+        let opponent_recipe = parse_fc_recipe(&opponent_model.recipe)?;
+        if FcExtractor::new(&game, opponent_recipe).dimension() != opponent_model.dimension {
+            return Err("opponent checkpoint dimension does not fit this ruleset".into());
+        }
+        play_paired_match_with(
+            &game,
+            || FcOrderedEvaluator::new(&game, &model, recipe, ranker.as_ref()),
+            || FcOrderedEvaluator::new(&game, &opponent_model, opponent_recipe, None),
             config.pairs,
             config.opening_plies,
             config.structured_budget,
@@ -2412,7 +2449,7 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
         let compiled = CompiledNet::from_net(&net, dims);
         play_paired_match_with(
             &game,
-            || StructuredEvaluator::new(&model, FcExtractor::new(&game, recipe)),
+            || FcOrderedEvaluator::new(&game, &model, recipe, ranker.as_ref()),
             || ModelEvaluator::new(&compiled),
             config.pairs,
             config.opening_plies,
@@ -2484,6 +2521,20 @@ enum FitModel {
     },
     /// The raw sparse MLP baseline (§9.3) under training recipe v1.
     RawMlp { width: usize, steps: u64 },
+    /// Linear pairwise move ranker on exact optimal/non-optimal pairs
+    /// (§18.5, §35). `leaf_checkpoint` is the structured value model
+    /// used for the node-efficiency and fixed-node probes.
+    Ranker {
+        steps: u64,
+        batch: usize,
+        lr: f64,
+        l2: f64,
+        /// Max ranking pairs drawn per position (deterministic by key).
+        pair_cap: usize,
+        leaf_checkpoint: PathBuf,
+        /// Fixed depths for the with/without-ordering node comparison.
+        depth_probe: Vec<u32>,
+    },
 }
 
 impl FitModel {
@@ -2491,6 +2542,7 @@ impl FitModel {
         match self {
             FitModel::Structured { recipe, .. } => recipe.label().to_string(),
             FitModel::RawMlp { width, .. } => format!("mlp-w{width}"),
+            FitModel::Ranker { .. } => "move-ranker".to_string(),
         }
     }
 }
@@ -2753,8 +2805,46 @@ fn fit(config_path: &Path) -> Result<(), String> {
     }
     say(format!("probe positions: {}", probes.len()), &mut log);
 
+    // -- The ranker arm has its own metrics and summary shape.
+    if let FitModel::Ranker {
+        steps,
+        batch,
+        lr,
+        l2,
+        pair_cap,
+        leaf_checkpoint,
+        depth_probe,
+    } = &config.model
+    {
+        return fit_ranker_arm(
+            &game,
+            &config,
+            RankerParams {
+                steps: *steps,
+                batch: *batch,
+                lr: *lr,
+                l2: *l2,
+                pair_cap: *pair_cap,
+                leaf_checkpoint: leaf_checkpoint.clone(),
+                depth_probe: depth_probe.clone(),
+            },
+            &run_dir,
+            manifest,
+            log,
+            &train,
+            &val_states,
+            &test_states,
+            &probes,
+            &key_wdl,
+            started,
+            cpu_before,
+        );
+    }
+
     // -- Fit the configured model and evaluate.
+    #[allow(clippy::wildcard_in_or_patterns)]
     let (val_metrics, test_metrics, prior, probe_report, extraction_ns) = match &config.model {
+        FitModel::Ranker { .. } => unreachable!("handled above"),
         FitModel::Structured {
             recipe,
             steps,
@@ -3083,6 +3173,368 @@ fn fit(config_path: &Path) -> Result<(), String> {
         )
         .map_err(|e| e.to_string())?;
     finish_run(&run_dir, manifest, &log)
+}
+
+/// Ranker-arm parameters (unpacked from `FitModel::Ranker`).
+struct RankerParams {
+    steps: u64,
+    batch: usize,
+    lr: f64,
+    l2: f64,
+    pair_cap: usize,
+    leaf_checkpoint: PathBuf,
+    depth_probe: Vec<u32>,
+}
+
+/// Fit and evaluate the move-ordering model (SHSD F1 card).
+#[allow(clippy::too_many_arguments)] // one experiment, one call site
+fn fit_ranker_arm(
+    game: &ForwardChess,
+    config: &FitConfig,
+    params: RankerParams,
+    run_dir: &RunDir,
+    manifest: Manifest,
+    mut log: String,
+    train: &[FitState],
+    val: &[FitState],
+    test: &[FitState],
+    probes: &[ProbePosition],
+    key_wdl: &std::collections::HashMap<u64, Wdl>,
+    started: Instant,
+    cpu_before: f64,
+) -> Result<(), String> {
+    use rand::Rng as _;
+    use rand::SeedableRng as _;
+    use selfplay_lab::features::forward_chess::{FcMoveFeatures, MOVE_FEATURE_DIMENSION};
+    use selfplay_lab::structured_eval::{
+        evaluate_move_ranker, fit_move_ranker, FcOrderedEvaluator, FitHyper, LinearWdl, RankPair,
+    };
+    use selfplay_lab::training::SELFPLAY_TT_LOG2;
+
+    let child_wdl = |state: &selfplay_lab::games::forward_chess::FcState,
+                     mv: selfplay_lab::games::forward_chess::FcMove|
+     -> Result<Wdl, String> {
+        let mut child = state.clone();
+        game.make_move(&mut child, mv);
+        if let Some(outcome) = game.outcome(&child) {
+            return Ok(Wdl::from_outcome(outcome, game.side_to_move(&child)));
+        }
+        key_wdl
+            .get(&game.position_key(&child))
+            .copied()
+            .ok_or_else(|| "child position missing from the exact map".to_string())
+    };
+
+    // Build ranking pairs: exact optimal vs non-optimal moves, up to
+    // pair_cap per position, deterministic by position key.
+    let build_pairs = |states: &[FitState]| -> Result<Vec<RankPair>, String> {
+        let mut pairs = Vec::new();
+        let mut moves = Vec::new();
+        let mut extractor = FcMoveFeatures::new(game);
+        let mut features: Vec<Vec<(u32, f32)>> = Vec::new();
+        for fit_state in states {
+            game.legal_moves(&fit_state.state, &mut moves);
+            if moves.len() < 2 {
+                continue;
+            }
+            let mut optimal = Vec::new();
+            let mut other = Vec::new();
+            for (i, &mv) in moves.iter().enumerate() {
+                if child_wdl(&fit_state.state, mv)?.flip() == fit_state.wdl {
+                    optimal.push(i);
+                } else {
+                    other.push(i);
+                }
+            }
+            if optimal.is_empty() || other.is_empty() {
+                continue;
+            }
+            features.clear();
+            features.resize(moves.len(), Vec::new());
+            for (i, &mv) in moves.iter().enumerate() {
+                let mut x = Vec::new();
+                extractor.extract(game, &fit_state.state, mv, &mut x);
+                features[i] = x;
+            }
+            let all = optimal.len() * other.len();
+            let key = game.position_key(&fit_state.state);
+            let mut rng =
+                rand_chacha::ChaCha12Rng::seed_from_u64(splitmix64(key) ^ splitmix64(config.seed));
+            let chosen: Vec<usize> = if all <= params.pair_cap {
+                (0..all).collect()
+            } else {
+                let mut set = std::collections::BTreeSet::new();
+                while set.len() < params.pair_cap {
+                    set.insert(rng.gen_range(0..all));
+                }
+                set.into_iter().collect()
+            };
+            for combo in chosen {
+                pairs.push(RankPair {
+                    better: features[optimal[combo / other.len()]].clone(),
+                    worse: features[other[combo % other.len()]].clone(),
+                });
+            }
+        }
+        Ok(pairs)
+    };
+
+    let t0 = Instant::now();
+    let train_pairs = build_pairs(train)?;
+    let pair_build_seconds = t0.elapsed().as_secs_f64();
+    let val_pairs = build_pairs(val)?;
+    let test_pairs = build_pairs(test)?;
+    say(
+        format!(
+            "ranking pairs: {} train / {} val / {} test (cap {}/position, {:.0}s build)",
+            train_pairs.len(),
+            val_pairs.len(),
+            test_pairs.len(),
+            params.pair_cap,
+            pair_build_seconds
+        ),
+        &mut log,
+    );
+    if train_pairs.is_empty() {
+        return Err("no ranking pairs; positions all have trivial move sets".into());
+    }
+
+    let hyper = FitHyper {
+        steps: params.steps,
+        batch: params.batch,
+        lr: params.lr,
+        l2: params.l2,
+    };
+    let mut metric_rows: Vec<serde_json::Value> = Vec::new();
+    let ranker = fit_move_ranker(
+        "fc_move_v1",
+        MOVE_FEATURE_DIMENSION,
+        &train_pairs,
+        hyper,
+        config.seed,
+        |step| {
+            if step.step % 500 == 0 || step.step == hyper.steps {
+                metric_rows.push(serde_json::json!({
+                    "step": step.step,
+                    "train_loss": step.train_loss,
+                }));
+            }
+        },
+    );
+    run_dir
+        .append_jsonl("metrics.jsonl", &metric_rows)
+        .map_err(|e| e.to_string())?;
+    let (val_loss, val_acc) = evaluate_move_ranker(&ranker, &val_pairs);
+    let (test_loss, test_acc) = evaluate_move_ranker(&ranker, &test_pairs);
+    say(
+        format!(
+            "pairwise: val {:.4}/{:.4}, test {:.4}/{:.4} (loss/acc; random floor 0.693/0.5)",
+            val_loss, val_acc, test_loss, test_acc
+        ),
+        &mut log,
+    );
+
+    run_dir
+        .create_subdir("checkpoint")
+        .map_err(|e| e.to_string())?;
+    run_dir
+        .write_json("checkpoint/ranker.json", &ranker)
+        .map_err(|e| e.to_string())?;
+    let mut inspection: Vec<(String, f32)> = (0..MOVE_FEATURE_DIMENSION)
+        .map(|i| (FcMoveFeatures::feature_name(i as u32), ranker.weights[i]))
+        .collect();
+    inspection.sort_by(|a, b| b.1.abs().total_cmp(&a.1.abs()));
+    run_dir
+        .write_json("checkpoint/weight_inspection.json", &inspection)
+        .map_err(|e| e.to_string())?;
+
+    // Leaf value model for the search probes.
+    let leaf: LinearWdl = serde_json::from_str(
+        &std::fs::read_to_string(&params.leaf_checkpoint)
+            .map_err(|e| format!("reading leaf checkpoint: {e}"))?,
+    )
+    .map_err(|e| format!("parsing leaf checkpoint: {e}"))?;
+    let leaf_recipe = parse_fc_recipe(&leaf.recipe)?;
+
+    // Probe A: ordering quality on exact probe positions.
+    // Probe B: nodes to reach fixed depths, with vs without ordering.
+    // Probe C: fixed-node decision quality, with vs without ordering.
+    struct ProbeRow {
+        rank_ranker: u32,
+        rank_generation: u32,
+        nodes_plain: Vec<u64>,
+        nodes_ordered: Vec<u64>,
+        fixed_plain: Vec<bool>,
+        fixed_ordered: Vec<bool>,
+    }
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(config.threads)
+        .build()
+        .expect("rayon pool");
+    let rows: Vec<ProbeRow> = pool.install(|| {
+        use rayon::prelude::*;
+        probes
+            .par_iter()
+            .map(|probe| {
+                let mut extractor = FcMoveFeatures::new(game);
+                let mut moves = Vec::new();
+                let mut state = probe.state.clone();
+                game.legal_moves(&state, &mut moves);
+                let mut scores = Vec::with_capacity(moves.len());
+                let mut x = Vec::new();
+                for &mv in &moves {
+                    extractor.extract(game, &state, mv, &mut x);
+                    scores.push(ranker.score(&x));
+                }
+                let mut order: Vec<usize> = (0..moves.len()).collect();
+                order.sort_by(|&a, &b| scores[b].total_cmp(&scores[a]));
+                let is_optimal =
+                    |i: usize| probe.optimal.contains(&game.action_id(&state, moves[i]));
+                let rank_ranker = order
+                    .iter()
+                    .position(|&i| is_optimal(i))
+                    .expect("optimal set non-empty") as u32;
+                let rank_generation = (0..moves.len())
+                    .position(is_optimal)
+                    .expect("optimal set non-empty") as u32;
+
+                let mut nodes_plain = Vec::new();
+                let mut nodes_ordered = Vec::new();
+                for &depth in &params.depth_probe {
+                    for (ranker_opt, out) in [
+                        (None, &mut nodes_plain),
+                        (Some(&ranker), &mut nodes_ordered),
+                    ] {
+                        let mut eval =
+                            FcOrderedEvaluator::new(game, &leaf, leaf_recipe, ranker_opt);
+                        let mut searcher: Searcher<ForwardChess> =
+                            Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+                        let result = searcher.search(game, &mut state, depth, u64::MAX, &mut eval);
+                        out.push(result.nodes_at_completed_depth);
+                    }
+                }
+                let mut fixed_plain = Vec::new();
+                let mut fixed_ordered = Vec::new();
+                for &budget in &config.probe_nodes {
+                    for (ranker_opt, out) in [
+                        (None, &mut fixed_plain),
+                        (Some(&ranker), &mut fixed_ordered),
+                    ] {
+                        let mut eval =
+                            FcOrderedEvaluator::new(game, &leaf, leaf_recipe, ranker_opt);
+                        let mut searcher: Searcher<ForwardChess> =
+                            Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+                        let result = searcher.search(game, &mut state, 512, budget, &mut eval);
+                        out.push(
+                            result.best_move.is_some_and(|mv| {
+                                probe.optimal.contains(&game.action_id(&state, mv))
+                            }),
+                        );
+                    }
+                }
+                ProbeRow {
+                    rank_ranker,
+                    rank_generation,
+                    nodes_plain,
+                    nodes_ordered,
+                    fixed_plain,
+                    fixed_ordered,
+                }
+            })
+            .collect()
+    });
+
+    let n = rows.len().max(1) as f64;
+    let mean_rank_ranker = rows.iter().map(|r| f64::from(r.rank_ranker)).sum::<f64>() / n;
+    let mean_rank_generation = rows
+        .iter()
+        .map(|r| f64::from(r.rank_generation))
+        .sum::<f64>()
+        / n;
+    let top1_ranker = rows.iter().filter(|r| r.rank_ranker == 0).count() as f64 / n;
+    let top1_generation = rows.iter().filter(|r| r.rank_generation == 0).count() as f64 / n;
+    let mut depth_summary = Vec::new();
+    for (i, &depth) in params.depth_probe.iter().enumerate() {
+        let plain: u64 = rows.iter().map(|r| r.nodes_plain[i]).sum();
+        let ordered: u64 = rows.iter().map(|r| r.nodes_ordered[i]).sum();
+        let mut ratios: Vec<f64> = rows
+            .iter()
+            .filter(|r| r.nodes_plain[i] > 0)
+            .map(|r| r.nodes_ordered[i] as f64 / r.nodes_plain[i] as f64)
+            .collect();
+        ratios.sort_by(f64::total_cmp);
+        let median = ratios.get(ratios.len() / 2).copied().unwrap_or(f64::NAN);
+        say(
+            format!(
+                "depth {depth}: nodes {} -> {} (total ratio {:.3}, median per-state {:.3})",
+                plain,
+                ordered,
+                ordered as f64 / plain.max(1) as f64,
+                median
+            ),
+            &mut log,
+        );
+        depth_summary.push(serde_json::json!({
+            "depth": depth,
+            "nodes_plain": plain,
+            "nodes_ordered": ordered,
+            "total_ratio": ordered as f64 / plain.max(1) as f64,
+            "median_ratio": median,
+        }));
+    }
+    let mut fixed_summary = Vec::new();
+    for (i, &budget) in config.probe_nodes.iter().enumerate() {
+        let plain = rows.iter().filter(|r| r.fixed_plain[i]).count() as f64 / n;
+        let ordered = rows.iter().filter(|r| r.fixed_ordered[i]).count() as f64 / n;
+        say(
+            format!("fixed {budget} nodes: optimal rate {plain:.4} -> {ordered:.4}"),
+            &mut log,
+        );
+        fixed_summary.push(serde_json::json!({
+            "budget": budget,
+            "optimal_rate_plain": plain,
+            "optimal_rate_ordered": ordered,
+        }));
+    }
+    say(
+        format!(
+            "first-optimal rank: generation order {:.3} (top-1 {:.3}) -> ranker {:.3} (top-1 {:.3})",
+            mean_rank_generation, top1_generation, mean_rank_ranker, top1_ranker
+        ),
+        &mut log,
+    );
+
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "model": "move-ranker",
+                "train_states": train.len(),
+                "train_pairs": train_pairs.len(),
+                "pairwise": {
+                    "val": { "log_loss": val_loss, "accuracy": val_acc },
+                    "test": { "log_loss": test_loss, "accuracy": test_acc },
+                },
+                "ordering": {
+                    "mean_rank_generation": mean_rank_generation,
+                    "mean_rank_ranker": mean_rank_ranker,
+                    "top1_generation": top1_generation,
+                    "top1_ranker": top1_ranker,
+                },
+                "depth_probe": depth_summary,
+                "fixed_node_probe": fixed_summary,
+                "cost": {
+                    "wall_seconds": wall_seconds,
+                    "cpu_seconds": cpu_seconds,
+                    "utilization": cpu_seconds / (wall_seconds * config.threads as f64),
+                    "peak_rss_bytes": peak_rss_bytes(),
+                },
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(run_dir, manifest, &log)
 }
 
 /// Decision quality of an evaluator on exact probe positions: raw

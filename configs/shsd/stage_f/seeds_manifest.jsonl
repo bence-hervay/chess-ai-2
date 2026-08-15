@@ -1,0 +1,2 @@
+{"command":"fit","config":"configs/shsd/stage_f/ranker_lr002_s2.toml","cores":2}
+{"command":"fit","config":"configs/shsd/stage_f/ranker_lr002_s3.toml","cores":2}

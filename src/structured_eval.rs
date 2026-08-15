@@ -225,6 +225,121 @@ pub fn class_prior_baseline(train: &[StructuredRow], eval: &[StructuredRow]) -> 
     (loss / eval.len() as f64, correct as f64 / eval.len() as f64)
 }
 
+/// Linear pairwise move-ranking model (§35.4 starting point). Scores
+/// state-action features; higher = search first. Trained on
+/// better/worse move pairs with the logistic ranking loss (§18.5).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MoveRanker {
+    /// Named move-feature recipe this ranker was fitted for.
+    pub recipe: String,
+    pub dimension: usize,
+    pub weights: Vec<f32>,
+}
+
+impl MoveRanker {
+    pub fn zeros(recipe: &str, dimension: usize) -> MoveRanker {
+        MoveRanker {
+            recipe: recipe.to_string(),
+            dimension,
+            weights: vec![0.0; dimension],
+        }
+    }
+
+    pub fn score(&self, x: &[FeatureEntry]) -> f64 {
+        x.iter()
+            .map(|&(i, v)| f64::from(self.weights[i as usize]) * f64::from(v))
+            .sum()
+    }
+}
+
+/// One ranking pair: `better` should score above `worse`.
+#[derive(Clone, Debug)]
+pub struct RankPair {
+    pub better: Vec<FeatureEntry>,
+    pub worse: Vec<FeatureEntry>,
+}
+
+/// Deterministic minibatch Adam on the pairwise logistic ranking loss
+/// `-ln sigma(s(better) - s(worse))` with L2.
+pub fn fit_move_ranker(
+    recipe: &str,
+    dimension: usize,
+    pairs: &[RankPair],
+    hyper: FitHyper,
+    seed: u64,
+    mut on_step: impl FnMut(&FitStep),
+) -> MoveRanker {
+    assert!(!pairs.is_empty(), "cannot fit on an empty pair set");
+    let mut model = MoveRanker::zeros(recipe, dimension);
+    let mut m = vec![0.0f64; dimension];
+    let mut v = vec![0.0f64; dimension];
+    let mut grad = vec![0.0f64; dimension];
+    let (beta1, beta2, eps): (f64, f64, f64) = (0.9, 0.999, 1e-8);
+    let mut rng = ChaCha12Rng::seed_from_u64(splitmix64(seed) ^ 0x4a4e_4b52);
+    let mut order: Vec<usize> = (0..pairs.len()).collect();
+    let mut cursor = pairs.len();
+
+    for step in 1..=hyper.steps {
+        for g in grad.iter_mut() {
+            *g = 0.0;
+        }
+        let mut batch_loss = 0.0;
+        for _ in 0..hyper.batch {
+            if cursor >= order.len() {
+                order.shuffle(&mut rng);
+                cursor = 0;
+            }
+            let pair = &pairs[order[cursor]];
+            cursor += 1;
+            let margin = model.score(&pair.better) - model.score(&pair.worse);
+            let p = 1.0 / (1.0 + (-margin).exp());
+            batch_loss -= p.max(1e-300).ln();
+            let delta = p - 1.0; // d(loss)/d(margin)
+            for &(i, x) in &pair.better {
+                grad[i as usize] += delta * f64::from(x);
+            }
+            for &(i, x) in &pair.worse {
+                grad[i as usize] -= delta * f64::from(x);
+            }
+        }
+        let scale = 1.0 / hyper.batch as f64;
+        for (i, g) in grad.iter_mut().enumerate() {
+            *g = *g * scale + hyper.l2 * f64::from(model.weights[i]);
+        }
+        let bc1 = 1.0 - beta1.powi(step as i32);
+        let bc2 = 1.0 - beta2.powi(step as i32);
+        for i in 0..dimension {
+            m[i] = beta1 * m[i] + (1.0 - beta1) * grad[i];
+            v[i] = beta2 * v[i] + (1.0 - beta2) * grad[i] * grad[i];
+            model.weights[i] -= (hyper.lr * (m[i] / bc1) / ((v[i] / bc2).sqrt() + eps)) as f32;
+        }
+        on_step(&FitStep {
+            step,
+            train_loss: batch_loss * scale,
+        });
+    }
+    model
+}
+
+/// Mean pairwise loss and accuracy (better ranked above worse).
+pub fn evaluate_move_ranker(model: &MoveRanker, pairs: &[RankPair]) -> (f64, f64) {
+    if pairs.is_empty() {
+        return (f64::NAN, f64::NAN);
+    }
+    let mut loss = 0.0;
+    let mut correct = 0u64;
+    for pair in pairs {
+        let margin = model.score(&pair.better) - model.score(&pair.worse);
+        let p = 1.0 / (1.0 + (-margin).exp());
+        loss -= p.max(1e-300).ln();
+        correct += u64::from(margin > 0.0);
+    }
+    (
+        loss / pairs.len() as f64,
+        correct as f64 / pairs.len() as f64,
+    )
+}
+
 /// A structured linear model plus its extractor as a search evaluator.
 pub struct StructuredEvaluator<'a, G: Game, X: FeatureExtractor<G>> {
     model: &'a LinearWdl,
@@ -253,6 +368,71 @@ impl<'a, G: Game, X: FeatureExtractor<G>> Evaluator<G> for StructuredEvaluator<'
     fn leaf_value(&mut self, game: &G, state: &G::State) -> i32 {
         self.extractor.extract(game, state, &mut self.buf);
         self.model.leaf_value(&self.buf)
+    }
+}
+
+/// Forward Chess evaluator combining the structured value model with an
+/// optional learned move-ordering model (§35). The search's
+/// TT-move-first rule applies on top of whatever this orders.
+pub struct FcOrderedEvaluator<'a> {
+    model: &'a LinearWdl,
+    ranker: Option<&'a MoveRanker>,
+    extractor: crate::features::forward_chess::FcExtractor,
+    move_features: crate::features::forward_chess::FcMoveFeatures,
+    buf: Vec<FeatureEntry>,
+}
+
+impl<'a> FcOrderedEvaluator<'a> {
+    pub fn new(
+        game: &crate::games::forward_chess::ForwardChess,
+        model: &'a LinearWdl,
+        recipe: crate::features::forward_chess::FcRecipe,
+        ranker: Option<&'a MoveRanker>,
+    ) -> Self {
+        let extractor = crate::features::forward_chess::FcExtractor::new(game, recipe);
+        assert_eq!(model.dimension, extractor.dimension());
+        if let Some(ranker) = ranker {
+            assert_eq!(
+                ranker.dimension,
+                crate::features::forward_chess::MOVE_FEATURE_DIMENSION
+            );
+        }
+        FcOrderedEvaluator {
+            model,
+            ranker,
+            extractor,
+            move_features: crate::features::forward_chess::FcMoveFeatures::new(game),
+            buf: Vec::new(),
+        }
+    }
+}
+
+impl Evaluator<crate::games::forward_chess::ForwardChess> for FcOrderedEvaluator<'_> {
+    fn leaf_value(
+        &mut self,
+        game: &crate::games::forward_chess::ForwardChess,
+        state: &crate::games::forward_chess::FcState,
+    ) -> i32 {
+        self.extractor.extract(game, state, &mut self.buf);
+        self.model.leaf_value(&self.buf)
+    }
+
+    fn policy_scores(
+        &mut self,
+        game: &crate::games::forward_chess::ForwardChess,
+        state: &crate::games::forward_chess::FcState,
+        moves: &[crate::games::forward_chess::FcMove],
+        out: &mut Vec<f32>,
+    ) -> bool {
+        let Some(ranker) = self.ranker else {
+            return false;
+        };
+        out.clear();
+        for &mv in moves {
+            self.move_features.extract(game, state, mv, &mut self.buf);
+            out.push(ranker.score(&self.buf) as f32);
+        }
+        true
     }
 }
 
@@ -378,6 +558,100 @@ mod tests {
         assert_eq!(model.weights, back.weights);
         assert_eq!(model.bias, back.bias);
         assert_eq!(model.recipe, back.recipe);
+    }
+
+    #[test]
+    fn ranker_learns_toy_rule_deterministically_and_round_trips() {
+        // Feature 0 marks the better move.
+        let pairs: Vec<RankPair> = (0..40)
+            .map(|i| RankPair {
+                better: vec![(0, 1.0), (1, (i % 3) as f32)],
+                worse: vec![(1, (i % 5) as f32)],
+            })
+            .collect();
+        let hyper = FitHyper {
+            steps: 400,
+            batch: 8,
+            lr: 0.05,
+            l2: 1e-6,
+        };
+        let run = || {
+            let mut losses = Vec::new();
+            let model = fit_move_ranker("toy_moves", 2, &pairs, hyper, 3, |s| {
+                losses.push(s.train_loss)
+            });
+            (model, losses)
+        };
+        let (model, losses) = run();
+        let (model2, losses2) = run();
+        assert_eq!(losses, losses2);
+        assert_eq!(model.weights, model2.weights);
+        let (loss, acc) = evaluate_move_ranker(&model, &pairs);
+        assert_eq!(acc, 1.0);
+        assert!(loss < 0.2);
+        assert!(model.weights[0] > 0.5, "the better-move marker is learned");
+        let back: MoveRanker =
+            serde_json::from_str(&serde_json::to_string(&model).unwrap()).unwrap();
+        assert_eq!(back.weights, model.weights);
+    }
+
+    #[test]
+    fn ordering_changes_nodes_not_values() {
+        // §69.4: with and without the ranker, search values at full
+        // depth must be identical; only node counts may differ.
+        use crate::features::forward_chess::{FcRecipe, MOVE_FEATURE_DIMENSION};
+        use crate::games::forward_chess::{ForwardChess, Ruleset};
+        use crate::search::{MoveOrdering, Searcher};
+        let game = ForwardChess::new(Ruleset::Tiny);
+        let model = {
+            // A tiny fitted model: random-ish deterministic weights.
+            let mut m = LinearWdl::zeros(
+                FcRecipe::FcStructuredLinearV1.label(),
+                crate::features::FeatureExtractor::<ForwardChess>::dimension(
+                    &crate::features::forward_chess::FcExtractor::new(
+                        &game,
+                        FcRecipe::FcStructuredLinearV1,
+                    ),
+                ),
+            );
+            for (i, w) in m.weights.iter_mut().enumerate() {
+                let h = crate::training::splitmix64(i as u64);
+                w[2] = ((h % 1000) as f32 - 500.0) / 2000.0;
+                w[0] = -w[2];
+            }
+            m
+        };
+        let mut ranker = MoveRanker::zeros("fc_move_v1", MOVE_FEATURE_DIMENSION);
+        for (i, w) in ranker.weights.iter_mut().enumerate() {
+            *w = ((crate::training::splitmix64(i as u64 ^ 7) % 100) as f32 - 50.0) / 100.0;
+        }
+        let mut rng = ChaCha12Rng::seed_from_u64(11);
+        use rand::Rng as _;
+        let mut moves = Vec::new();
+        let mut state = game.initial_state();
+        for _ in 0..30 {
+            if crate::game::Game::outcome(&game, &state).is_some() {
+                break;
+            }
+            let depth = 5;
+            let mut plain =
+                FcOrderedEvaluator::new(&game, &model, FcRecipe::FcStructuredLinearV1, None);
+            let mut ordered = FcOrderedEvaluator::new(
+                &game,
+                &model,
+                FcRecipe::FcStructuredLinearV1,
+                Some(&ranker),
+            );
+            let mut s1: Searcher<ForwardChess> = Searcher::new(Some(12), MoveOrdering::Natural);
+            let mut s2: Searcher<ForwardChess> = Searcher::new(Some(12), MoveOrdering::Natural);
+            let r1 = s1.search(&game, &mut state, depth, u64::MAX, &mut plain);
+            let r2 = s2.search(&game, &mut state, depth, u64::MAX, &mut ordered);
+            assert_eq!(r1.value, r2.value, "ordering must never change values");
+            assert_eq!(r1.completed_depth, r2.completed_depth);
+            crate::game::Game::legal_moves(&game, &state, &mut moves);
+            let mv = moves[rng.gen_range(0..moves.len())];
+            crate::game::Game::make_move(&game, &mut state, mv);
+        }
     }
 
     #[test]

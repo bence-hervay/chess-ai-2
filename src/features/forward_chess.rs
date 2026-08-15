@@ -286,6 +286,163 @@ impl FeatureExtractor<ForwardChess> for FcExtractor {
     }
 }
 
+/// State-action (move) measurements for ordering (§35.2 rule-level and
+/// tactical inputs). Search-history inputs (TT move, killers) are not
+/// features: the TT-move-first rule already applies on top of any
+/// evaluator ordering.
+pub struct FcMoveFeatures {
+    width: u16,
+    height: u16,
+    cells_scratch: Vec<u8>,
+}
+
+/// Move-feature index layout (dimension 35).
+const MF_MOVING: usize = 0; // ..10: moving piece combo
+const MF_CAPTURED: usize = 10; // ..20: captured piece combo
+const MF_IS_CAPTURE: usize = 20;
+const MF_PROMO_CHOICE: usize = 21; // ..25: N,B,R,Q
+const MF_IS_PROMO: usize = 25;
+const MF_GIVES_CHECK: usize = 26;
+const MF_FORWARD_DISP: usize = 27;
+const MF_HORIZONTAL: usize = 28;
+const MF_DEST_ATTACKED: usize = 29;
+const MF_DEST_DEFENDED: usize = 30;
+const MF_SOURCE_ATTACKED: usize = 31;
+const MF_DEST_REL_RANK: usize = 32;
+const MF_IS_CASTLE: usize = 33;
+const MF_IS_EP: usize = 34;
+pub const MOVE_FEATURE_DIMENSION: usize = 35;
+
+impl FcMoveFeatures {
+    pub fn new(game: &ForwardChess) -> FcMoveFeatures {
+        FcMoveFeatures {
+            width: game.width(),
+            height: game.height(),
+            cells_scratch: Vec::new(),
+        }
+    }
+
+    pub fn dimension(&self) -> usize {
+        MOVE_FEATURE_DIMENSION
+    }
+
+    /// Clear `out` and append the move's features, mover perspective.
+    pub fn extract(
+        &mut self,
+        game: &ForwardChess,
+        state: &<ForwardChess as Game>::State,
+        mv: <ForwardChess as Game>::Move,
+        out: &mut Vec<FeatureEntry>,
+    ) {
+        out.clear();
+        let cells = game.state_cells(state);
+        let mover = game.side_to_move(state);
+        let opponent = mover.opponent();
+        let (_, piece, reversed) = ForwardChess::unpack_code(cells[usize::from(mv.from)]);
+        out.push(((MF_MOVING + combo_index(piece, reversed)) as u32, 1.0));
+
+        let ep = game.state_ep(state);
+        let is_ep = piece == Piece::Pawn && Some(mv.to) == ep && cells[usize::from(mv.to)] == 0;
+        let captured_code = cells[usize::from(mv.to)];
+        if captured_code != 0 || is_ep {
+            let (victim_piece, victim_rev) = if is_ep {
+                (Piece::Pawn, false)
+            } else {
+                let (_, p, r) = ForwardChess::unpack_code(captured_code);
+                (p, r)
+            };
+            out.push((
+                (MF_CAPTURED + combo_index(victim_piece, victim_rev)) as u32,
+                1.0,
+            ));
+            out.push((MF_IS_CAPTURE as u32, 1.0));
+        }
+        if let Some(promoted) = mv.promotion {
+            let slot = match promoted {
+                Piece::Knight => 0,
+                Piece::Bishop => 1,
+                Piece::Rook => 2,
+                Piece::Queen => 3,
+                _ => unreachable!("promotion choices are N/B/R/Q"),
+            };
+            out.push(((MF_PROMO_CHOICE + slot) as u32, 1.0));
+            out.push((MF_IS_PROMO as u32, 1.0));
+        }
+
+        // Direct + discovered check: apply the move to a scratch board
+        // and test whether the opponent's king is attacked.
+        self.cells_scratch.clear();
+        self.cells_scratch.extend_from_slice(cells);
+        game.apply_move_to_cells(&mut self.cells_scratch, ep, mv);
+        let enemy_king = game.king_cell(&self.cells_scratch, opponent);
+        if game.cell_attacked_by(&self.cells_scratch, enemy_king, mover) {
+            out.push((MF_GIVES_CHECK as u32, 1.0));
+        }
+
+        let from_rank = i32::from(mv.from / self.width);
+        let to_rank = i32::from(mv.to / self.width);
+        let forward = if mover == crate::game::Player::One {
+            1
+        } else {
+            -1
+        };
+        let disp = (to_rank - from_rank) * forward;
+        if disp != 0 {
+            out.push((MF_FORWARD_DISP as u32, disp as f32));
+        } else {
+            out.push((MF_HORIZONTAL as u32, 1.0));
+        }
+        if game.cell_attacked_by(cells, mv.to, opponent) {
+            out.push((MF_DEST_ATTACKED as u32, 1.0));
+        }
+        if game.cell_attacked_by(cells, mv.to, mover) {
+            out.push((MF_DEST_DEFENDED as u32, 1.0));
+        }
+        if game.cell_attacked_by(cells, mv.from, opponent) {
+            out.push((MF_SOURCE_ATTACKED as u32, 1.0));
+        }
+        let rel_rank = if mover == crate::game::Player::One {
+            to_rank
+        } else {
+            i32::from(self.height) - 1 - to_rank
+        };
+        if rel_rank != 0 {
+            out.push((MF_DEST_REL_RANK as u32, rel_rank as f32));
+        }
+        if piece == Piece::King
+            && (i32::from(mv.to % self.width) - i32::from(mv.from % self.width)).abs() == 2
+        {
+            out.push((MF_IS_CASTLE as u32, 1.0));
+        }
+        if is_ep {
+            out.push((MF_IS_EP as u32, 1.0));
+        }
+    }
+
+    pub fn feature_name(index: u32) -> String {
+        let index = index as usize;
+        match index {
+            i if i < MF_CAPTURED => format!("moving/{}", combo_name(i - MF_MOVING)),
+            i if i < MF_IS_CAPTURE => format!("captured/{}", combo_name(i - MF_CAPTURED)),
+            MF_IS_CAPTURE => "is_capture".into(),
+            i if i < MF_IS_PROMO => {
+                format!("promo_choice/{}", ["N", "B", "R", "Q"][i - MF_PROMO_CHOICE])
+            }
+            MF_IS_PROMO => "is_promotion".into(),
+            MF_GIVES_CHECK => "gives_check".into(),
+            MF_FORWARD_DISP => "forward_displacement".into(),
+            MF_HORIZONTAL => "is_horizontal".into(),
+            MF_DEST_ATTACKED => "dest_attacked".into(),
+            MF_DEST_DEFENDED => "dest_defended".into(),
+            MF_SOURCE_ATTACKED => "source_attacked".into(),
+            MF_DEST_REL_RANK => "dest_relative_rank".into(),
+            MF_IS_CASTLE => "is_castle".into(),
+            MF_IS_EP => "is_en_passant".into(),
+            _ => format!("unknown/{index}"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -441,6 +598,110 @@ mod tests {
         // Feature names resolve for every emitted index.
         for &(index, _) in &out {
             assert!(!extractor.feature_name(index).is_empty());
+        }
+    }
+
+    #[test]
+    fn move_features_are_rotation_swap_invariant() {
+        // A move and its rotated-colour-swapped counterpart must have
+        // identical features (mover perspective).
+        let game = ForwardChess::new(Ruleset::Small);
+        let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(43);
+        let mut extractor = FcMoveFeatures::new(&game);
+        let mut moves = Vec::new();
+        let mut a = Vec::new();
+        let mut b = Vec::new();
+        let total = game.cell_count() as u16;
+        let mut tested = 0;
+        for _ in 0..25 {
+            let mut state = game.initial_state();
+            loop {
+                if game.outcome(&state).is_some() {
+                    break;
+                }
+                let rotated = rotate_swap(&game, &state);
+                game.legal_moves(&state, &mut moves);
+                let move_list = moves.clone();
+                for &mv in &move_list {
+                    let rotated_mv = crate::games::forward_chess::FcMove {
+                        from: total - 1 - mv.from,
+                        to: total - 1 - mv.to,
+                        promotion: mv.promotion,
+                    };
+                    extractor.extract(&game, &state, mv, &mut a);
+                    extractor.extract(&game, &rotated, rotated_mv, &mut b);
+                    assert_eq!(a, b, "move features must be rotation-swap invariant");
+                    tested += 1;
+                }
+                let mv = move_list[rng.gen_range(0..move_list.len())];
+                game.make_move(&mut state, mv);
+            }
+        }
+        assert!(tested > 300);
+    }
+
+    #[test]
+    fn hand_computed_move_features() {
+        // Same position as `hand_computed_position`; White to move.
+        let game = ForwardChess::new(Ruleset::Small);
+        let state = game.custom_state(
+            &[
+                ("b1", Player::One, Piece::King, false),
+                ("c1", Player::One, Piece::Rook, false),
+                ("a2", Player::One, Piece::Pawn, false),
+                ("d4", Player::Two, Piece::King, false),
+                ("b3", Player::Two, Piece::Rook, true),
+            ],
+            Player::One,
+            [false; 4],
+            None,
+        );
+        let mut extractor = FcMoveFeatures::new(&game);
+        let mut moves = Vec::new();
+        game.legal_moves(&state, &mut moves);
+        let axb3 = moves
+            .iter()
+            .copied()
+            .find(|m| m.from == game.square("a2") && m.to == game.square("b3"))
+            .expect("axb3 is legal");
+        let mut x = Vec::new();
+        extractor.extract(&game, &state, axb3, &mut x);
+        let get = |i: usize| {
+            x.iter()
+                .find(|&&(f, _)| f as usize == i)
+                .map(|&(_, v)| v)
+                .unwrap_or(0.0)
+        };
+        assert_eq!(get(MF_MOVING), 1.0, "moving pawn-nat");
+        assert_eq!(get(MF_CAPTURED + 8), 1.0, "captures rook-rev (combo 8)");
+        assert_eq!(get(MF_IS_CAPTURE), 1.0);
+        assert_eq!(get(MF_FORWARD_DISP), 1.0, "one rank forward");
+        assert_eq!(get(MF_DEST_REL_RANK), 2.0, "b3 is rank 3 = rel rank 2");
+        assert_eq!(get(MF_DEST_ATTACKED), 0.0, "b3 undefended by black");
+        assert_eq!(get(MF_SOURCE_ATTACKED), 0.0);
+        // After axb3 the pawn on b3 attacks a4 and c4 - not the king
+        // on d4; no check.
+        assert_eq!(get(MF_GIVES_CHECK), 0.0);
+        // Rook lift c1-c4 gives check? White rook on c4 attacks
+        // horizontally d4 = Black king: yes.
+        let rook_c4 = moves
+            .iter()
+            .copied()
+            .find(|m| m.from == game.square("c1") && m.to == game.square("c4"))
+            .expect("Rc4 is legal");
+        extractor.extract(&game, &state, rook_c4, &mut x);
+        let get = |i: usize| {
+            x.iter()
+                .find(|&&(f, _)| f as usize == i)
+                .map(|&(_, v)| v)
+                .unwrap_or(0.0)
+        };
+        assert_eq!(get(MF_GIVES_CHECK), 1.0, "Rc4+ through the empty file");
+        assert_eq!(get(MF_MOVING + 3), 1.0, "moving rook-nat");
+        assert_eq!(get(MF_IS_CAPTURE), 0.0);
+        // Every emitted index has a name.
+        for &(index, _) in &x {
+            assert!(!FcMoveFeatures::feature_name(index).is_empty());
         }
     }
 

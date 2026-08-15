@@ -325,6 +325,22 @@ impl ForwardChess {
         rank.abs_diff(last)
     }
 
+    /// The king square of `owner` in a bare cell array.
+    pub(crate) fn king_cell(&self, cells: &[u8], owner: Player) -> u16 {
+        self.king_square(cells, owner)
+    }
+
+    /// The current en-passant target square, if any.
+    pub(crate) fn state_ep(&self, state: &FcState) -> Option<u16> {
+        state.core.ep
+    }
+
+    /// Apply a move to a bare cell array (en passant, promotion, and
+    /// castling included) without touching clocks or hashes.
+    pub(crate) fn apply_move_to_cells(&self, cells: &mut [u8], ep: Option<u16>, mv: FcMove) {
+        self.apply_to_cells(cells, ep, mv);
+    }
+
     /// Is `target` attacked by any piece of `attacker`?
     fn square_attacked(&self, cells: &[u8], target: u16, attacker: Player) -> bool {
         for (cell, &code) in cells.iter().enumerate() {

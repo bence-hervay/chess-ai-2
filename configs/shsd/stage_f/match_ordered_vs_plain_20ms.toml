@@ -1,0 +1,20 @@
+kind = "structured_match"
+structured_checkpoint = "runs/20260815-223149-fit-fc-small-fc_structured_linear_v1-n1000000-s1-6b532d8/checkpoint/structured.json"
+structured_ranker = "runs/20260815-231139-fit-fc-small-move-ranker-n100000-s1-5698bcf/checkpoint/ranker.json"
+opponent = "runs/20260815-223149-fit-fc-small-fc_structured_linear_v1-n1000000-s1-6b532d8/checkpoint/structured.json"
+pairs = 300
+opening_plies = 6
+seed = 1
+threads = 4
+
+[structured_budget]
+kind = "movetime_ms"
+ms = 20
+
+[opponent_budget]
+kind = "movetime_ms"
+ms = 20
+
+[game]
+kind = "forward_chess"
+ruleset = "small"

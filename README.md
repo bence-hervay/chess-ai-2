@@ -79,6 +79,7 @@ time.
 | A — Recover and audit the existing system | **PASS** | [reports/shsd/stage_a_audit.md](reports/shsd/stage_a_audit.md) |
 | B — Research instrumentation | **PASS** | [reports/shsd/stage_b_instrumentation.md](reports/shsd/stage_b_instrumentation.md) |
 | C — First compact structured evaluator | **PASS** | [reports/shsd/stage_c_structured_linear.md](reports/shsd/stage_c_structured_linear.md) |
+| F1 — Learned move ordering (exact data) | **PASS** | [reports/shsd/stage_f1_move_ordering.md](reports/shsd/stage_f1_move_ordering.md) |
 
 Stage B delivered provenance-typed deep-search teacher records
 (`lab relabel`), validated against the exact fc-tiny oracle across 3
