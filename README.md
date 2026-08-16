@@ -82,6 +82,7 @@ time.
 | F1 — Learned move ordering (exact data) | **PASS** | [reports/shsd/stage_f1_move_ordering.md](reports/shsd/stage_f1_move_ordering.md) |
 | F2 — fc-full ordering from search distillation | **PASS** | [reports/shsd/stage_f2_fullboard_ordering.md](reports/shsd/stage_f2_fullboard_ordering.md) |
 | G1 — Capture/promotion quiescence | **PASS** | [reports/shsd/stage_g1_quiescence.md](reports/shsd/stage_g1_quiescence.md) |
+| F3 — Ranker iteration on the quiescent teacher | null (recorded) | [reports/shsd/stage_f3_teacher_iteration_note.md](reports/shsd/stage_f3_teacher_iteration_note.md) |
 
 Stage B delivered provenance-typed deep-search teacher records
 (`lab relabel`), validated against the exact fc-tiny oracle across 3

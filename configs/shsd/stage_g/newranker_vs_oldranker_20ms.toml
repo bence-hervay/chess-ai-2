@@ -1,0 +1,20 @@
+# F3 loop test: ranker refit on quiescent-teacher records vs the F2
+# ranker, both searching with quiescence, same value model.
+kind = "ordered_mlp_match"
+mlp_checkpoint = "campaigns/fc_full_w64_n800/champion"
+ordering = "runs/20260816-005342-fit-fc-full-move-ranker-records-n10000-s1-5a5670a/checkpoint/ranker.json"
+opponent_ordering = "runs/20260815-234249-fit-fc-full-move-ranker-records-n10000-s1-69f4289/checkpoint/ranker.json"
+pairs = 300
+opening_plies = 8
+quiescence = true
+opponent_quiescence = true
+seed = 1
+threads = 4
+
+[budget]
+kind = "movetime_ms"
+ms = 20
+
+[game]
+kind = "forward_chess"
+ruleset = "full"
