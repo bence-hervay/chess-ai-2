@@ -29,6 +29,7 @@ use selfplay_lab::experiment::{
 };
 use selfplay_lab::features::forward_chess::{FcExtractor, FcRecipe};
 use selfplay_lab::features::FeatureExtractor as _;
+use selfplay_lab::features::MoveFeatures as _;
 use selfplay_lab::game::Game;
 use selfplay_lab::games::breakthrough::Breakthrough;
 use selfplay_lab::games::chess::Chess;
@@ -258,6 +259,12 @@ struct StructuredMatchConfig {
     /// side (default: none, keeping pre-F1 configs replayable).
     #[serde(default)]
     structured_ranker: Option<PathBuf>,
+    /// Horizon quiescence per side (default off; pre-G1 configs replay
+    /// identically).
+    #[serde(default)]
+    quiescence: bool,
+    #[serde(default)]
+    opponent_quiescence: bool,
     /// `"zero"` or an MLP checkpoint directory (`model.bin` + json).
     opponent: String,
     pairs: u64,
@@ -516,7 +523,7 @@ fn ordered_mlp_match(config: OrderedMlpMatchConfig) -> Result<(), String> {
 
     enum EitherEval<'a> {
         Policy(ModelEvaluator<'a>),
-        Ranked(MlpRankedEvaluator<'a>),
+        Ranked(MlpRankedEvaluator<'a, selfplay_lab::features::forward_chess::FcMoveFeatures>),
     }
     impl selfplay_lab::search::Evaluator<ForwardChess> for EitherEval<'_> {
         fn leaf_value(&mut self, game: &ForwardChess, state: &FcState) -> i32 {
@@ -545,7 +552,11 @@ fn ordered_mlp_match(config: OrderedMlpMatchConfig) -> Result<(), String> {
     ) -> impl Fn() -> EitherEval<'a> + Sync + 'a {
         move || match ranker {
             None => EitherEval::Policy(ModelEvaluator::new(compiled)),
-            Some(r) => EitherEval::Ranked(MlpRankedEvaluator::new(game, compiled, r)),
+            Some(r) => EitherEval::Ranked(MlpRankedEvaluator::new(
+                compiled,
+                r,
+                selfplay_lab::features::forward_chess::FcMoveFeatures::new(game),
+            )),
         }
     }
 
@@ -2580,8 +2591,8 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
             config.opening_plies,
             config.structured_budget,
             config.opponent_budget,
-            false,
-            false,
+            config.quiescence,
+            config.opponent_quiescence,
             config.seed,
             config.threads,
         )
@@ -2605,8 +2616,8 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
             config.opening_plies,
             config.structured_budget,
             config.opponent_budget,
-            false,
-            false,
+            config.quiescence,
+            config.opponent_quiescence,
             config.seed,
             config.threads,
         )
@@ -2627,8 +2638,8 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
             config.opening_plies,
             config.structured_budget,
             config.opponent_budget,
-            false,
-            false,
+            config.quiescence,
+            config.opponent_quiescence,
             config.seed,
             config.threads,
         )
@@ -2713,6 +2724,15 @@ enum FitModel {
         /// Fixed depths for the with/without-ordering node comparison.
         depth_probe: Vec<u32>,
     },
+    /// Structured linear WDL on teacher-record deep values, calibrated
+    /// to WDL through trajectory outcomes (K1: §18.2 + §18.3).
+    StructuredFromRecords {
+        recipe: FcRecipe,
+        steps: u64,
+        batch: usize,
+        lr: f64,
+        l2: f64,
+    },
     /// Linear pairwise move ranker on teacher-record child labels
     /// (F2: no oracle; §19.5 counterfactual values as noisy targets).
     RankerFromRecords {
@@ -2736,6 +2756,9 @@ impl FitModel {
             FitModel::RawMlp { width, .. } => format!("mlp-w{width}"),
             FitModel::Ranker { .. } => "move-ranker".to_string(),
             FitModel::RankerFromRecords { .. } => "move-ranker-records".to_string(),
+            FitModel::StructuredFromRecords { recipe, .. } => {
+                format!("{}-records", recipe.label())
+            }
         }
     }
 }
@@ -2793,12 +2816,132 @@ struct FitSplitMetrics {
 
 fn fit(config_path: &Path) -> Result<(), String> {
     let config: FitConfig = read_config(config_path)?;
-    let GameSpec::ForwardChess { ruleset } = &config.game else {
-        return Err("lab fit currently supports forward_chess only".into());
-    };
     if config.train_positions == 0 || config.eval_cap == 0 {
         return Err("train_positions and eval_cap must be positive".into());
     }
+
+    // -- Teacher-record source: no oracle; game-general (FC + chess).
+    if let FitSource::Records { path } = &config.source {
+        if config.probe_states != 0 || !config.probe_nodes.is_empty() {
+            return Err(
+                "records source has no oracle probes; set probe_states = 0 and probe_nodes = []"
+                    .into(),
+            );
+        }
+        let label = format!(
+            "fit-{}-{}-n{}-s{}",
+            config.game.label(),
+            config.model.label(),
+            config.train_positions,
+            config.seed
+        );
+        let (run_dir, manifest) = start_run(&label, &config, config.seed, config.threads)?;
+        let mut log = String::new();
+        say(
+            format!("run directory: {}", run_dir.path().display()),
+            &mut log,
+        );
+        let cpu_before = process_cpu_seconds().unwrap_or(0.0);
+        let started = Instant::now();
+        match &config.model {
+            FitModel::RankerFromRecords {
+                steps,
+                batch,
+                lr,
+                l2,
+                pair_cap,
+                pair_margin,
+            } => {
+                let params = RecordsRankerParams {
+                    steps: *steps,
+                    batch: *batch,
+                    lr: *lr,
+                    l2: *l2,
+                    pair_cap: *pair_cap,
+                    pair_margin: *pair_margin,
+                };
+                return match &config.game {
+                    GameSpec::ForwardChess { ruleset } => {
+                        let game = ForwardChess::new(*ruleset);
+                        fit_records_ranker(
+                            &game,
+                            &config,
+                            path.clone(),
+                            params,
+                            "fc_move_v1",
+                            || selfplay_lab::features::forward_chess::FcMoveFeatures::new(&game),
+                            &run_dir,
+                            manifest,
+                            log,
+                            started,
+                            cpu_before,
+                        )
+                    }
+                    GameSpec::Chess {} => {
+                        let game = Chess::new();
+                        fit_records_ranker(
+                            &game,
+                            &config,
+                            path.clone(),
+                            params,
+                            "chess_move_v1",
+                            || selfplay_lab::features::chess::ChessMoveFeatures::new(&game),
+                            &run_dir,
+                            manifest,
+                            log,
+                            started,
+                            cpu_before,
+                        )
+                    }
+                    _ => Err("ranker_from_records supports forward_chess and chess".into()),
+                };
+            }
+            FitModel::StructuredFromRecords {
+                recipe,
+                steps,
+                batch,
+                lr,
+                l2,
+            } => {
+                let GameSpec::ForwardChess { ruleset } = &config.game else {
+                    return Err("structured_from_records supports forward_chess only".into());
+                };
+                let game = ForwardChess::new(*ruleset);
+                return fit_records_structured(
+                    &game,
+                    &config,
+                    path.clone(),
+                    *recipe,
+                    selfplay_lab::structured_eval::FitHyper {
+                        steps: *steps,
+                        batch: *batch,
+                        lr: *lr,
+                        l2: *l2,
+                    },
+                    &run_dir,
+                    manifest,
+                    log,
+                    started,
+                    cpu_before,
+                );
+            }
+            _ => {
+                return Err(
+                    "source kind = records requires ranker_from_records or structured_from_records"
+                        .into(),
+                )
+            }
+        }
+    }
+    if matches!(
+        config.model,
+        FitModel::RankerFromRecords { .. } | FitModel::StructuredFromRecords { .. }
+    ) {
+        return Err("records-target models require source kind = records".into());
+    }
+    let GameSpec::ForwardChess { ruleset } = &config.game else {
+        return Err("lab fit exact sources currently support forward_chess only".into());
+    };
     let game = ForwardChess::new(*ruleset);
     let label = format!(
         "fit-{}-{}-n{}-s{}",
@@ -2815,48 +2958,6 @@ fn fit(config_path: &Path) -> Result<(), String> {
     );
     let cpu_before = process_cpu_seconds().unwrap_or(0.0);
     let started = Instant::now();
-
-    // -- Teacher-record source: no oracle, ranker-from-records only.
-    if let FitSource::Records { path } = &config.source {
-        let FitModel::RankerFromRecords {
-            steps,
-            batch,
-            lr,
-            l2,
-            pair_cap,
-            pair_margin,
-        } = &config.model
-        else {
-            return Err("source kind = records requires model kind = ranker_from_records".into());
-        };
-        if config.probe_states != 0 || !config.probe_nodes.is_empty() {
-            return Err(
-                "records source has no oracle probes; set probe_states = 0 and probe_nodes = []"
-                    .into(),
-            );
-        }
-        return fit_records_ranker(
-            &game,
-            &config,
-            path.clone(),
-            RecordsRankerParams {
-                steps: *steps,
-                batch: *batch,
-                lr: *lr,
-                l2: *l2,
-                pair_cap: *pair_cap,
-                pair_margin: *pair_margin,
-            },
-            &run_dir,
-            manifest,
-            log,
-            started,
-            cpu_before,
-        );
-    }
-    if matches!(config.model, FitModel::RankerFromRecords { .. }) {
-        return Err("model kind = ranker_from_records requires source kind = records".into());
-    }
 
     // -- Load the exact stream and select train/val/test states.
     let mut key_wdl: std::collections::HashMap<u64, Wdl> = std::collections::HashMap::new();
@@ -3080,7 +3181,9 @@ fn fit(config_path: &Path) -> Result<(), String> {
     // -- Fit the configured model and evaluate.
     #[allow(clippy::wildcard_in_or_patterns)]
     let (val_metrics, test_metrics, prior, probe_report, extraction_ns) = match &config.model {
-        FitModel::Ranker { .. } | FitModel::RankerFromRecords { .. } => {
+        FitModel::Ranker { .. }
+        | FitModel::RankerFromRecords { .. }
+        | FitModel::StructuredFromRecords { .. } => {
             unreachable!("handled above")
         }
         FitModel::Structured {
@@ -3413,6 +3516,271 @@ fn fit(config_path: &Path) -> Result<(), String> {
     finish_run(&run_dir, manifest, &log)
 }
 
+/// Fit the calibrated structured value model on teacher records
+/// (K1 card): a tiny score→WDL calibration on trajectory outcomes,
+/// then soft-target training of the structured evaluator.
+#[allow(clippy::too_many_arguments)] // one experiment, one call site
+fn fit_records_structured(
+    game: &ForwardChess,
+    config: &FitConfig,
+    records_path: PathBuf,
+    recipe: FcRecipe,
+    hyper: selfplay_lab::structured_eval::FitHyper,
+    run_dir: &RunDir,
+    manifest: Manifest,
+    mut log: String,
+    started: Instant,
+    cpu_before: f64,
+) -> Result<(), String> {
+    use selfplay_lab::data::{replay_path, TeacherRecord};
+    use selfplay_lab::search::SCORE_TERMINAL_BOUND;
+    use selfplay_lab::structured_eval::{
+        evaluate_linear_wdl_soft, fit_linear_wdl, fit_linear_wdl_soft, SoftRow, StructuredRow,
+    };
+
+    let text = std::fs::read_to_string(&records_path)
+        .map_err(|e| format!("reading {}: {e}", records_path.display()))?;
+    let records: Vec<TeacherRecord> = text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| serde_json::from_str(l).map_err(|e| format!("record parse: {e}")))
+        .collect::<Result<_, _>>()?;
+    let missing = records
+        .iter()
+        .filter(|r| r.trajectory_outcome.is_none())
+        .count();
+    if missing > 0 {
+        return Err(format!(
+            "{missing} records lack trajectory outcomes; regenerate with the K1 relabel"
+        ));
+    }
+    let mut train: Vec<&TeacherRecord> = Vec::new();
+    let mut val: Vec<&TeacherRecord> = Vec::new();
+    let mut test: Vec<&TeacherRecord> = Vec::new();
+    for record in &records {
+        match splitmix64(record.key) % 10 {
+            8 => val.push(record),
+            9 => test.push(record),
+            _ => train.push(record),
+        }
+    }
+    train.sort_unstable_by_key(|r| splitmix64(r.key ^ FIT_TRAIN_SALT));
+    train.truncate(config.train_positions);
+    for bucket in [&mut val, &mut test] {
+        bucket.sort_unstable_by_key(|r| splitmix64(r.key ^ selfplay_lab::training::EVAL_THIN_SALT));
+        bucket.truncate(config.eval_cap);
+    }
+    say(
+        format!(
+            "records split: {} train / {} val / {} test",
+            train.len(),
+            val.len(),
+            test.len()
+        ),
+        &mut log,
+    );
+
+    // -- Calibration: (scaled deep value, mate flags) -> WDL, fitted on
+    // trajectory outcomes (§18.2 + §18.3). Three features plus bias.
+    let cal_x = |record: &TeacherRecord| -> Vec<(u32, f32)> {
+        let value = record.deep.value;
+        let mut x = vec![(0u32, value as f32 / 1000.0)];
+        if value > SCORE_TERMINAL_BOUND {
+            x.push((1, 1.0));
+        } else if value < -SCORE_TERMINAL_BOUND {
+            x.push((2, 1.0));
+        }
+        x
+    };
+    let cal_rows = |records: &[&TeacherRecord]| -> Vec<StructuredRow> {
+        records
+            .iter()
+            .map(|r| StructuredRow {
+                x: cal_x(r),
+                wdl: r.trajectory_outcome.expect("checked above"),
+            })
+            .collect()
+    };
+    let calibration = fit_linear_wdl(
+        "score_wdl_calibration_v1",
+        3,
+        &cal_rows(&train),
+        hyper,
+        config.seed,
+        |_| {},
+    );
+    // Reliability by deep-value decile on val: predicted mean P(win)
+    // vs empirical win rate (and same for draw/loss).
+    let mut val_sorted: Vec<&&TeacherRecord> = val.iter().collect();
+    val_sorted.sort_by_key(|r| r.deep.value);
+    let mut reliability = Vec::new();
+    let bucket_size = val_sorted.len().div_ceil(10).max(1);
+    for chunk in val_sorted.chunks(bucket_size) {
+        let n = chunk.len() as f64;
+        let mut predicted = [0.0f64; 3];
+        let mut empirical = [0.0f64; 3];
+        for record in chunk {
+            let p = calibration.probs(&cal_x(record));
+            for class in 0..3 {
+                predicted[class] += p[class] / n;
+            }
+            empirical[record.trajectory_outcome.expect("checked") as usize] += 1.0 / n;
+        }
+        reliability.push(serde_json::json!({
+            "mean_value": chunk.iter().map(|r| f64::from(r.deep.value)).sum::<f64>() / n,
+            "predicted_wdl": [predicted[2], predicted[1], predicted[0]],
+            "empirical_wdl": [empirical[2], empirical[1], empirical[0]],
+            "count": chunk.len(),
+        }));
+    }
+    let max_reliability_gap = reliability
+        .iter()
+        .map(|b| {
+            let p = b["predicted_wdl"].as_array().expect("array");
+            let e = b["empirical_wdl"].as_array().expect("array");
+            p.iter()
+                .zip(e)
+                .map(|(a, b)| (a.as_f64().unwrap() - b.as_f64().unwrap()).abs())
+                .fold(0.0f64, f64::max)
+        })
+        .fold(0.0f64, f64::max);
+    say(
+        format!("calibration: max val reliability gap {max_reliability_gap:.3}"),
+        &mut log,
+    );
+
+    // -- Structured features + calibrated soft targets.
+    let build_soft = |records: &[&TeacherRecord]| -> Result<Vec<SoftRow>, String> {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(config.threads)
+            .build()
+            .expect("rayon pool");
+        pool.install(|| {
+            use rayon::prelude::*;
+            records
+                .par_iter()
+                .map(|record| {
+                    let state =
+                        replay_path(game, &record.path).map_err(|e| format!("replay: {e}"))?;
+                    let mut extractor = FcExtractor::new(game, recipe);
+                    let mut x = Vec::new();
+                    extractor.extract(game, &state, &mut x);
+                    Ok(SoftRow {
+                        x,
+                        target: calibration.probs(&cal_x(record)),
+                    })
+                })
+                .collect()
+        })
+    };
+    let t0 = Instant::now();
+    let train_rows = build_soft(&train)?;
+    let extraction_ns = t0.elapsed().as_nanos() as f64 / train.len().max(1) as f64;
+    let val_rows = build_soft(&val)?;
+    let test_rows = build_soft(&test)?;
+    let dimension = FcExtractor::new(game, recipe).dimension();
+    say(
+        format!("extraction: {extraction_ns:.0} ns/position, dimension {dimension}"),
+        &mut log,
+    );
+
+    let mut metric_rows: Vec<serde_json::Value> = Vec::new();
+    let model = fit_linear_wdl_soft(
+        recipe.label(),
+        dimension,
+        &train_rows,
+        hyper,
+        config.seed,
+        |step| {
+            if step.step % 500 == 0 || step.step == hyper.steps {
+                metric_rows.push(serde_json::json!({
+                    "step": step.step,
+                    "train_loss": step.train_loss,
+                }));
+            }
+        },
+    );
+    run_dir
+        .append_jsonl("metrics.jsonl", &metric_rows)
+        .map_err(|e| e.to_string())?;
+    let (val_ce, val_agree) = evaluate_linear_wdl_soft(&model, &val_rows);
+    let (test_ce, test_agree) = evaluate_linear_wdl_soft(&model, &test_rows);
+    // Hard sanity: argmax vs the (noisy) trajectory outcomes.
+    let hard_acc = |rows: &[SoftRow], records: &[&TeacherRecord]| {
+        let mut correct = 0u64;
+        for (row, record) in rows.iter().zip(records) {
+            let p = model.probs(&row.x);
+            let argmax = (0..3).max_by(|&a, &b| p[a].total_cmp(&p[b])).expect("3");
+            correct += u64::from(argmax == record.trajectory_outcome.expect("checked") as usize);
+        }
+        correct as f64 / rows.len().max(1) as f64
+    };
+    let test_outcome_acc = hard_acc(&test_rows, &test);
+    say(
+        format!(
+            "soft CE: val {val_ce:.4} (agree {val_agree:.4}), test {test_ce:.4} (agree {test_agree:.4}); test outcome-acc {test_outcome_acc:.4}"
+        ),
+        &mut log,
+    );
+
+    run_dir
+        .create_subdir("checkpoint")
+        .map_err(|e| e.to_string())?;
+    run_dir
+        .write_json("checkpoint/structured.json", &model)
+        .map_err(|e| e.to_string())?;
+    run_dir
+        .write_json("checkpoint/calibration.json", &calibration)
+        .map_err(|e| e.to_string())?;
+    let extractor = FcExtractor::new(game, recipe);
+    let mut indices: Vec<usize> = (0..dimension).collect();
+    indices.sort_by(|&a, &b| {
+        let ma = (model.weights[a][2] - model.weights[a][0]).abs();
+        let mb = (model.weights[b][2] - model.weights[b][0]).abs();
+        mb.total_cmp(&ma)
+    });
+    let inspect: Vec<(String, [f32; 3])> = indices
+        .iter()
+        .take(40)
+        .map(|&i| (extractor.feature_name(i as u32), model.weights[i]))
+        .collect();
+    run_dir
+        .write_json("checkpoint/weight_inspection.json", &inspect)
+        .map_err(|e| e.to_string())?;
+
+    let wall_seconds = started.elapsed().as_secs_f64();
+    let cpu_seconds = process_cpu_seconds().unwrap_or(0.0) - cpu_before;
+    run_dir
+        .write_json(
+            "summary.json",
+            &serde_json::json!({
+                "model": format!("{}-records", recipe.label()),
+                "records": records.len(),
+                "train_records": train.len(),
+                "calibration": {
+                    "weights": calibration.weights,
+                    "bias": calibration.bias,
+                    "max_val_reliability_gap": max_reliability_gap,
+                    "reliability": reliability,
+                },
+                "soft": {
+                    "val": { "cross_entropy": val_ce, "agree": val_agree },
+                    "test": { "cross_entropy": test_ce, "agree": test_agree },
+                },
+                "test_outcome_accuracy": test_outcome_acc,
+                "extraction_ns_per_position": extraction_ns,
+                "cost": {
+                    "wall_seconds": wall_seconds,
+                    "cpu_seconds": cpu_seconds,
+                    "utilization": cpu_seconds / (wall_seconds * config.threads as f64),
+                    "peak_rss_bytes": peak_rss_bytes(),
+                },
+            }),
+        )
+        .map_err(|e| e.to_string())?;
+    finish_run(run_dir, manifest, &log)
+}
+
 /// Records-ranker parameters (unpacked from `FitModel::RankerFromRecords`).
 struct RecordsRankerParams {
     steps: u64,
@@ -3423,25 +3791,31 @@ struct RecordsRankerParams {
     pair_margin: i32,
 }
 
-/// Fit a move ranker on teacher-record child labels (F2 card): pairs
-/// from counterfactual child values, evaluation against the deep
+/// Fit a move ranker on teacher-record child labels (F2/J2 cards):
+/// pairs from counterfactual child values, evaluation against the deep
 /// label's best action and the recorded policy-ordering rank.
-#[allow(clippy::too_many_arguments)] // one experiment, one call site
-fn fit_records_ranker(
-    game: &ForwardChess,
+#[allow(clippy::too_many_arguments)] // one experiment, two game call sites
+fn fit_records_ranker<G, MF, F>(
+    game: &G,
     config: &FitConfig,
     records_path: PathBuf,
     params: RecordsRankerParams,
+    ranker_recipe: &str,
+    make_features: F,
     run_dir: &RunDir,
     manifest: Manifest,
     mut log: String,
     started: Instant,
     cpu_before: f64,
-) -> Result<(), String> {
+) -> Result<(), String>
+where
+    G: Game,
+    MF: selfplay_lab::features::MoveFeatures<G>,
+    F: Fn() -> MF + Sync,
+{
     use rand::Rng as _;
     use rand::SeedableRng as _;
     use selfplay_lab::data::{replay_path, TeacherRecord};
-    use selfplay_lab::features::forward_chess::{FcMoveFeatures, MOVE_FEATURE_DIMENSION};
     use selfplay_lab::structured_eval::{
         evaluate_move_ranker, fit_move_ranker, FitHyper, RankPair,
     };
@@ -3496,6 +3870,8 @@ fn fit_records_ranker(
         &mut log,
     );
 
+    let move_dimension = make_features().dimension();
+
     // Pair building and the teacher-rank metric both need the replayed
     // state and per-move features; do both in one parallel pass.
     struct RecordDerived {
@@ -3521,7 +3897,7 @@ fn fit_records_ranker(
                         replay_path(game, &record.path).map_err(|e| format!("replay: {e}"))?;
                     let mut moves = Vec::new();
                     game.legal_moves(&state, &mut moves);
-                    let mut extractor = FcMoveFeatures::new(game);
+                    let mut extractor = make_features();
                     let mut features: Vec<(u32, Vec<(u32, f32)>)> = Vec::new();
                     for &mv in &moves {
                         let mut x = Vec::new();
@@ -3605,8 +3981,8 @@ fn fit_records_ranker(
     };
     let mut metric_rows: Vec<serde_json::Value> = Vec::new();
     let ranker = fit_move_ranker(
-        "fc_move_v1",
-        MOVE_FEATURE_DIMENSION,
+        ranker_recipe,
+        move_dimension,
         &train_pairs,
         hyper,
         config.seed,
@@ -3674,8 +4050,9 @@ fn fit_records_ranker(
     run_dir
         .write_json("checkpoint/ranker.json", &ranker)
         .map_err(|e| e.to_string())?;
-    let mut inspection: Vec<(String, f32)> = (0..MOVE_FEATURE_DIMENSION)
-        .map(|i| (FcMoveFeatures::feature_name(i as u32), ranker.weights[i]))
+    let name_source = make_features();
+    let mut inspection: Vec<(String, f32)> = (0..move_dimension)
+        .map(|i| (name_source.feature_name(i as u32), ranker.weights[i]))
         .collect();
     inspection.sort_by(|a, b| b.1.abs().total_cmp(&a.1.abs()));
     run_dir
@@ -3880,8 +4257,9 @@ fn fit_ranker_arm(
     run_dir
         .write_json("checkpoint/ranker.json", &ranker)
         .map_err(|e| e.to_string())?;
+    let name_source = FcMoveFeatures::new(game);
     let mut inspection: Vec<(String, f32)> = (0..MOVE_FEATURE_DIMENSION)
-        .map(|i| (FcMoveFeatures::feature_name(i as u32), ranker.weights[i]))
+        .map(|i| (name_source.feature_name(i as u32), ranker.weights[i]))
         .collect();
     inspection.sort_by(|a, b| b.1.abs().total_cmp(&a.1.abs()));
     run_dir

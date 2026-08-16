@@ -293,6 +293,36 @@ impl Game for Chess {
         board.piece_on(mv.0.from) == Some(cozy_chess::Piece::Pawn)
             && mv.0.from.file() != mv.0.to.file()
     }
+
+    fn tactical_moves(&self, state: &ChessState, moves: &mut Vec<ChessMove>) {
+        // Targeted generation: intersect each piece's move bitboard
+        // with the tactical destinations before iterating — quiescence
+        // nodes were dominated by full generation otherwise. Same set
+        // as the default filter (differential-tested).
+        moves.clear();
+        let board = &state.board;
+        let stm = board.side_to_move();
+        let enemy = board.colors(!stm);
+        let promo_rank = cozy_chess::Rank::Eighth.relative_to(stm).bitboard();
+        let ep_square = board
+            .en_passant()
+            .map(|file| cozy_chess::Square::new(file, cozy_chess::Rank::Sixth.relative_to(stm)));
+        board.generate_moves(|mut piece_moves| {
+            let mut targets = enemy;
+            if board.piece_on(piece_moves.from) == Some(cozy_chess::Piece::Pawn) {
+                targets |= promo_rank;
+                if let Some(ep) = ep_square {
+                    targets |= ep.bitboard();
+                }
+            }
+            piece_moves.to &= targets;
+            for mv in piece_moves {
+                moves.push(ChessMove(mv));
+            }
+            false
+        });
+        moves.sort();
+    }
 }
 
 /// Parse a UCI move string against a state's legal moves, translating
@@ -324,6 +354,38 @@ pub fn parse_move_text(game: &Chess, state: &ChessState, text: &str) -> Option<C
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tactical_moves_match_the_filtered_default() {
+        use rand::Rng as _;
+        use rand::SeedableRng as _;
+        let game = Chess::new();
+        let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(9);
+        let mut state = game.initial_state();
+        let mut legal = Vec::new();
+        let mut targeted = Vec::new();
+        let mut checked = 0;
+        for _ in 0..300 {
+            if game.outcome(&state).is_some() {
+                state = game.initial_state();
+            }
+            game.legal_moves(&state, &mut legal);
+            let expected: Vec<ChessMove> = legal
+                .iter()
+                .copied()
+                .filter(|&mv| game.is_tactical(&state, mv))
+                .collect();
+            game.tactical_moves(&state, &mut targeted);
+            assert_eq!(
+                targeted, expected,
+                "targeted generator must match the filter"
+            );
+            checked += 1;
+            let mv = legal[rng.gen_range(0..legal.len())];
+            game.make_move(&mut state, mv);
+        }
+        assert!(checked >= 300);
+    }
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha12Rng;
 

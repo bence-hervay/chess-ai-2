@@ -13,7 +13,7 @@
 //!   test below is the §69.2 symmetry check (a D031-class guard).
 //! - No feature asserts a strategic sign; fitting decides (§6.2).
 
-use crate::features::{FeatureEntry, FeatureExtractor};
+use crate::features::{FeatureEntry, FeatureExtractor, MoveFeatures};
 use crate::game::Game;
 use crate::games::forward_chess::{ForwardChess, Piece};
 
@@ -321,13 +321,15 @@ impl FcMoveFeatures {
             cells_scratch: Vec::new(),
         }
     }
+}
 
-    pub fn dimension(&self) -> usize {
+impl MoveFeatures<ForwardChess> for FcMoveFeatures {
+    fn dimension(&self) -> usize {
         MOVE_FEATURE_DIMENSION
     }
 
     /// Clear `out` and append the move's features, mover perspective.
-    pub fn extract(
+    fn extract(
         &mut self,
         game: &ForwardChess,
         state: &<ForwardChess as Game>::State,
@@ -419,7 +421,7 @@ impl FcMoveFeatures {
         }
     }
 
-    pub fn feature_name(index: u32) -> String {
+    fn feature_name(&self, index: u32) -> String {
         let index = index as usize;
         match index {
             i if i < MF_CAPTURED => format!("moving/{}", combo_name(i - MF_MOVING)),
@@ -701,7 +703,7 @@ mod tests {
         assert_eq!(get(MF_IS_CAPTURE), 0.0);
         // Every emitted index has a name.
         for &(index, _) in &x {
-            assert!(!FcMoveFeatures::feature_name(index).is_empty());
+            assert!(!extractor.feature_name(index).is_empty());
         }
     }
 

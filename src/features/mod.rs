@@ -12,6 +12,7 @@
 //! structured evaluation, and it is what makes one weight vector serve
 //! both sides in negamax search.
 
+pub mod chess;
 pub mod forward_chess;
 
 use crate::game::Game;
@@ -32,5 +33,17 @@ pub trait FeatureExtractor<G: Game> {
 
     /// Stable, human-readable name of a feature index (diagnostics,
     /// weight inspection, the parameter ledger).
+    fn feature_name(&self, index: u32) -> String;
+}
+
+/// Computes state-action (move) measurements for ordering models
+/// (§35.2). Same purity contract as [`FeatureExtractor`].
+pub trait MoveFeatures<G: Game> {
+    fn dimension(&self) -> usize;
+
+    /// Clear `out` and append the move's features, mover perspective.
+    fn extract(&mut self, game: &G, state: &G::State, mv: G::Move, out: &mut Vec<FeatureEntry>);
+
+    /// Stable, human-readable name of a feature index.
     fn feature_name(&self, index: u32) -> String;
 }

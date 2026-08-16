@@ -8,7 +8,7 @@
 //! leaf-value convention as the raw MLP (D019:
 //! `round(1000 · (P(win) − P(loss)))`).
 
-use crate::features::{FeatureEntry, FeatureExtractor};
+use crate::features::{FeatureEntry, FeatureExtractor, MoveFeatures};
 use crate::game::Game;
 use crate::search::{Evaluator, Wdl, SCORE_EVAL_MAX};
 use crate::training::splitmix64;
@@ -105,12 +105,22 @@ pub struct FitStep {
     pub train_loss: f64,
 }
 
-/// Deterministic minibatch Adam on the multinomial logistic loss with
-/// L2 on weights (not bias). The batch stream depends only on `seed`.
-pub fn fit_linear_wdl(
+/// One soft-target training example: the target is a probability
+/// distribution over WDL classes (e.g. calibrated deep-search values,
+/// §18.2). Hard labels are the one-hot special case.
+#[derive(Clone, Debug)]
+pub struct SoftRow {
+    pub x: Vec<FeatureEntry>,
+    pub target: [f64; 3],
+}
+
+/// Deterministic minibatch Adam on the (soft) multinomial logistic
+/// loss with L2 on weights (not bias). The batch stream depends only
+/// on `seed`. Hard-label fitting wraps this with one-hot targets.
+pub fn fit_linear_wdl_soft(
     recipe: &str,
     dimension: usize,
-    rows: &[StructuredRow],
+    rows: &[SoftRow],
     hyper: FitHyper,
     seed: u64,
     mut on_step: impl FnMut(&FitStep),
@@ -140,10 +150,11 @@ pub fn fit_linear_wdl(
             let row = &rows[order[cursor]];
             cursor += 1;
             let p = model.probs(&row.x);
-            let target = row.wdl as usize;
-            batch_loss -= p[target].max(1e-300).ln();
             for class in 0..3 {
-                let delta = p[class] - f64::from(u8::from(class == target));
+                if row.target[class] > 0.0 {
+                    batch_loss -= row.target[class] * p[class].max(1e-300).ln();
+                }
+                let delta = p[class] - row.target[class];
                 grad[3 * dimension + class] += delta;
                 for &(index, value) in &row.x {
                     grad[3 * index as usize + class] += delta * f64::from(value);
@@ -181,6 +192,53 @@ pub fn fit_linear_wdl(
         });
     }
     model
+}
+
+/// Hard-label fitting: the one-hot special case of
+/// [`fit_linear_wdl_soft`].
+pub fn fit_linear_wdl(
+    recipe: &str,
+    dimension: usize,
+    rows: &[StructuredRow],
+    hyper: FitHyper,
+    seed: u64,
+    on_step: impl FnMut(&FitStep),
+) -> LinearWdl {
+    let soft: Vec<SoftRow> = rows
+        .iter()
+        .map(|row| {
+            let mut target = [0.0; 3];
+            target[row.wdl as usize] = 1.0;
+            SoftRow {
+                x: row.x.clone(),
+                target,
+            }
+        })
+        .collect();
+    fit_linear_wdl_soft(recipe, dimension, &soft, hyper, seed, on_step)
+}
+
+/// Mean soft cross-entropy and argmax agreement on soft-target rows.
+pub fn evaluate_linear_wdl_soft(model: &LinearWdl, rows: &[SoftRow]) -> (f64, f64) {
+    if rows.is_empty() {
+        return (f64::NAN, f64::NAN);
+    }
+    let mut loss = 0.0;
+    let mut agree = 0u64;
+    for row in rows {
+        let p = model.probs(&row.x);
+        for (class, &prob) in p.iter().enumerate() {
+            if row.target[class] > 0.0 {
+                loss -= row.target[class] * prob.max(1e-300).ln();
+            }
+        }
+        let pa = (0..3).max_by(|&a, &b| p[a].total_cmp(&p[b])).expect("3");
+        let ta = (0..3)
+            .max_by(|&a, &b| row.target[a].total_cmp(&row.target[b]))
+            .expect("3");
+        agree += u64::from(pa == ta);
+    }
+    (loss / rows.len() as f64, agree as f64 / rows.len() as f64)
 }
 
 /// Mean log-loss and accuracy of the model on labelled rows.
@@ -436,50 +494,46 @@ impl Evaluator<crate::games::forward_chess::ForwardChess> for FcOrderedEvaluator
     }
 }
 
-/// Champion-MLP value with learned move ordering (F2 composite): the
-/// raw-model baseline's WDL head at leaves, a `MoveRanker` for
-/// ordering. Lets ordering models be evaluated against the policy
-/// head with the value model held fixed.
-pub struct MlpRankedEvaluator<'a> {
+/// MLP value with learned move ordering (F2/J2 composite): the
+/// raw-model baseline's WDL head at leaves, a `MoveRanker` over the
+/// game's move features for ordering. Lets ordering models be
+/// evaluated against the policy head with the value model held fixed.
+pub struct MlpRankedEvaluator<'a, MF> {
     inner: crate::model::ModelEvaluator<'a>,
     ranker: &'a MoveRanker,
-    move_features: crate::features::forward_chess::FcMoveFeatures,
+    move_features: MF,
     buf: Vec<FeatureEntry>,
 }
 
-impl<'a> MlpRankedEvaluator<'a> {
-    pub fn new(
-        game: &crate::games::forward_chess::ForwardChess,
+impl<'a, MF> MlpRankedEvaluator<'a, MF> {
+    pub fn new<G: Game>(
         net: &'a crate::model::CompiledNet,
         ranker: &'a MoveRanker,
-    ) -> Self {
-        assert_eq!(
-            ranker.dimension,
-            crate::features::forward_chess::MOVE_FEATURE_DIMENSION
-        );
+        move_features: MF,
+    ) -> Self
+    where
+        MF: crate::features::MoveFeatures<G>,
+    {
+        assert_eq!(ranker.dimension, move_features.dimension());
         MlpRankedEvaluator {
             inner: crate::model::ModelEvaluator::new(net),
             ranker,
-            move_features: crate::features::forward_chess::FcMoveFeatures::new(game),
+            move_features,
             buf: Vec::new(),
         }
     }
 }
 
-impl Evaluator<crate::games::forward_chess::ForwardChess> for MlpRankedEvaluator<'_> {
-    fn leaf_value(
-        &mut self,
-        game: &crate::games::forward_chess::ForwardChess,
-        state: &crate::games::forward_chess::FcState,
-    ) -> i32 {
+impl<G: Game, MF: crate::features::MoveFeatures<G>> Evaluator<G> for MlpRankedEvaluator<'_, MF> {
+    fn leaf_value(&mut self, game: &G, state: &G::State) -> i32 {
         self.inner.leaf_value(game, state)
     }
 
     fn policy_scores(
         &mut self,
-        game: &crate::games::forward_chess::ForwardChess,
-        state: &crate::games::forward_chess::FcState,
-        moves: &[crate::games::forward_chess::FcMove],
+        game: &G,
+        state: &G::State,
+        moves: &[G::Move],
         out: &mut Vec<f32>,
     ) -> bool {
         out.clear();

@@ -111,6 +111,12 @@ pub struct TeacherRecord {
     /// carries its own `action` id, so consumers should match by action
     /// rather than by index. Empty when child search is disabled.
     pub children: Vec<ChildLabel>,
+    /// Terminal outcome of the trajectory that first sampled this
+    /// position, from this position's side to move (§18.3 calibration
+    /// source; one Monte-Carlo draw, exploration noise documented).
+    /// Absent in records written before K1.
+    #[serde(default)]
+    pub trajectory_outcome: Option<Wdl>,
     /// Exact WDL for the side to move, when an oracle was joined.
     pub exact_wdl: Option<Wdl>,
     /// Exact optimal actions, when an oracle was joined.
@@ -172,6 +178,9 @@ pub struct PositionSample {
     pub key: u64,
     pub ply: u32,
     pub weight: u32,
+    /// Terminal outcome of the sampling trajectory, from this
+    /// position's side to move.
+    pub outcome: Wdl,
 }
 
 /// Salt separating position-sampling hashes from split/thinning hashes
@@ -215,7 +224,8 @@ where
         .num_threads(threads)
         .build()
         .expect("failed to build rayon pool");
-    let per_game: Vec<Vec<(Vec<ActionId>, u64, u32)>> = pool.install(|| {
+    type GameSamples = Vec<(Vec<ActionId>, u64, u32, Wdl)>;
+    let per_game: Vec<GameSamples> = pool.install(|| {
         use rayon::prelude::*;
         (0..spec.games())
             .into_par_iter()
@@ -229,13 +239,18 @@ where
                 let mut path: Vec<ActionId> = Vec::new();
                 let mut moves = Vec::new();
                 let mut sampled = Vec::new();
-                loop {
-                    if game.outcome(&state).is_some() {
-                        break;
+                let final_outcome = loop {
+                    if let Some(outcome) = game.outcome(&state) {
+                        break outcome;
                     }
                     let key = game.position_key(&state);
                     if splitmix64(key ^ SAMPLE_SALT).is_multiple_of(sample_one_in) {
-                        sampled.push((path.clone(), key, path.len() as u32));
+                        sampled.push((
+                            path.clone(),
+                            key,
+                            path.len() as u32,
+                            game.side_to_move(&state),
+                        ));
                     }
                     game.legal_moves(&state, &mut moves);
                     let mv = match spec {
@@ -255,8 +270,13 @@ where
                     };
                     path.push(game.action_id(&state, mv));
                     game.make_move(&mut state, mv);
-                }
+                };
                 sampled
+                    .into_iter()
+                    .map(|(path, key, ply, mover)| {
+                        (path, key, ply, Wdl::from_outcome(final_outcome, mover))
+                    })
+                    .collect::<Vec<_>>()
             })
             .collect()
     });
@@ -264,7 +284,7 @@ where
     let mut by_key: HashMap<u64, usize> = HashMap::new();
     let mut samples: Vec<PositionSample> = Vec::new();
     for game_samples in per_game {
-        for (path, key, ply) in game_samples {
+        for (path, key, ply, outcome) in game_samples {
             match by_key.get(&key) {
                 Some(&index) => samples[index].weight += 1,
                 None => {
@@ -277,6 +297,7 @@ where
                         key,
                         ply,
                         weight: 1,
+                        outcome,
                     });
                 }
             }
@@ -420,6 +441,7 @@ where
                     deep,
                     deep_best_order_rank,
                     children,
+                    trajectory_outcome: Some(sample.outcome),
                     exact_wdl: None,
                     exact_optimal: None,
                 }
@@ -726,6 +748,7 @@ mod tests {
                 per_depth: vec![(1, 3), (4, -12), (1, 20), (1, 25)],
             },
             deep_best_order_rank: 1,
+            trajectory_outcome: Some(Wdl::Draw),
             children: vec![ChildLabel {
                 action: 1,
                 node_budget: 100,

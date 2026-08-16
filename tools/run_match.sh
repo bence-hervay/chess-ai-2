@@ -8,6 +8,8 @@
 #   run_match.sh <name> <engine1-spec> <engine2-spec> <pairs> <limit> [seed]
 # where <engine-spec> is one of:
 #   ckpt:<checkpoint-dir>   our engine with a model
+#   ckptqs:<checkpoint-dir> same, with horizon quiescence (SHSD G1)
+#   ckptx:<dir>,<ranker|->,<qs|->  model + optional ranker + quiescence
 #   zero                    our engine, zero evaluator
 #   random:<seed>           our engine, uniform random mover
 #   sf-elo:<elo>            Stockfish with UCI_LimitStrength at <elo>
@@ -36,6 +38,15 @@ engine_args() {
   local spec=$1 label=$2
   case "$spec" in
     ckpt:*)   echo "-engine cmd=$UCI args=${spec#ckpt:} name=$label" ;;
+    ckptqs:*) echo "-engine cmd=$UCI args=--qs=${spec#ckptqs:} name=$label" ;;
+    ckptx:*)  # ckptx:<dir>,<ranker.json|->,<qs|->  (SHSD J2 stack spec)
+              local body=${spec#ckptx:}
+              local dir=${body%%,*}; local rest=${body#*,}
+              local rk=${rest%%,*}; local qs=${rest#*,}
+              local extra=""
+              [ "$rk" != "-" ] && extra="$extra option.Ranker=$rk"
+              [ "$qs" = "qs" ] && extra="$extra option.Quiescence=true"
+              echo "-engine cmd=$UCI args=$dir name=$label$extra" ;;
     zero)     echo "-engine cmd=$UCI name=$label" ;;
     random:*) echo "-engine cmd=$UCI args=--random=${spec#random:} name=$label" ;;
     sf-elo:*) echo "-engine cmd=$SF name=$label option.UCI_LimitStrength=true option.UCI_Elo=${spec#sf-elo:} option.Threads=1 option.Hash=16" ;;

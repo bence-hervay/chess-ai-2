@@ -1,0 +1,24 @@
+# J2 training data: counterfactual child labels at standard chess from
+# the Phase-7 w64 anchor engine (card: stage_j2_chess_ranker.md).
+evaluator = "runs/20260814-131835-selfplay-chess-w64-g200-e10-s1-c03fefc/checkpoint"
+sample_one_in = 2
+max_positions = 10000
+shallow_nodes = []
+deep_nodes = 1600
+children = "all"
+child_nodes = 400
+quiescence = false
+seed = 12
+threads = 4
+
+[game]
+kind = "chess"
+
+[trajectories]
+kind = "selfplay"
+games = 250
+nodes = 400
+epsilon = 0.10
+
+[oracle]
+kind = "none"

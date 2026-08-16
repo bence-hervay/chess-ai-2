@@ -86,4 +86,15 @@ pub trait Game: Send + Sync + 'static {
         let _ = (state, mv);
         false
     }
+
+    /// Append exactly the legal tactical moves (the `is_tactical`
+    /// subset). The default filters the full move list; games override
+    /// it with a targeted generator when full generation dominates
+    /// quiescence cost (measured: chess quiescence nodes were
+    /// movegen-bound). Overrides must produce the same *set* as the
+    /// default — differential-tested per game.
+    fn tactical_moves(&self, state: &Self::State, moves: &mut Vec<Self::Move>) {
+        self.legal_moves(state, moves);
+        moves.retain(|&mv| self.is_tactical(state, mv));
+    }
 }

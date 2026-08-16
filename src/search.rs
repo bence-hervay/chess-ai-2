@@ -859,11 +859,15 @@ impl<G: Game> Searcher<G> {
         alpha = alpha.max(stand);
 
         let mut moves = Vec::new();
-        game.legal_moves(state, &mut moves);
-        moves.retain(|&mv| game.is_tactical(state, mv));
+        game.tactical_moves(state, &mut moves);
         if moves.is_empty() {
             return stand;
         }
+        // Order tactical moves by the evaluator's policy scores (the
+        // G1-validated configuration). Cost note (J1): this is cheap
+        // for learned rankers but for raw-MLP evaluators it pays the
+        // full action head per quiescence node — one of two measured
+        // reasons chess quiescence needs a learned ranker first.
         let mut scores = std::mem::take(&mut self.scores);
         if eval.policy_scores(game, state, &moves, &mut scores) {
             debug_assert_eq!(scores.len(), moves.len());

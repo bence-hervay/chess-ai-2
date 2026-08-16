@@ -17,10 +17,12 @@
 use burn::module::Module as _;
 use burn::record::{BinFileRecorder, FullPrecisionSettings};
 use cozy_chess::{Color, Piece, Square};
+use selfplay_lab::features::chess::ChessMoveFeatures;
 use selfplay_lab::game::Game;
 use selfplay_lab::games::chess::{Chess, ChessMove, ChessState};
 use selfplay_lab::model::{CompiledNet, InferBackend, ModelDims, ModelEvaluator, PolicyValueNet};
 use selfplay_lab::search::{MoveOrdering, Searcher, ZeroEvaluator};
+use selfplay_lab::structured_eval::{MlpRankedEvaluator, MoveRanker};
 use std::io::BufRead as _;
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -97,6 +99,9 @@ fn main() {
     // only, §27). Otherwise the first argument is a checkpoint directory.
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut random_rng: Option<rand_chacha::ChaCha12Rng> = None;
+    // `--qs=<dir>`: checkpoint plus horizon quiescence (SHSD G1/J1).
+    // Single-token form so fastchess engine specs stay one word.
+    let mut quiescence = false;
     if let Some(seed_text) = args.first().and_then(|a| a.strip_prefix("--random=")) {
         use rand::SeedableRng as _;
         let seed = seed_text.parse().unwrap_or(0u64);
@@ -105,13 +110,21 @@ fn main() {
         use rand::SeedableRng as _;
         let seed = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(0u64);
         random_rng = Some(rand_chacha::ChaCha12Rng::seed_from_u64(seed));
+    } else if let Some(dir) = args.first().and_then(|a| a.strip_prefix("--qs=")) {
+        quiescence = true;
+        match load_compiled(Path::new(dir)) {
+            Ok(net) => compiled = Some(net),
+            Err(e) => eprintln!("info string checkpoint error: {e}"),
+        }
     } else if let Some(dir) = args.first() {
         match load_compiled(Path::new(dir)) {
             Ok(net) => compiled = Some(net),
             Err(e) => eprintln!("info string checkpoint error: {e}"),
         }
     }
+    let mut ranker: Option<MoveRanker> = None;
     let mut searcher: Searcher<Chess> = Searcher::new(Some(UCI_TT_LOG2), MoveOrdering::Natural);
+    searcher.set_quiescence(quiescence);
 
     for line in stdin.lock().lines() {
         let line = match line {
@@ -124,22 +137,36 @@ fn main() {
                 println!("id name selfplay-lab");
                 println!("id author selfplay-lab research");
                 println!("option name Checkpoint type string default <empty>");
+                println!("option name Ranker type string default <empty>");
+                println!("option name Quiescence type check default false");
                 println!("uciok");
             }
             Some("isready") => println!("readyok"),
             Some("ucinewgame") => {
                 state = game.initial_state();
                 searcher = Searcher::new(Some(UCI_TT_LOG2), MoveOrdering::Natural);
+                searcher.set_quiescence(quiescence);
             }
             Some("setoption") => {
                 let rest: Vec<&str> = words.collect();
                 if let Some(pos) = rest.iter().position(|&w| w == "value") {
+                    let value_text = rest[pos + 1..].join(" ");
                     if rest.get(..pos).is_some_and(|n| n.contains(&"Checkpoint")) {
-                        let dir = rest[pos + 1..].join(" ");
-                        match load_compiled(Path::new(&dir)) {
+                        match load_compiled(Path::new(&value_text)) {
                             Ok(net) => compiled = Some(net),
                             Err(e) => eprintln!("info string checkpoint error: {e}"),
                         }
+                    } else if rest.get(..pos).is_some_and(|n| n.contains(&"Ranker")) {
+                        match std::fs::read_to_string(&value_text)
+                            .map_err(|e| e.to_string())
+                            .and_then(|t| serde_json::from_str(&t).map_err(|e| e.to_string()))
+                        {
+                            Ok(r) => ranker = Some(r),
+                            Err(e) => eprintln!("info string ranker error: {e}"),
+                        }
+                    } else if rest.get(..pos).is_some_and(|n| n.contains(&"Quiescence")) {
+                        quiescence = value_text.trim() == "true";
+                        searcher.set_quiescence(quiescence);
                     }
                 }
             }
@@ -233,11 +260,17 @@ fn main() {
                 }
                 searcher.set_deadline(deadline);
                 let started = Instant::now();
-                let result = if let Some(net) = &compiled {
-                    let mut evaluator = ModelEvaluator::new(net);
-                    searcher.search(&game, &mut state, depth, node_budget, &mut evaluator)
-                } else {
-                    searcher.search(&game, &mut state, depth, node_budget, &mut ZeroEvaluator)
+                let result = match (&compiled, &ranker) {
+                    (Some(net), Some(rk)) => {
+                        let mut evaluator =
+                            MlpRankedEvaluator::new(net, rk, ChessMoveFeatures::new(&game));
+                        searcher.search(&game, &mut state, depth, node_budget, &mut evaluator)
+                    }
+                    (Some(net), None) => {
+                        let mut evaluator = ModelEvaluator::new(net);
+                        searcher.search(&game, &mut state, depth, node_budget, &mut evaluator)
+                    }
+                    _ => searcher.search(&game, &mut state, depth, node_budget, &mut ZeroEvaluator),
                 };
                 searcher.set_deadline(None);
                 let elapsed = started.elapsed().as_millis().max(1);

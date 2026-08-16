@@ -32,7 +32,7 @@
         "additional_lines_rgx": [],
         "event_name": "Fastchess Tournament",
         "site": "?",
-        "file": "runs/20260814-165142-match-width64-8g-fixedtime-8a1931a/games.pgn",
+        "file": "runs/20260816-074253-match-j1-qs-selfmatch-712ad8e/games.pgn",
         "notation": 0,
         "append_file": true,
         "track_nodes": false,
@@ -60,7 +60,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 115,
+    "seed": 42,
     "variant": 0,
     "type": 0,
     "gauntlet_seeds": 1,
@@ -69,8 +69,8 @@
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 50,
-    "concurrency": 5,
+    "rounds": 150,
+    "concurrency": 3,
     "force_concurrency": false,
     "recover": false,
     "noswap": false,
@@ -92,7 +92,7 @@
             "name": "A",
             "dir": "",
             "cmd": "./target/release/uci",
-            "args": "runs/20260814-120150-selfplay-chess-w64-g200-e10-s1-2327384/checkpoint",
+            "args": "--qs=runs/20260814-131835-selfplay-chess-w64-g200-e10-s1-c03fefc/checkpoint",
             "restart": false,
             "options": [],
             "limit": {
@@ -131,15 +131,15 @@
     ],
     "stats": {
         "A vs B": {
-            "wins": 45,
-            "losses": 43,
-            "draws": 12,
-            "penta_WW": 10,
-            "penta_WD": 8,
-            "penta_WL": 17,
+            "wins": 31,
+            "losses": 38,
+            "draws": 11,
+            "penta_WW": 6,
+            "penta_WD": 6,
+            "penta_WL": 13,
             "penta_DD": 0,
-            "penta_LD": 4,
-            "penta_LL": 11
+            "penta_LD": 5,
+            "penta_LL": 10
         }
     }
 }
