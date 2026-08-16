@@ -186,6 +186,40 @@ cross-validation, and the tablebase corruption/fuzz tests.
 - `lab sweep <manifest.jsonl>`: run many configs with CPU-slot
   scheduling (lines of `{"command","config","cores"}`).
 
+## SHSD instruments (Program 2)
+
+The structured-heuristic search-distillation program (reports in
+`reports/shsd/`) adds four instruments; every config is a fully
+explicit TOML under `configs/shsd/`:
+
+```
+lab relabel <config>    # deep-search teacher records: sample positions
+                        # from trajectories, label with shallow/deep/
+                        # counterfactual-child searches (+ optional
+                        # exact-oracle join on solved rulesets)
+lab fit <config>        # fit evaluators on exact data or teacher
+                        # records: structured linear WDL / raw-MLP
+                        # baseline / move rankers; probes searched
+                        # decisions against exact optimal sets
+lab evaluate <config>   # kind = "structured_match": structured-vs-
+                        #   {zero|mlp|structured} paired matches at
+                        #   node or movetime budgets
+                        # kind = "ordered_mlp_match": one value model
+                        #   vs itself with different orderings and/or
+                        #   quiescence (the A/B instrument)
+tools/shsd_fit_table.py # aggregate fit summaries into a markdown table
+```
+
+Search quiescence (captures/promotions at the horizon, §37.3) is off
+by default everywhere and enabled per config (`quiescence = true`).
+The strongest current Forward Chess configuration is the Program-1
+champion value + the F2 learned ranker + quiescence (see
+`reports/shsd/stage_g1_quiescence.md`).
+
+Note: `threads = 7` above dates from the 8-vCPU shape; on the current
+4-vCPU VM use `threads = 4` (matches/fits) and sweep-level
+parallelism for many small runs.
+
 ## Disk policy
 
 `runs/` and `campaigns/` are git-ignored working data. When disk

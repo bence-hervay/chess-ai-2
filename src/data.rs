@@ -194,6 +194,7 @@ fn trajectory_rng(seed: u64, game_index: u64) -> ChaCha12Rng {
 /// (§20.1); repeat visits increase `weight`. Once `max_positions`
 /// distinct positions are collected, new positions are refused but
 /// weights keep counting.
+#[allow(clippy::too_many_arguments)] // §55 sampling axes are irreducible
 pub fn collect_positions<G, E, F>(
     game: &G,
     spec: &TrajectorySpec,
@@ -201,6 +202,7 @@ pub fn collect_positions<G, E, F>(
     max_positions: usize,
     seed: u64,
     threads: usize,
+    quiescence: bool,
     make_eval: F,
 ) -> Vec<PositionSample>
 where
@@ -222,6 +224,7 @@ where
                 let mut evaluator = make_eval();
                 let mut searcher: Searcher<G> =
                     Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+                searcher.set_quiescence(quiescence);
                 let mut state = game.initial_state();
                 let mut path: Vec<ActionId> = Vec::new();
                 let mut moves = Vec::new();
@@ -327,6 +330,7 @@ pub fn label_positions<G, E, F>(
     label_children: bool,
     child_nodes: u64,
     threads: usize,
+    quiescence: bool,
     make_eval: F,
 ) -> Vec<TeacherRecord>
 where
@@ -349,6 +353,7 @@ where
                 let search_at = |state: &mut G::State, budget: u64, eval: &mut E| {
                     let mut searcher: Searcher<G> =
                         Searcher::new(Some(SELFPLAY_TT_LOG2), MoveOrdering::Natural);
+                    searcher.set_quiescence(quiescence);
                     searcher.search(game, state, 512, budget, eval)
                 };
 
@@ -740,7 +745,7 @@ mod tests {
     fn collect_positions_is_deterministic_and_deduplicated() {
         let game = ConnectK::new(3, 3, 3, true).unwrap();
         let run = |threads: usize| {
-            collect_positions(&game, &random_spec(40), 2, 500, 11, threads, || {
+            collect_positions(&game, &random_spec(40), 2, 500, 11, threads, false, || {
                 ZeroEvaluator
             })
         };
@@ -761,14 +766,18 @@ mod tests {
             assert_eq!(root.weight, 40);
         }
         // The cap on distinct positions is respected.
-        let capped = collect_positions(&game, &random_spec(40), 1, 5, 11, 2, || ZeroEvaluator);
+        let capped = collect_positions(&game, &random_spec(40), 1, 5, 11, 2, false, || {
+            ZeroEvaluator
+        });
         assert_eq!(capped.len(), 5);
     }
 
     #[test]
     fn labelling_is_thread_independent_and_well_formed() {
         let game = ConnectK::new(3, 3, 3, true).unwrap();
-        let samples = collect_positions(&game, &random_spec(20), 1, 60, 3, 2, || ZeroEvaluator);
+        let samples = collect_positions(&game, &random_spec(20), 1, 60, 3, 2, false, || {
+            ZeroEvaluator
+        });
         let label = |threads: usize| {
             label_positions(
                 &game,
@@ -779,6 +788,7 @@ mod tests {
                 true,
                 200,
                 threads,
+                false,
                 || ZeroEvaluator,
             )
         };
@@ -817,7 +827,9 @@ mod tests {
         // agree with the oracle's WDL — an end-to-end cross-check of
         // trajectory sampling, replay, search, and the oracle join.
         let game = ConnectK::new(3, 3, 3, true).unwrap();
-        let samples = collect_positions(&game, &random_spec(30), 1, 80, 5, 2, || ZeroEvaluator);
+        let samples = collect_positions(&game, &random_spec(30), 1, 80, 5, 2, false, || {
+            ZeroEvaluator
+        });
         let mut records = label_positions(
             &game,
             &samples,
@@ -827,6 +839,7 @@ mod tests {
             true,
             50_000,
             2,
+            false,
             || ZeroEvaluator,
         );
         let solution = solve_retrograde(&game, 10_000).unwrap();

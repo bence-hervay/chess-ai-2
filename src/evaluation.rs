@@ -827,6 +827,8 @@ pub fn play_paired_match<G: Game>(
         MoveBudget::Nodes {
             nodes: champion_nodes,
         },
+        false,
+        false,
         run_seed,
         threads,
     )
@@ -845,6 +847,8 @@ pub fn play_paired_match_with<G, EA, EB, FA, FB>(
     opening_plies: u32,
     candidate_budget: MoveBudget,
     champion_budget: MoveBudget,
+    candidate_quiescence: bool,
+    champion_quiescence: bool,
     run_seed: u64,
     threads: usize,
 ) -> MatchResult
@@ -910,10 +914,12 @@ where
                         Some(crate::training::SELFPLAY_TT_LOG2),
                         MoveOrdering::Natural,
                     );
+                    cand_search.set_quiescence(candidate_quiescence);
                     let mut champ_search: Searcher<G> = Searcher::new(
                         Some(crate::training::SELFPLAY_TT_LOG2),
                         MoveOrdering::Natural,
                     );
+                    champ_search.set_quiescence(champion_quiescence);
                     let outcome = loop {
                         if let Some(outcome) = game.outcome(&state) {
                             break outcome;

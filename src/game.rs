@@ -77,4 +77,13 @@ pub trait Game: Send + Sync + 'static {
 
     /// Stable action ID of a legal move in this state.
     fn action_id(&self, state: &Self::State, mv: Self::Move) -> ActionId;
+
+    /// Rule-level fact: does this move capture material or promote?
+    /// Quiescence search extends only these moves at the horizon. The
+    /// default (no tactical moves) makes quiescence a no-op for games
+    /// without a quiet/tactical distinction.
+    fn is_tactical(&self, state: &Self::State, mv: Self::Move) -> bool {
+        let _ = (state, mv);
+        false
+    }
 }

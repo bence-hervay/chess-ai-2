@@ -1,0 +1,21 @@
+# The combined SHSD stack (ranker ordering + quiescence) vs the
+# Program-1 champion configuration (policy ordering, no quiescence),
+# identical value model, 20 ms/move.
+kind = "ordered_mlp_match"
+mlp_checkpoint = "campaigns/fc_full_w64_n800/champion"
+ordering = "runs/20260815-234249-fit-fc-full-move-ranker-records-n10000-s1-69f4289/checkpoint/ranker.json"
+opponent_ordering = "policy"
+pairs = 300
+opening_plies = 8
+quiescence = true
+opponent_quiescence = false
+seed = 1
+threads = 4
+
+[budget]
+kind = "movetime_ms"
+ms = 20
+
+[game]
+kind = "forward_chess"
+ruleset = "full"

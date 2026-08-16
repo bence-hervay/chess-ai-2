@@ -277,6 +277,22 @@ impl Game for Chess {
             }
         }
     }
+
+    fn is_tactical(&self, state: &ChessState, mv: ChessMove) -> bool {
+        if mv.0.promotion.is_some() {
+            return true;
+        }
+        // Captures: destination occupied by the enemy, or en passant
+        // (a pawn changing file onto an empty square). cozy-chess
+        // castling is king-takes-rook — own-piece destination, so it
+        // is correctly not counted as a capture here.
+        let board = &state.board;
+        if let Some(color) = board.color_on(mv.0.to) {
+            return color != board.side_to_move();
+        }
+        board.piece_on(mv.0.from) == Some(cozy_chess::Piece::Pawn)
+            && mv.0.from.file() != mv.0.to.file()
+    }
 }
 
 /// Parse a UCI move string against a state's legal moves, translating

@@ -1,0 +1,18 @@
+kind = "ordered_mlp_match"
+mlp_checkpoint = "runs/20260815-224143-fit-fc-small-mlp-w32-n1000000-s1-6b532d8/checkpoint"
+ordering = "policy"
+opponent_ordering = "policy"
+pairs = 300
+opening_plies = 6
+quiescence = true
+opponent_quiescence = false
+seed = 1
+threads = 4
+
+[budget]
+kind = "nodes"
+nodes = 400
+
+[game]
+kind = "forward_chess"
+ruleset = "small"

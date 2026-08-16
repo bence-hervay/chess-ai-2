@@ -180,6 +180,17 @@
       "code_revision": "stage-f1"
     },
     {
+      "name": "qs_max_depth",
+      "component": "search quiescence (§37.3 rung 2)",
+      "class": "engineering",
+      "value": 32,
+      "unit": "plies",
+      "allowed_range": ">= longest capture/promotion chain",
+      "selection": "safety bound; captures and promotions strictly consume material so real chains are far shorter",
+      "date": "2026-08-16",
+      "code_revision": "stage-g1"
+    },
+    {
       "name": "labelling_max_depth",
       "component": "data::label_positions / collect_positions",
       "class": "engineering",

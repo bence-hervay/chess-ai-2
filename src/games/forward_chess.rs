@@ -1034,6 +1034,19 @@ impl Game for ForwardChess {
             }
         }
     }
+
+    fn is_tactical(&self, state: &FcState, mv: FcMove) -> bool {
+        if mv.promotion.is_some() {
+            return true;
+        }
+        let cells = &state.core.cells;
+        if cells[usize::from(mv.to)] != EMPTY {
+            return true;
+        }
+        // En passant: a pawn moving diagonally onto the crossed square.
+        let (_, piece, _) = unpack(cells[usize::from(mv.from)]);
+        piece == Piece::Pawn && Some(mv.to) == state.core.ep
+    }
 }
 
 // ---------------------------------------------------------------------------

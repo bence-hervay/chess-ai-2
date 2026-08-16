@@ -1,0 +1,25 @@
+# F2 training data: counterfactual child labels at fc-full from the
+# c03 champion (card: stage_f2_fullboard_ordering.md).
+evaluator = "campaigns/fc_full_w64_n800/champion"
+sample_one_in = 2
+max_positions = 10000
+shallow_nodes = []
+deep_nodes = 1600
+children = "all"
+child_nodes = 400
+quiescence = true
+seed = 11
+threads = 4
+
+[game]
+kind = "forward_chess"
+ruleset = "full"
+
+[trajectories]
+kind = "selfplay"
+games = 250
+nodes = 400
+epsilon = 0.10
+
+[oracle]
+kind = "none"

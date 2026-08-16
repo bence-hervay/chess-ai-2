@@ -81,6 +81,7 @@ time.
 | C — First compact structured evaluator | **PASS** | [reports/shsd/stage_c_structured_linear.md](reports/shsd/stage_c_structured_linear.md) |
 | F1 — Learned move ordering (exact data) | **PASS** | [reports/shsd/stage_f1_move_ordering.md](reports/shsd/stage_f1_move_ordering.md) |
 | F2 — fc-full ordering from search distillation | **PASS** | [reports/shsd/stage_f2_fullboard_ordering.md](reports/shsd/stage_f2_fullboard_ordering.md) |
+| G1 — Capture/promotion quiescence | **PASS** | [reports/shsd/stage_g1_quiescence.md](reports/shsd/stage_g1_quiescence.md) |
 
 Stage B delivered provenance-typed deep-search teacher records
 (`lab relabel`), validated against the exact fc-tiny oracle across 3
@@ -96,8 +97,13 @@ top-1 optimal ordering 0.75→0.93) and on teacher counterfactual child
 labels with no oracle (F2, fc-full: **beats the Program-1 champion's
 own policy-head ordering by ≈+93 protocol Elo at fixed time** with the
 value model held identical — equal ordering quality at a fraction of
-the per-node cost). The strongest current fc-full configuration is
-the c03 champion value + learned ranker ordering.
+the per-node cost). Stage G1 added
+capture/promotion quiescence (rung 2 of §37.3, off-by-default with a
+bit-identical reference mode): ≈+115 Elo at both fixed nodes and fixed
+time on fc-full. **The combined stack — c03 champion value + learned
+ranker + quiescence — beats the Program-1 champion configuration by
+≈+186 protocol Elo at fixed time (0.744 [0.712, 0.776]) with the
+identical value network.**
 
 Stage C delivered the first structured evaluator: a 426-parameter
 linear WDL model over hand-designed measurements (`lab fit`,

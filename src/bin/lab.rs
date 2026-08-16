@@ -235,8 +235,14 @@ struct OrderedMlpMatchConfig {
     opponent_ordering: String,
     pairs: u64,
     opening_plies: u32,
-    /// One budget for both sides: the comparison is ordering-only.
+    /// One budget for both sides.
     budget: selfplay_lab::evaluation::MoveBudget,
+    /// Horizon quiescence per side (A/B instrument for §37).
+    /// Defaults to off so pre-G1 configs replay identically.
+    #[serde(default)]
+    quiescence: bool,
+    #[serde(default)]
+    opponent_quiescence: bool,
     seed: u64,
     threads: usize,
     game: GameSpec,
@@ -573,6 +579,8 @@ fn ordered_mlp_match(config: OrderedMlpMatchConfig) -> Result<(), String> {
         config.opening_plies,
         config.budget,
         config.budget,
+        config.quiescence,
+        config.opponent_quiescence,
         config.seed,
         config.threads,
     );
@@ -2572,6 +2580,8 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
             config.opening_plies,
             config.structured_budget,
             config.opponent_budget,
+            false,
+            false,
             config.seed,
             config.threads,
         )
@@ -2595,6 +2605,8 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
             config.opening_plies,
             config.structured_budget,
             config.opponent_budget,
+            false,
+            false,
             config.seed,
             config.threads,
         )
@@ -2615,6 +2627,8 @@ fn structured_match(config: StructuredMatchConfig) -> Result<(), String> {
             config.opening_plies,
             config.structured_budget,
             config.opponent_budget,
+            false,
+            false,
             config.seed,
             config.threads,
         )
@@ -4182,6 +4196,10 @@ struct RelabelConfig {
     deep_nodes: u64,
     children: ChildPolicy,
     child_nodes: u64,
+    /// Horizon quiescence in every labelling search (§37.3 rung 2).
+    /// Defaults to off so pre-G1 configs replay identically.
+    #[serde(default)]
+    quiescence: bool,
     oracle: OracleSpec,
     seed: u64,
     threads: usize,
@@ -4275,6 +4293,7 @@ where
         config.max_positions,
         config.seed,
         config.threads,
+        config.quiescence,
         &make_eval,
     );
     let total_weight: u64 = samples.iter().map(|s| u64::from(s.weight)).sum();
@@ -4300,6 +4319,7 @@ where
         config.children == ChildPolicy::All,
         config.child_nodes,
         config.threads,
+        config.quiescence,
         &make_eval,
     );
     say(format!("labelled {} positions", records.len()), log);

@@ -368,6 +368,12 @@ impl Game for Breakthrough {
         let direction = (dx + 1) as u32; // 0 = forward-left, 1 = straight, 2 = forward-right
         3 * ActionId::from(from) + direction
     }
+
+    fn is_tactical(&self, state: &BreakthroughState, mv: BreakthroughMove) -> bool {
+        // Only diagonal moves may capture; the destination is enemy-
+        // occupied exactly when this move captures.
+        state.cells[usize::from(mv.to)] != 0
+    }
 }
 
 #[cfg(test)]

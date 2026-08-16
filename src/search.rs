@@ -19,6 +19,11 @@ pub const SCORE_EVAL_MAX: i32 = 1_000;
 
 const SCORE_INF: i32 = i32::MAX - 1;
 
+/// Safety bound on quiescence recursion (engineering; captures and
+/// promotions strictly consume material so real chains are far
+/// shorter — see parameter_ledger.json).
+const QS_MAX_DEPTH: u32 = 32;
+
 /// Game-theoretic value from the side to move's perspective.
 /// Ordered so that `Loss < Draw < Win`.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Serialize, Deserialize)]
@@ -513,6 +518,8 @@ pub struct SearchResult<M> {
     /// `depth - 1`. Best-move stability across depths is teacher-record
     /// evidence (SHSD program §18.2).
     pub per_depth: Vec<(M, i32)>,
+    /// Nodes spent inside quiescence (subset of `nodes`; §68.1).
+    pub quiescence_nodes: u64,
 }
 
 /// The production search: negamax with alpha–beta pruning, iterative
@@ -522,7 +529,12 @@ pub struct SearchResult<M> {
 pub struct Searcher<G: Game> {
     tt: Option<TranspositionTable<G::Move>>,
     ordering: MoveOrdering,
+    /// Resolve captures/promotions at the horizon (SHSD §37.3 rung 2).
+    /// Off by default; off is the correctness-preserving reference
+    /// mode (§14.3) and is bit-identical to the pre-quiescence search.
+    quiescence: bool,
     nodes: u64,
+    qnodes: u64,
     node_limit: u64,
     /// Optional wall-clock deadline (§11.4), checked every 128 nodes
     /// (fine-grained because model evaluators cost ~0.2 ms per node).
@@ -539,7 +551,9 @@ impl<G: Game> Searcher<G> {
         Searcher {
             tt: tt_log2_entries.map(TranspositionTable::new),
             ordering,
+            quiescence: false,
             nodes: 0,
+            qnodes: 0,
             node_limit: u64::MAX,
             deadline: None,
             aborted: false,
@@ -550,6 +564,12 @@ impl<G: Game> Searcher<G> {
     /// Set or clear the wall-clock deadline for subsequent searches.
     pub fn set_deadline(&mut self, deadline: Option<std::time::Instant>) {
         self.deadline = deadline;
+    }
+
+    /// Enable or disable horizon quiescence (captures and promotions
+    /// only; games without a tactical classification are unaffected).
+    pub fn set_quiescence(&mut self, on: bool) {
+        self.quiescence = on;
     }
 
     pub fn tt_stats(&self) -> (u64, u64) {
@@ -574,6 +594,7 @@ impl<G: Game> Searcher<G> {
         eval: &mut impl Evaluator<G>,
     ) -> SearchResult<G::Move> {
         self.nodes = 0;
+        self.qnodes = 0;
         self.node_limit = max_nodes;
         self.aborted = false;
 
@@ -584,6 +605,7 @@ impl<G: Game> Searcher<G> {
             nodes: 0,
             nodes_at_completed_depth: 0,
             per_depth: Vec::new(),
+            quiescence_nodes: 0,
         };
         if game.outcome(state).is_some() {
             return result;
@@ -635,6 +657,7 @@ impl<G: Game> Searcher<G> {
             }
         }
         result.nodes = self.nodes;
+        result.quiescence_nodes = self.qnodes;
         result
     }
 
@@ -702,6 +725,13 @@ impl<G: Game> Searcher<G> {
             return terminal_score(outcome, game.side_to_move(state), ply);
         }
         if depth == 0 {
+            if self.quiescence {
+                // The horizon node was already counted at this
+                // function's entry; qsearch counts it again, so undo
+                // one increment to keep node accounting exact.
+                self.nodes -= 1;
+                return self.qsearch(game, state, ply, alpha, beta, eval, 0);
+            }
             let value = eval.leaf_value(game, state);
             debug_assert!(value.abs() <= SCORE_EVAL_MAX, "leaf eval out of range");
             return value;
@@ -785,6 +815,81 @@ impl<G: Game> Searcher<G> {
             });
         }
         best_score
+    }
+
+    /// Horizon quiescence (SHSD §37.3 rung 2): stand pat on the static
+    /// evaluation, then resolve captures and promotions only. No
+    /// transposition-table interaction; nodes count against the budget
+    /// and are reported separately. Checks receive no special
+    /// treatment yet (identical to the pre-quiescence leaf behavior in
+    /// check); evasions are rung 3.
+    #[allow(clippy::too_many_arguments)] // same kernel shape as negamax
+    fn qsearch(
+        &mut self,
+        game: &G,
+        state: &mut G::State,
+        ply: u32,
+        mut alpha: i32,
+        beta: i32,
+        eval: &mut impl Evaluator<G>,
+        qdepth: u32,
+    ) -> i32 {
+        self.nodes += 1;
+        self.qnodes += 1;
+        if self.nodes >= self.node_limit {
+            self.aborted = true;
+            return 0;
+        }
+        if self.nodes.is_multiple_of(128) {
+            if let Some(deadline) = self.deadline {
+                if std::time::Instant::now() >= deadline {
+                    self.aborted = true;
+                    return 0;
+                }
+            }
+        }
+        if let Some(outcome) = game.outcome(state) {
+            return terminal_score(outcome, game.side_to_move(state), ply);
+        }
+        let stand = eval.leaf_value(game, state);
+        debug_assert!(stand.abs() <= SCORE_EVAL_MAX, "leaf eval out of range");
+        if qdepth >= QS_MAX_DEPTH || stand >= beta {
+            return stand;
+        }
+        alpha = alpha.max(stand);
+
+        let mut moves = Vec::new();
+        game.legal_moves(state, &mut moves);
+        moves.retain(|&mv| game.is_tactical(state, mv));
+        if moves.is_empty() {
+            return stand;
+        }
+        let mut scores = std::mem::take(&mut self.scores);
+        if eval.policy_scores(game, state, &moves, &mut scores) {
+            debug_assert_eq!(scores.len(), moves.len());
+            let mut indexed: Vec<(usize, G::Move)> = moves.iter().copied().enumerate().collect();
+            indexed.sort_by(|(i, _), (j, _)| scores[*j].total_cmp(&scores[*i]));
+            for (slot, (_, mv)) in indexed.into_iter().enumerate() {
+                moves[slot] = mv;
+            }
+        }
+        self.scores = scores;
+
+        let mut best = stand;
+        for &mv in &moves {
+            let undo = game.make_move(state, mv);
+            let score = -self.qsearch(game, state, ply + 1, -beta, -alpha, eval, qdepth + 1);
+            game.unmake_move(state, mv, undo);
+            if self.aborted {
+                return 0;
+            }
+            best = best.max(score);
+            alpha = alpha.max(score);
+            if alpha >= beta {
+                break;
+            }
+        }
+        best
     }
 }
 
@@ -1055,6 +1160,111 @@ mod tests {
         };
         assert_eq!(run(), run());
         let _ = &mut state;
+    }
+
+    #[test]
+    fn quiescence_is_neutral_without_tactical_moves() {
+        // Connect-k defines no tactical moves, so quiescence ON must
+        // reproduce OFF exactly — values, moves, and node counts.
+        let game = ConnectK::new(5, 4, 4, true).unwrap();
+        let run = |quiescence: bool| {
+            let mut searcher: Searcher<ConnectK> = Searcher::new(Some(14), MoveOrdering::Natural);
+            searcher.set_quiescence(quiescence);
+            let mut state = game.initial_state();
+            let r = searcher.search(&game, &mut state, 6, 50_000, &mut ZeroEvaluator);
+            (r.value, r.best_move, r.nodes, r.quiescence_nodes)
+        };
+        let (v_off, m_off, n_off, q_off) = run(false);
+        let (v_on, m_on, n_on, q_on) = run(true);
+        assert_eq!(v_off, v_on);
+        assert_eq!(m_off, m_on);
+        assert_eq!(n_off, n_on, "no tactical moves: node counts identical");
+        assert_eq!(q_off, 0);
+        assert!(
+            q_on > 0 && q_on < n_on,
+            "horizon leaves pass through qsearch; interior nodes do not"
+        );
+    }
+
+    #[test]
+    fn quiescence_resolves_a_hanging_capture() {
+        // Forward Chess small: White Kd1, Rb2; Black Kd4, Pb3, Pa4.
+        // Rxb3 wins a pawn at the horizon but loses the rook to axb3.
+        // A material evaluator + depth-1 search: without quiescence the
+        // root value believes the pawn grab (+400); with quiescence the
+        // recapture is resolved (-100).
+        use crate::games::forward_chess::{ForwardChess, Piece, Ruleset};
+        struct Material;
+        impl Evaluator<ForwardChess> for Material {
+            fn leaf_value(
+                &mut self,
+                game: &ForwardChess,
+                state: &<ForwardChess as Game>::State,
+            ) -> i32 {
+                let mover = game.side_to_move(state);
+                let mut score = 0;
+                for &code in game.state_cells(state) {
+                    if code == 0 {
+                        continue;
+                    }
+                    let (owner, piece, _) = ForwardChess::unpack_code(code);
+                    let value = match piece {
+                        Piece::Pawn => 100,
+                        Piece::Rook => 500,
+                        Piece::King => 0,
+                        _ => 300,
+                    };
+                    score += if owner == mover { value } else { -value };
+                }
+                score
+            }
+        }
+        let game = ForwardChess::new(Ruleset::Small);
+        let state = game.custom_state(
+            &[
+                ("d1", Player::One, Piece::King, false),
+                ("b2", Player::One, Piece::Rook, false),
+                ("d4", Player::Two, Piece::King, false),
+                ("b3", Player::Two, Piece::Pawn, false),
+                ("a4", Player::Two, Piece::Pawn, false),
+            ],
+            Player::One,
+            [false; 4],
+            None,
+        );
+        let run = |quiescence: bool| {
+            let mut searcher: Searcher<ForwardChess> =
+                Searcher::new(Some(12), MoveOrdering::Natural);
+            searcher.set_quiescence(quiescence);
+            let mut s = state.clone();
+            searcher.search(&game, &mut s, 1, u64::MAX, &mut Material)
+        };
+        let off = run(false);
+        let on = run(true);
+        assert_eq!(off.value, 400, "horizon effect: the pawn grab looks won");
+        let grab = off.best_move.expect("some move");
+        assert_eq!(
+            (grab.from, grab.to),
+            (game.square("b2"), game.square("b3")),
+            "without quiescence the search grabs the poisoned pawn"
+        );
+        assert_eq!(
+            on.value, 300,
+            "quiescence sees the recapture and keeps the rook instead"
+        );
+        assert_ne!(
+            on.best_move.expect("some move").to,
+            game.square("b3"),
+            "with quiescence the poisoned pawn is declined"
+        );
+        assert!(on.quiescence_nodes > 0);
+        // Budget abort stays clean with quiescence on.
+        let mut searcher: Searcher<ForwardChess> = Searcher::new(Some(12), MoveOrdering::Natural);
+        searcher.set_quiescence(true);
+        let mut s = state.clone();
+        let tiny = searcher.search(&game, &mut s, 8, 40, &mut Material);
+        assert!(tiny.nodes <= 41);
+        assert!(tiny.best_move.is_some());
     }
 
     #[test]
